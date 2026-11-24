@@ -358,6 +358,7 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
 
 .rh-calendar-event{border:0;text-align:left;width:100%;font-family:inherit;cursor:pointer;line-height:1.35;overflow:hidden;text-overflow:ellipsis;color:#dceaf0}
 .rh-calendar-event:hover,.rh-calendar-event:focus-visible{background:#365769;outline:1px solid #88b1c3}
+.rh-draft-alert{padding:14px 17px;border:1px solid #6b92a5;background:#213944;border-radius:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}.rh-draft-alert strong{font-size:13px;color:#e9f6f7}.rh-draft-alert p{color:#bed2da;font-size:12px;margin:5px 0 0}
 </style>
 </head>
 <body>
@@ -696,9 +697,20 @@ function rhProjectCard(item,compact){
  const progress=rhContentCompletion(item),percent=progress.total?Math.round(progress.done/progress.total*100):0;
  return '<article class="panel rh-project-card'+(compact?' compact':'')+'"><div class="rh-project-heading"><div><p class="rh-project-kicker">'+txt(brand?brand.name+(brand.campaign?" · "+brand.campaign:""):"Personal Content")+'</p><h3>'+txt(item.title||"Konten tanpa judul")+'</h3></div><span class="rh-platform">'+txt(item.platform||"TikTok")+'</span></div><div class="rh-metadata"><span>'+txt(item.content_type||item.pillar||"Content")+'</span>'+(item.date?'<span>'+fmt(item.date)+'</span>':"")+'</div><div class="rh-progress-head"><span>Checklist produksi</span><strong>'+progress.done+' / '+progress.total+'</strong></div><div class="rh-progress"><span style="width:'+percent+'%"></span></div><div class="rh-project-stats"><span>'+n((item.script||[]).length||(item.hook?1:0))+' kalimat</span><span>'+n((item.shots||[]).length)+' shot</span><span>'+n((item.references||[]).length)+' referensi</span></div><div class="buttons">'+btn("Buka Content","edit-content","primary",'data-id="'+txt(item.id)+'"')+(compact?"":btn("Hapus","delete-idea","danger",'data-id="'+txt(item.id)+'"'))+'</div></article>';
 }
+function pendingContentDraft(){
+ let raw="";
+ try{raw=localStorage.getItem("rh-creator-draft-v1:content-form:new")||sessionStorage.getItem("rh-creator-draft-v1:content-form:new")||"";}catch(e){}
+ if(!raw)return "";
+ try{
+  const parsed=JSON.parse(raw),values=parsed.values||{},sections=parsed.sections||{};
+  const hasWork=String(values.title||"").trim()||String(values.notes||"").trim()||Object.values(sections).some(list=>Array.isArray(list)&&list.some(x=>x.text||x.label||x.url));
+  if(!hasWork)return "";
+  return '<div class="rh-draft-alert"><div><strong>Draf konten sebelumnya ditemukan.</strong><p>Kalimat dan shot list yang sempat kamu isi masih bisa dipulihkan.</p></div>'+btn("Pulihkan Draf","new-content","primary")+'</div>';
+ }catch(e){return "";}
+}
 function production(){
  const linked=state.ideas.filter(x=>x.brand_id).length;
- return '<div class="rh-content-page"><div class="rh-page-lead"><div><p class="rh-overline">CONTENT WORKSPACE</p><h3>Produksi Konten</h3><p>Tulis script per kalimat, susun shot list, tambahkan referensi dan centang pekerjaan.</p></div>'+btn("+ Content Baru","new-content","primary")+'</div><div class="rh-content-summary"><span>'+n(state.ideas.length)+' total konten</span><span>'+n(linked)+' terhubung ke Collaboration</span></div><div class="rh-project-grid">'+(state.ideas.length?state.ideas.slice().sort((a,b)=>(b.updated_at||0)-(a.updated_at||0)).map(x=>rhProjectCard(x,false)).join(""):empty("Belum ada konten. Tekan + Content Baru untuk membuat script dan shot list pertama."))+'</div></div>';
+ return '<div class="rh-content-page">'+pendingContentDraft()+'<div class="rh-page-lead"><div><p class="rh-overline">CONTENT WORKSPACE</p><h3>Produksi Konten</h3><p>Tulis script per kalimat, susun shot list, tambahkan referensi dan centang pekerjaan.</p></div>'+btn("+ Content Baru","new-content","primary")+'</div><div class="rh-content-summary"><span>'+n(state.ideas.length)+' total konten</span><span>'+n(linked)+' terhubung ke Collaboration</span></div><div class="rh-project-grid">'+(state.ideas.length?state.ideas.slice().sort((a,b)=>(b.updated_at||0)-(a.updated_at||0)).map(x=>rhProjectCard(x,false)).join(""):empty("Belum ada konten. Tekan + Content Baru untuk membuat script dan shot list pertama."))+'</div></div>';
 }
 function contentForm(contentId,date,brandId){
  const item=state.ideas.find(x=>x.id===contentId)||{title:"",pillar:"Education",platform:"TikTok",content_type:"UGC",goal:"Awareness",notes:"",date:date||"",shoot_date:"",brand_id:brandId||"",caption:"",hashtags:""};
