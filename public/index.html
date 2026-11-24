@@ -182,6 +182,26 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
   .music-widget .music-album{height:49px}
   .music-widget .music-disc{width:42px;height:42px}
 }
+
+/* Original RH logo fills the brand tile beside Rizky Hidayat. */
+.sidebar .logo{align-items:center;gap:12px}
+.sidebar .logo-mark.rh-logo{
+  position:relative;display:block;
+  width:59px;height:59px;flex:0 0 59px;
+  padding:0!important;overflow:hidden;
+  border-radius:15px;border:1px solid #557587;
+  background:linear-gradient(145deg,#172b38,#10212d);
+  transform:none;letter-spacing:normal;
+}
+.sidebar .rh-logo img{
+  width:100%;height:100%;max-width:none;max-height:none;
+  display:block;object-fit:cover;object-position:center;
+  transform:scale(1.48);transform-origin:50% 50%;
+}
+.sidebar .brand-copy{min-width:0;flex:1}
+@media(max-width:790px){
+  .sidebar .logo-mark.rh-logo{width:56px;height:56px;flex-basis:56px}
+}
 </style>
 </head>
 <body>
