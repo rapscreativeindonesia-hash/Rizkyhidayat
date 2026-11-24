@@ -276,10 +276,10 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
 <div class="logo"><div class="logo-mark rh-logo" role="img" aria-label="Logo RH asli"><img src="https://rizkyhidayat.com/assets/rh-script.svg" alt="Logo RH" loading="eager"></div><div class="brand-copy"><h1>Rizky Hidayat</h1><p>Freelance Content Creator</p></div></div>
 <nav class="nav" aria-label="Menu utama">
 <button data-page="dashboard" class="active"><span class="nav-icon">⌂</span>Dashboard</button>
-<button data-page="ideas"><span class="nav-icon">✦</span>Ide / Library</button>
-<button data-page="calendar"><span class="nav-icon">▦</span>Kalender Konten</button>
-<button data-page="production"><span class="nav-icon">▷</span>Produksi Content</button>
-<button data-page="brand"><span class="nav-icon">◇</span>Brand</button>
+<button data-page="production"><span class="nav-icon">▷</span>Content</button>
+<button data-page="brand"><span class="nav-icon">◇</span>Collaboration</button>
+<button data-page="calendar"><span class="nav-icon">▦</span>Konten Kalender</button>
+<button data-page="ideas"><span class="nav-icon">✦</span>Ide</button>
 </nav>
 <section class="sidefoot music-widget" id="music-widget" aria-label="Ikoy Music">
 <div class="music-top"><span class="music-overline">IKOY MUSIC</span><span class="music-equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
@@ -446,7 +446,7 @@ function metric(label,value,description){return '<section class="panel"><div cla
 function empty(txt){return '<div class="empty">'+esc(txt)+'</div>';}
 function txt(t){return esc(t);}
 function setpage(p){page=p;render();}
-function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide / Library","Bank ide, referensi, dan aset untuk produksi."],calendar:["Kalender Konten","Rencanakan jadwal konten di satu kalender."],production:["Produksi Content","Kelola proses konten dari ide sampai final."],brand:["Brand","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.querySelector(".top")?.classList.toggle("dashboard-top",page==="dashboard");const sh=document.getElementById("side-handle");if(sh)sh.textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{timeZone:"Asia/Jakarta",weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
+function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide","Bank ide, referensi, dan aset untuk produksi."],calendar:["Konten Kalender","Rencanakan jadwal konten di satu kalender."],production:["Content","Kelola proses konten dari ide sampai final."],brand:["Collaboration","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.querySelector(".top")?.classList.toggle("dashboard-top",page==="dashboard");const sh=document.getElementById("side-handle");if(sh)sh.textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{timeZone:"Asia/Jakarta",weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
 function growthChart(history){
 if(!Array.isArray(history)||history.length<2)return '<div class="empty">Grafik pertumbuhan muncul setelah minimal dua sinkronisasi berhasil.</div>';
 const h=history.filter(x=>Number.isFinite(x.followers)).slice(-60);if(h.length<2)return '<div class="empty">Belum ada data pertumbuhan yang cukup.</div>';
