@@ -227,7 +227,7 @@ export class TikTokStore {
   }
 }
 export default {
-  async fetch(req,env){
+  async fetch(req,env,ctx){
     const url=new URL(req.url),path=url.pathname;
     if(!path.startsWith("/api/"))return env.ASSETS.fetch(req);
     if(req.method==="OPTIONS")return new Response(null,{status:405});
