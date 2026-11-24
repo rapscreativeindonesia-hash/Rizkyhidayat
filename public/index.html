@@ -441,6 +441,37 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
 /* Minimal icon-only close button for Content and Collaboration modal */
 .modal-head .rh-modal-close{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;min-width:36px;min-height:36px;padding:0;border-radius:10px;font-size:24px;line-height:1;font-weight:400}
 .modal-head .rh-modal-close:focus-visible{outline:2px solid #a8d3e4;outline-offset:2px}
+
+/* Auto-growing text fields: no clipped writing, internal scroll or maximum row height. */
+.rh-editor-form textarea,
+.rh-editor-form .field textarea,
+.rh-editor-form .rh-inline-main textarea{
+ box-sizing:border-box!important;
+ height:auto;
+ min-height:39px;
+ max-height:none!important;
+ overflow-y:hidden!important;
+ resize:none!important;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+ word-break:break-word;
+}
+.rh-editor-form .rh-inline-main textarea{min-height:39px!important;height:auto;line-height:1.5}
+.rh-editor-form .rh-builder-row.rh-compact-row{align-items:flex-start}
+.rh-editor-form .rh-builder-row.rh-compact-row .rh-item-options{align-self:flex-start}
+.rh-editor-form .rh-inline-script{align-items:start}
+.rh-editor-form .rh-inline-check{align-items:flex-start}
+.rh-editor-form .rh-inline-check .rh-compact-checkbox{align-self:flex-start}
+/* Keep Safari from auto-zooming the entire layout when focusing a small text field. */
+@media(max-width:790px){
+ .rh-editor-form input,
+ .rh-editor-form textarea,
+ .rh-editor-form select,
+ .rh-editor-form .rh-inline-main input,
+ .rh-editor-form .rh-inline-main textarea,
+ .rh-editor-form .rh-inline-main select{font-size:16px!important}
+ .rh-editor-form .rh-inline-script{grid-template-columns:minmax(100px,106px) minmax(0,1fr)}
+}
 </style>
 </head>
 <body>
@@ -775,6 +806,7 @@ function rhReplaceBuilderRows(form,kind,items){
  const container=form.querySelector('.rh-builder-list[data-kind="'+kind+'"]');if(!container)return;
  container.innerHTML=(items||[]).map(item=>rhBuilderRow(kind,item,rhLoadScriptRows(form))).join("");
  if(kind==="script")rhRefreshShotChoices(form);
+ requestAnimationFrame(()=>rhFitTextareas(container));
 }
 function rhContentCompletion(item){
  const checks=[...(item.checklist||[]),...(item.shots||[])];
@@ -827,6 +859,24 @@ function brand(){
  const active=state.brands.filter(x=>["Aktif","Berjalan"].includes(x.status)).length;
  return '<div class="rh-collaboration-page"><div class="rh-page-lead"><div><p class="rh-overline">BRAND PARTNERSHIPS</p><h3>Collaboration</h3><p>Kelola campaign, brief, fee, deliverables, pembayaran, dan produksi konten brand dalam satu halaman.</p></div>'+btn("+ Collaboration","new-brand","primary")+'</div><div class="rh-collab-summary"><div><span>Total Collaboration</span><strong>'+n(state.brands.length)+'</strong></div><div><span>Aktif / Berjalan</span><strong>'+n(active)+'</strong></div><div><span>Total Deal</span><strong>'+rp(total)+'</strong></div><div><span>Sisa Pembayaran</span><strong>'+rp(balance)+'</strong></div></div><div class="rh-collab-list">'+(state.brands.length?state.brands.slice().sort((a,b)=>(b.updated_at||0)-(a.updated_at||0)).map(brandCard).join(""):empty("Belum ada Collaboration. Tambahkan brand atau campaign pertamamu."))+'</div></div>';
 }
+
+/* Expand writing fields with their content, including restored drafts on iOS Safari. */
+function rhFitTextarea(field){
+ if(!field||field.tagName!=="TEXTAREA")return;
+ field.style.overflowY="hidden";
+ field.style.height="auto";
+ const computed=window.getComputedStyle(field);
+ const border=(parseFloat(computed.borderTopWidth)||0)+(parseFloat(computed.borderBottomWidth)||0);
+ const minimum=parseFloat(computed.minHeight)||38;
+ const required=Math.ceil(field.scrollHeight+border);
+ field.style.height=Math.max(minimum,required)+"px";
+}
+function rhFitTextareas(root){
+ if(!root)return;
+ if(root.tagName==="TEXTAREA")rhFitTextarea(root);
+ else root.querySelectorAll?.("textarea").forEach(rhFitTextarea);
+}
+
 function modal(title,body){
  document.getElementById("modal-title").textContent=title;
  document.getElementById("modal-content").innerHTML=body;
@@ -838,6 +888,7 @@ function modal(title,body){
    // Preserve all drafts, but perform required-field checks in our submit handler.
    form.noValidate=true;
    restoreFormDraft(form);
+   requestAnimationFrame(()=>rhFitTextareas(form));
  }
 }
 
@@ -879,6 +930,7 @@ function clearFormDraft(form){
  }
 }
 document.addEventListener("input",e=>{
+ if(e.target.matches?.(".rh-editor-form textarea"))rhFitTextarea(e.target);
  const form=e.target.closest("form");
  if(form){
    if(form.getAttribute("id")==="content-form"&&e.target.closest('.rh-builder-list[data-kind="script"]'))rhRefreshShotChoices(form);
@@ -889,6 +941,14 @@ document.addEventListener("input",e=>{
 document.addEventListener("change",e=>{
  const form=e.target.closest("form");
  if(form){saveDraft(form);queueWorkingContent(form);}
+});
+window.addEventListener("resize",()=>{
+ const open=document.querySelector("#modal-layer.open .rh-editor-form");
+ if(open)requestAnimationFrame(()=>rhFitTextareas(open));
+});
+if(document.fonts?.ready)document.fonts.ready.then(()=>{
+ const open=document.querySelector("#modal-layer.open .rh-editor-form");
+ if(open)rhFitTextareas(open);
 });
 window.addEventListener("pagehide",()=>{const form=document.querySelector("#content-form");if(form){saveDraft(form);saveWorkingContent(form);}});
 function close(){document.getElementById("modal-layer").classList.remove("open");document.getElementById("modal-layer").setAttribute("aria-hidden","true");}
@@ -923,6 +983,7 @@ document.addEventListener("click",function(e){
        kind==="shots"?{id:id(),text:"",angle:"",scriptId:"",checked:false}:
        ["checklist","deliverables_checklist"].includes(kind)?{id:id(),text:"",checked:false}:{id:id(),label:"",url:""};
      list.insertAdjacentHTML("beforeend",rhBuilderRow(kind,seed,rhLoadScriptRows(form)));
+     rhFitTextareas(list.lastElementChild);
      list.lastElementChild?.querySelector("textarea,input[data-field='text'],input[data-field='label']")?.focus();
    }
    if(a==="builder-remove"&&row)row.remove();
