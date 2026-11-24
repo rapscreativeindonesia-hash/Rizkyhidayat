@@ -189,7 +189,7 @@ export default {
     }
     if(!originAllowed(req))return json({error:"invalid_origin"},403);
     if(path==="/api/tiktok/config"&&req.method==="GET"){
-      return json({oauth_diagnostics:"sandbox-metrics-v6",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
+      return json({oauth_diagnostics:"cross-device-status-v7",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
     }
     if(path==="/api/tiktok/health"&&req.method==="GET"){
       const [a,b,c]=await Promise.all([
@@ -216,8 +216,41 @@ export default {
       response.headers.append("set-cookie",secureCookie("iky_retry","",0));
       return response;
     }
+    // Read-only TikTok profile snapshots are shared across the owner's devices.
+    // Never expose the account's access/refresh tokens, raw video list or internal errors.
+    if(path==="/api/tiktok/status"&&req.method==="GET"){
+      const r=await proxy(env,"/internal/status");
+      if(!r.ok)return json({error:"status_unavailable"},502);
+      const data=await r.json();
+      const owner=await isOwner(req,env);
+      if(owner)return json({...data,owner_session:true,read_only:false});
+      const raw=data.latest;
+      const publicLatest=raw?{
+        synced_at:raw.synced_at||null,
+        username:raw.username||"",
+        display_name:raw.display_name||"",
+        avatar_url:raw.avatar_url||"",
+        followers:raw.followers??null,
+        likes:raw.likes??null,
+        video_count:raw.video_count??null,
+        recent_views:raw.recent_views??null,
+        recent_video_count:raw.recent_video_count??0
+      }:null;
+      const history=Array.isArray(data.history)?data.history.slice(-180).map(h=>({
+        at:h.at,followers:h.followers??null,likes:h.likes??null,
+        video_count:h.video_count??null,recent_views:h.recent_views??null
+      })):[];
+      return json({
+        connected:!!data.connected,
+        owner_session:false,
+        read_only:true,
+        account:data.account||"",
+        scope:"",
+        latest:publicLatest,
+        history
+      });
+    }
     if(!await isOwner(req,env))return json({error:"owner_authorization_required"},401);
-    if(path==="/api/tiktok/status"&&req.method==="GET"){const r=await proxy(env,"/internal/status");return new Response(r.body,{status:r.status,headers:HEADER});}
     if(path==="/api/tiktok/sync"&&req.method==="POST"){const r=await proxy(env,"/internal/sync",{method:"POST"});return new Response(r.body,{status:r.status,headers:HEADER});}
     if(path==="/api/tiktok/disconnect"&&req.method==="POST"){const r=await proxy(env,"/internal/disconnect",{method:"POST"});return new Response(r.body,{status:r.status,headers:HEADER});}
     return json({error:"not_found"},404);
