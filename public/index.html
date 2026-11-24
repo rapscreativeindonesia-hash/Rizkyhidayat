@@ -577,17 +577,17 @@ function dashboard(){
  oauthInfo+'</section>'+
  '<div class="tt-quick"><section class="panel"><div class="section-head"><h3>Kalender & Jadwal Konten</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+
  (next.length?'<ul class="tt-schedule">'+next.map(x=>'<li><strong>'+txt(x.title)+'</strong>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</li>').join("")+'</ul>':empty("Belum ada konten terjadwal. Tentukan tanggal pada ide konten."))+'</section>'+
- '<section class="panel"><div class="section-head"><h3>Creative Workspace</h3><span class="pill">5 halaman</span></div><p class="muted small">Mulai dari ide, jadwalkan produksi, dan kelola kolaborasi brand dalam satu workspace.</p><div class="tt-small-actions">'+btn("+ Tambah Ide","new-idea","primary")+btn("Produksi","go-production","")+btn("Tambah Brand","new-brand","")+'</div></section></div></div>';
+ '<section class="panel"><div class="section-head"><h3>Creative Workspace</h3><span class="pill">5 halaman</span></div><p class="muted small">Mulai dari ide, jadwalkan produksi, dan kelola kolaborasi brand dalam satu workspace.</p><div class="tt-small-actions">'+btn("+ Tambah Ide","new-idea","primary")+btn("Produksi","go-production","")+btn("Collaboration","new-brand","")+'</div></section></div></div>';
 }
 
-function ideaCard(x){return '<section class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.stage)+'</div><p class="muted small">Hook: '+txt(x.hook||"Belum diisi")+'</p><div class="tagrow">'+chip(x.pillar||"Umum")+chip(x.platform||"TikTok")+(x.date?chip(fmt(x.date)):"")+'</div><p class="muted small">'+txt(x.notes||"Belum ada catatan.")+'</p><div class="buttons">'+btn("Edit","edit-idea","","data-id='"+txt(x.id)+"'")+btn("Produksi","move-idea","primary","data-id='"+txt(x.id)+"'") + btn("Hapus","delete-idea","danger","data-id='"+txt(x.id)+"'")+'</div></section>';}
+function ideaCard(x){return '<section class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3></div><p class="muted small">Hook: '+txt(x.hook||(x.script||[]).find(a=>a.type==="Hook")?.text||"Belum diisi")+'</p><div class="tagrow">'+chip(x.pillar||"Umum")+chip(x.platform||"TikTok")+(x.date?chip(fmt(x.date)):"")+'</div><p class="muted small">'+txt(x.notes||"Belum ada catatan.")+'</p><div class="buttons">'+btn("Edit Ide","edit-idea","","data-id='"+txt(x.id)+"'")+btn("Buka Content","edit-content","primary","data-id='"+txt(x.id)+"'")+btn("Hapus","delete-idea","danger","data-id='"+txt(x.id)+"'")+'</div></section>';}
 function assetCard(x){return '<div class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.kind)+'</div><a class="link small" href="'+txt(x.url)+'" target="_blank" rel="noopener noreferrer">'+txt(x.url)+'</a><div class="buttons" style="margin-top:12px">'+btn("Hapus","delete-asset","danger","data-id='"+txt(x.id)+"'")+'</div></div>';}
 function ideas(){return '<div class="toolbar"><div class="buttons">'+btn("Ide Konten","tab-ideas",libTab==="ideas"?"primary":"")+btn("Library Aset","tab-assets",libTab==="assets"?"primary":"")+'</div>'+btn(libTab==="ideas"?"+ Tambah Ide":"+ Tambah Aset",libTab==="ideas"?"new-idea":"new-asset","primary")+'</div>'+
 (libTab==="ideas"?'<div class="grid cols3">'+(state.ideas.length?state.ideas.map(ideaCard).join(""):'<div style="grid-column:1/-1">'+empty("Belum ada ide. Klik Tambah Ide untuk membuat ide pertama, melengkapi hook, dan menjadwalkannya.")+'</div>')+'</div>':'<div class="grid cols3">'+(state.assets.length?state.assets.map(assetCard).join(""):'<div style="grid-column:1/-1">'+empty("Library masih kosong. Simpan link referensi, folder footage, atau file produksi agar mudah ditemukan.")+'</div>')+'</div>');}
 function calendar(){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()+calendarOffset);var y=d.getFullYear(),m=d.getMonth(),start=(d.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),cells=Math.ceil((start+days)/7)*7;
-var out='<section class="panel"><div class="monthline"><div class="buttons">'+btn("‹","prev-month")+ '<h3 style="padding:9px 8px">'+d.toLocaleDateString("id-ID",{month:"long",year:"numeric"})+'</h3>'+btn("›","next-month")+'</div>'+btn("+ Tambah Konten","new-idea","primary")+'</div><div class="calendar">';
+var out='<section class="panel"><div class="monthline"><div class="buttons">'+btn("‹","prev-month")+ '<h3 style="padding:9px 8px">'+d.toLocaleDateString("id-ID",{month:"long",year:"numeric"})+'</h3>'+btn("›","next-month")+'</div>'+btn("+ Tambah Konten","new-content","primary")+'</div><div class="calendar">';
 ["Sen","Sel","Rab","Kam","Jum","Sab","Min"].forEach(function(w){out+='<div class="dayname">'+w+'</div>';});
-for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?state.ideas.filter(function(x){return x.date===dateStr;}):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.slice(0,3).map(function(x){return '<span class="event">'+txt(x.title)+'</span>';}).join("")+(matches.length>3?'<span class="event">+'+(matches.length-3)+' lainnya</span>':"")+'</div>';}out+='</div></section><div class="notice">Klik tanggal pada kalender untuk membuat ide dengan tanggal tersebut. Tahap produksi tetap dikelola melalui halaman Produksi Content.</div>';return out;}
+for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?state.ideas.filter(function(x){return x.date===dateStr;}):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.slice(0,3).map(function(x){return '<span class="event">'+txt(x.title)+'</span>';}).join("")+(matches.length>3?'<span class="event">+'+(matches.length-3)+' lainnya</span>':"")+'</div>';}out+='</div></section><div class="notice">Klik tanggal untuk membuat konten. Script, shot list, dan checklist dapat dikelola di halaman Content.</div>';return out;}
 var stages=["Ide","Script","Shooting","Editing","Review","Final"];
 
 /* Creator Content Workspace — one project referenced from Content, Collaboration and Calendar. */
@@ -705,10 +705,12 @@ function modal(title,body){
 const DRAFT_PREFIX="rh-creator-draft-v1:";
 function draftKey(form){return DRAFT_PREFIX+form.id+":"+(form.elements.namedItem("id")?.value||"new");}
 function saveDraft(form){
- if(!form||!["idea-form","asset-form","brand-form","profile-form"].includes(form.id))return;
+ if(!form||!["idea-form","content-form","asset-form","brand-form","profile-form"].includes(form.id))return;
  const values=Object.fromEntries(new FormData(form).entries());
- try{localStorage.setItem(draftKey(form),JSON.stringify({values,updated_at:Date.now()}));}
- catch(e){try{sessionStorage.setItem(draftKey(form),JSON.stringify({values,updated_at:Date.now()}));}catch(_){}}
+ const sections={};for(const kind of RH_BUILDER_KEYS)if(form.querySelector('.rh-builder-list[data-kind="'+kind+'"]'))sections[kind]=rhCollectRows(form,kind);
+ const draft=JSON.stringify({values,sections,updated_at:Date.now()});
+ try{localStorage.setItem(draftKey(form),draft);}
+ catch(e){try{sessionStorage.setItem(draftKey(form),draft);}catch(_){}}
 }
 function restoreFormDraft(form){
  let draft=null;
@@ -720,6 +722,10 @@ function restoreFormDraft(form){
    if(key==="id")continue;
    const field=form.elements.namedItem(key);
    if(field&&"value" in field)field.value=String(value);
+  }
+  if(parsed.sections&&typeof parsed.sections==="object"){
+    for(const kind of RH_BUILDER_KEYS)if(Array.isArray(parsed.sections[kind]))rhReplaceBuilderRows(form,kind,parsed.sections[kind]);
+    rhRefreshShotChoices(form);
   }
   const marker=document.createElement("div");marker.className="restored-draft";
   marker.textContent="Draf tulisan sebelumnya dipulihkan otomatis.";
@@ -743,7 +749,7 @@ function close(){document.getElementById("modal-layer").classList.remove("open")
 function formFooter(){return '<div class="form-actions"><button type="button" class="button ghost" data-action="close">Batal</button><button type="submit" class="button primary">Simpan</button></div>';}
 function input(label,name,value,type,extra){return '<label class="field">'+label+'<input name="'+name+'" type="'+(type||"text")+'" value="'+txt(value||"")+'" '+(extra||"")+'></label>';}
 function select(label,name,options,selected){return '<label class="field">'+label+'<select name="'+name+'">'+options.map(function(s){return '<option value="'+txt(s)+'" '+(s===selected?"selected":"")+'>'+txt(s)+'</option>';}).join("")+'</select></label>';}
-function ideaForm(id,date){var x=state.ideas.find(function(a){return a.id===id;})||{title:"",hook:"",pillar:"Education",platform:"TikTok",stage:"Ide",notes:"",date:date||""};modal(id?"Edit Ide":"Tambah Ide Konten",'<form id="idea-form"><input type="hidden" name="id" value="'+txt(id||"")+'"><div class="form-grid">'+input("Judul Konten *","title",x.title,"text","required maxlength=160")+input("Hook / Opening","hook",x.hook)+select("Pilar Konten","pillar",["Education","Entertainment","Lifestyle","UGC","Travel","Product","Lainnya"],x.pillar)+select("Platform","platform",["TikTok","Instagram","YouTube","Threads","Facebook","Multiplatform"],x.platform)+select("Status Produksi","stage",stages,x.stage)+input("Tanggal Posting","date",x.date,"date")+'<label class="field wide">Konsep / Catatan<textarea name="notes">'+txt(x.notes)+'</textarea></label></div>'+formFooter()+'</form>');}
+function ideaForm(id,date){var x=state.ideas.find(function(a){return a.id===id;})||{title:"",hook:"",pillar:"Education",platform:"TikTok",stage:"Ide",notes:"",date:date||""};modal(id?"Edit Ide":"Tambah Ide Konten",'<form id="idea-form"><input type="hidden" name="id" value="'+txt(id||"")+'"><div class="form-grid">'+input("Judul Konten *","title",x.title,"text","required maxlength=160")+input("Hook / Opening","hook",x.hook)+select("Pilar Konten","pillar",["Education","Entertainment","Lifestyle","UGC","Travel","Product","Lainnya"],x.pillar)+select("Platform","platform",["TikTok","Instagram","YouTube","Threads","Facebook","Multiplatform"],x.platform)+input("Tanggal Posting","date",x.date,"date")+'<label class="field wide">Konsep / Catatan<textarea name="notes">'+txt(x.notes)+'</textarea></label></div><p class="rh-helper">Script lengkap dan shot list dapat dilanjutkan dari halaman Content.</p>'+formFooter()+'</form>');}
 function assetForm(){modal("Tambah Tautan Aset",'<form id="asset-form"><div class="form-grid">'+input("Nama Aset *","title","","text","required")+input("Link HTTPS *","url","","url","required pattern=https?://.+")+select("Jenis","kind",["Referensi","Footage","Folder","Dokumen","Audio","Foto"],"Referensi")+'</div>'+formFooter()+'</form>');}
 
 function brandForm(editId){
