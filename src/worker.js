@@ -19,7 +19,24 @@ function store(env){return env.TIKTOK_STORE.get(env.TIKTOK_STORE.idFromName("per
 function proxy(env,path,init){return store(env).fetch("https://internal"+path,init);}
 function errURL(req,message){const base=new URL("/",req.url);base.searchParams.set("tiktok_status",message);return base.toString();}
 async function readBody(req){try{return await req.json();}catch{return {};}}
-async function tokengrant(env,details){const form=new URLSearchParams({client_key:(env.TIKTOK_CLIENT_KEY||"").trim(),client_secret:(env.TIKTOK_CLIENT_SECRET||"").trim(),...details});const r=await fetch(TIKTOK_TOKEN,{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded","cache-control":"no-store"},body:form});const j=await r.json();if(!r.ok||!j.access_token)throw Error("TikTok token rejected: "+String(j.error_description||j.error||r.status).slice(0,110));return j;}
+async function tokengrant(env,details){
+  const form=new URLSearchParams({client_key:(env.TIKTOK_CLIENT_KEY||"").trim(),client_secret:(env.TIKTOK_CLIENT_SECRET||"").trim(),...details});
+  const r=await fetch(TIKTOK_TOKEN,{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded","cache-control":"no-store"},body:form});
+  let j;
+  try{j=await r.json();}catch{j={error:"invalid_response"};}
+  if(!r.ok||!j?.access_token){
+    const allowed=new Set(["invalid_client","invalid_grant","invalid_request","invalid_scope","unauthorized_client","unsupported_grant_type","server_error","temporarily_unavailable"]);
+    const code=allowed.has(j?.error)?j.error:"unknown_error";
+    const logId=typeof j?.log_id==="string"?j.log_id.replace(/[^A-Za-z0-9_-]/g,"").slice(0,100):"";
+    // Do not log secrets, access tokens, authorization codes, or arbitrary error descriptions.
+    console.error("TikTok token exchange error",code,"HTTP",r.status,"log_id",logId);
+    const err=new Error("TikTok token exchange failed");
+    err.oauthCategory=code;
+    err.oauthLogId=logId;
+    throw err;
+  }
+  return j;
+}
 async function getUser(token){const fields="open_id,display_name,avatar_url,username,follower_count,following_count,likes_count,video_count";const r=await fetch(TIKTOK_USER+"?fields="+fields,{headers:{authorization:"Bearer "+token,"cache-control":"no-store"}});const j=await r.json();if(!r.ok||j.error?.code!=="ok"||!j.data?.user)throw Error("TikTok user info: "+(j.error?.code||r.status));return j.data.user;}
 async function recentVideos(token){const fields="id,title,create_time,cover_image_url,share_url,view_count,like_count,comment_count,share_count";const r=await fetch(TIKTOK_VIDEO+"?fields="+fields,{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+token},body:JSON.stringify({max_count:20})});const j=await r.json();if(!r.ok||j.error?.code!=="ok")throw Error("TikTok video list: "+(j.error?.code||r.status));return (j.data?.videos||[]).map(v=>({id:v.id,title:v.title||"",view_count:v.view_count??null,like_count:v.like_count??null,comment_count:v.comment_count??null,share_count:v.share_count??null,create_time:v.create_time??null,share_url:v.share_url||""}));}
 export class TikTokStore {
@@ -102,7 +119,13 @@ export default {
         res.headers.append("set-cookie",secureCookie("iky_owner",expiry+"."+sessionNonce+"."+mac,7*24*60*60));
         res.headers.append("set-cookie",secureCookie("iky_oauth","",0));
         return res;
-      }catch(e){console.error("TikTok OAuth callback",String(e.message||e));return redirect(errURL(req,"token_exchange_failed"));}
+      }catch(e){
+        console.error("TikTok OAuth callback failed",e?.oauthCategory||"internal_error",e?.oauthLogId||"");
+        const target=new URL(errURL(req,"token_exchange_failed"));
+        if(e?.oauthCategory)target.searchParams.set("oauth_error",e.oauthCategory);
+        if(e?.oauthLogId)target.searchParams.set("oauth_log_id",e.oauthLogId);
+        return redirect(target.href);
+      }
     }
     if(!originAllowed(req))return json({error:"invalid_origin"},403);
     if(path==="/api/tiktok/config"&&req.method==="GET"){
