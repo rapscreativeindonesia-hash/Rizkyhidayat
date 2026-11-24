@@ -41,10 +41,35 @@ async function getUser(token){const fields="open_id,display_name,avatar_url,user
 async function recentVideos(token){const fields="id,title,create_time,cover_image_url,share_url,view_count,like_count,comment_count,share_count";const r=await fetch(TIKTOK_VIDEO+"?fields="+fields,{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+token},body:JSON.stringify({max_count:20})});const j=await r.json();if(!r.ok||j.error?.code!=="ok")throw Error("TikTok video list: "+(j.error?.code||r.status));return (j.data?.videos||[]).map(v=>({id:v.id,title:v.title||"",view_count:v.view_count??null,like_count:v.like_count??null,comment_count:v.comment_count??null,share_count:v.share_count??null,create_time:v.create_time??null,share_url:v.share_url||""}));}
 
 const WORKSPACE_FIELDS={
- ideas:["id","title","hook","pillar","platform","stage","notes","date","updated_at"],
+ ideas:["id","title","hook","pillar","platform","stage","notes","date","content_type","goal","shoot_date","brand_id","campaign","script","shots","checklist","references","caption","hashtags","published_url","folder_url","updated_at"],
  assets:["id","title","url","kind","updated_at"],
- brands:["id","name","contact","value","deadline","status","deliverables","notes","updated_at"]
+ brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","dp","paid","post_date","brief_must","brief_avoid","references","files","final_links","deliverables_checklist","updated_at"]
 };
+const WORKSPACE_NESTED={
+ script:{id:90,type:40,text:6000},
+ shots:{id:90,text:1600,angle:350,scriptId:90,checked:"boolean"},
+ checklist:{id:90,text:1600,checked:"boolean"},
+ deliverables_checklist:{id:90,text:1600,checked:"boolean"},
+ references:{id:90,label:350,url:2000},
+ files:{id:90,label:350,url:2000},
+ final_links:{id:90,label:350,url:2000}
+};
+function workspaceRows(raw,kind){
+ const shape=WORKSPACE_NESTED[kind],rows=Array.isArray(raw)?raw.slice(0,200):[],out=[],seen=new Set();
+ for(const r of rows){
+   if(!r||typeof r!=="object"||Array.isArray(r))continue;
+   const id=typeof r.id==="string"?r.id.slice(0,90):"";
+   if(!id||seen.has(id))continue;
+   seen.add(id);const item={id};
+   for(const [key,max] of Object.entries(shape)){
+     if(key==="id")continue;
+     if(max==="boolean")item[key]=r[key]===true;
+     else item[key]=typeof r[key]==="string"?r[key].slice(0,max):"";
+   }
+   out.push(item);
+ }
+ return out;
+}
 function blankWorkspace(){return {profile:{handle:"@ikyhdyat",updated_at:0},ideas:[],assets:[],brands:[],deleted:{ideas:{},assets:{},brands:{}}};}
 function normalizedWorkspace(input){
  const src=input&&typeof input==="object"&&!Array.isArray(input)?input:{},out=blankWorkspace();
@@ -63,7 +88,8 @@ function normalizedWorkspace(input){
        if(field==="id")continue;
        const val=ent[field];
        if(field==="updated_at"){row.updated_at=Number.isFinite(Number(val))?Math.max(0,Number(val)):0;continue;}
-       if(typeof val==="string")row[field]=val.slice(0,field==="notes"||field==="deliverables"?12000:1000);
+       if(WORKSPACE_NESTED[field]){row[field]=workspaceRows(val,field);continue;}
+       if(typeof val==="string")row[field]=val.slice(0,["notes","deliverables","caption","brief_must","brief_avoid"].includes(field)?12000:2000);
        if(typeof val==="number"&&Number.isFinite(val))row[field]=val;
      }
      out[group].push(row);
