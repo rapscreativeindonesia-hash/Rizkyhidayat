@@ -112,6 +112,23 @@ export class TikTokStore {
         try{await this.performSync();}catch(e){await s.put("last-error",{message:String(e.message||e).slice(0,130),at:new Date().toISOString()});}
         return json({ok:true});
       }
+      if(path==="/internal/sync-if-stale"&&req.method==="POST"){
+        const account=await s.get("account");
+        if(!account)return json({queued:false,reason:"not_connected"});
+        const latest=await s.get("latest");
+        const lastSuccess=Date.parse(latest?.synced_at||"")||0;
+        const lastAttempt=Number(await s.get("last-sync-attempt")||0);
+        const now=Date.now();
+        if(now-lastSuccess<55000||now-lastAttempt<55000)return json({queued:false,reason:"fresh_or_throttled"});
+        await s.put("last-sync-attempt",now);
+        if(!this.syncing){
+          this.syncing=this.performSync().catch(async error=>{
+            await s.put("last-error",{message:String(error?.message||error).slice(0,140),at:new Date().toISOString()});
+          }).finally(()=>{this.syncing=null;});
+          this.ctx.waitUntil(this.syncing);
+        }
+        return json({queued:true});
+      }
       if(path==="/internal/sync"&&req.method==="POST"){
         if(this.syncing)return await this.syncing;
         this.syncing=this.performSync().then(res=>json(res)).catch(async e=>{await s.put("last-error",{message:String(e.message||e).slice(0,140),at:new Date().toISOString()});return json({ok:false,error:String(e.message||e).slice(0,140)},502);}).finally(()=>{this.syncing=null;});
@@ -263,7 +280,7 @@ export default {
     }
     if(!originAllowed(req))return json({error:"invalid_origin"},403);
     if(path==="/api/tiktok/config"&&req.method==="GET"){
-      return json({oauth_diagnostics:"workspace-cloud-v8",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
+      return json({oauth_diagnostics:"minute-sync-v9",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
     }
     if(path==="/api/tiktok/health"&&req.method==="GET"){
       const [a,b,c]=await Promise.all([
@@ -296,6 +313,12 @@ export default {
       const r=await proxy(env,"/internal/status");
       if(!r.ok)return json({error:"status_unavailable"},502);
       const data=await r.json();
+      // Stale snapshot: schedule at most one backend refresh per minute.
+      // Durable Object throttles concurrent visitors and cron invocations.
+      const lastSync=Date.parse(data.latest?.synced_at||"")||0;
+      if(data.connected&&Date.now()-lastSync>=55000){
+        ctx.waitUntil(proxy(env,"/internal/sync-if-stale",{method:"POST"}).catch(e=>console.error("stale_sync_request_failed",String(e?.message||e))));
+      }
       const owner=await isOwner(req,env);
       if(owner)return json({...data,owner_session:true,read_only:false});
       const raw=data.latest;
@@ -340,6 +363,6 @@ export default {
   },
   async scheduled(event,env,ctx){
     if(!env.TIKTOK_CLIENT_KEY||!env.TIKTOK_CLIENT_SECRET)return;
-    ctx.waitUntil(proxy(env,"/internal/sync",{method:"POST"}).catch(e=>console.error("scheduled_sync_failed",String(e))));
+    ctx.waitUntil(proxy(env,"/internal/sync-if-stale",{method:"POST"}).catch(e=>console.error("scheduled_sync_failed",String(e))));
   }
 };
