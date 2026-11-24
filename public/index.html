@@ -121,15 +121,20 @@ if(!Array.isArray(history)||history.length<2)return '<div class="empty">Grafik p
 const h=history.filter(x=>Number.isFinite(x.followers)).slice(-60);if(h.length<2)return '<div class="empty">Belum ada data pertumbuhan yang cukup.</div>';
 const min=Math.min(...h.map(x=>x.followers)),max=Math.max(...h.map(x=>x.followers)),range=Math.max(1,max-min);
 const pts=h.map((v,i)=>(Math.round((i/(h.length-1))*500))+","+(Math.round(95-((v.followers-min)/range)*85))).join(" ");
-return '<svg viewBox="0 0 520 120" role="img" aria-label="Grafik followers dari statistik TikTok terverifikasi" style="width:100%;max-height:185px;overflow:visible"><path d="M0 110 H520" stroke="#5a486b" stroke-width="1" fill="none"/><polyline points="'+pts+'" fill="none" stroke="#bc75ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="itemtop small muted"><span>Awal '+n(h[0].followers)+' followers</span><span>Terakhir '+n(h[h.length-1].followers)+' followers</span></div>';
+return '<svg viewBox="0 0 520 120" role="img" aria-label="Grafik followers berdasarkan snapshot TikTok API" style="width:100%;max-height:185px;overflow:visible"><path d="M0 110 H520" stroke="#5a486b" stroke-width="1" fill="none"/><polyline points="'+pts+'" fill="none" stroke="#bc75ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="itemtop small muted"><span>Awal '+n(h[0].followers)+' followers</span><span>Terakhir '+n(h[h.length-1].followers)+' followers</span></div>';
 }
 function dashboard(){
 const scheduled=state.ideas.filter(x=>!!x.date),done=state.ideas.filter(x=>x.stage==="Final");
 const next=scheduled.slice().sort((a,b)=>a.date.localeCompare(b.date)).filter(x=>x.date>=today()).slice(0,5);
 const live=tiktokSync&&tiktokSync.connected&&tiktokSync.latest?tiktokSync.latest:null;
-const status=live?'<span class="pill ok">Data asli · '+(tiktokConfig?.mode==='sandbox'?'TikTok Sandbox API':'TikTok API')+'</span>':tiktokSync?.connected?'<span class="pill warn">Terhubung · menunggu data</span>':'<span class="pill warn">Belum tersinkron</span>';
+const isSandbox=tiktokConfig?.mode==="sandbox";
+const allSandboxZero=!!(isSandbox&&live&&live.followers===0&&live.likes===0&&live.video_count===0);
+const grantedScopes=new Set((tiktokSync?.scope||"").split(",").map(s=>s.trim()).filter(Boolean));
+const status=live?(isSandbox?'<span class="pill warn">Terhubung · Mode uji Sandbox</span>':'<span class="pill ok">Terhubung · TikTok API</span>'):tiktokSync?.connected?'<span class="pill warn">Terhubung · menunggu data</span>':'<span class="pill warn">Belum tersinkron</span>';
 const message=live?'Terakhir sinkron: '+new Date(live.synced_at).toLocaleString("id-ID")+' · Akun: @'+txt(live.username):'Hubungkan akun @ikyhdyat melalui izin resmi TikTok. Data belum tersedia tanpa OAuth.';
 const views=(live&&live.recent_video_count>0)?n(live.recent_views):"—";
+const videoHint=live?.video_error?"Video API: "+live.video_error:(live?.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":!grantedScopes.has("video.list")?"Izin video.list belum disetujui":"Belum ada video yang diberikan API");
+const sandboxNotice=isSandbox&&tiktokSync?.connected?'<p class="small" style="color:#f2c07f;margin-top:10px">Mode Sandbox untuk menguji koneksi. Angka dari API Sandbox belum tentu sama dengan statistik akun TikTok publik. '+(allSandboxZero?'TikTok mengembalikan 0 untuk tiga metrik akun; angka tersebut belum dapat dipastikan sebagai nilai live.':'Data ini belum diverifikasi sebagai metrik Production.')+'</p>':"";
 const oauthParams=new URLSearchParams(window.location.search);
 const oauthResult=oauthParams.get("tiktok_status");
 const oauthCategory=oauthParams.get("oauth_error");
@@ -141,13 +146,13 @@ const oauthLog=oauthLogId&&/^[A-Za-z0-9_-]{1,100}$/.test(oauthLogId)?" TikTok Lo
 const oauthNotice=oauthResult&&oauthResult!=="connected"?'<p class="small" style="color:#ffb4a7">'+txt((oauthMessages[oauthResult]||"Otorisasi TikTok gagal.")+" "+oauthDetail+oauthLog)+'</p>':"";
 
 return '<div class="grid cols2"><section class="panel gradient hero"><span class="pill">Personal Creator Workspace</span><h3 style="margin-top:14px">Halo, Iky.</h3><p>Seluruh ide, kalender, produksi, dan kerja sama brand dalam satu tempat.</p><div class="buttons" style="margin-top:20px">'+btn("+ Tambah Ide","new-idea","primary")+btn("Tambah Brand","new-brand","")+'</div></section>'+
-'<section class="panel"><div class="section-head"><h3>Sinkronisasi TikTok '+(tiktokConfig?.mode==='sandbox'?'<span class="pill">SANDBOX</span>':'')+'</h3>'+status+'</div><p class="muted small">'+message+'</p><div class="buttons">'+(live?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary"))+(live?btn("Kelola Akun","connect-tiktok",""):btn("Cek Koneksi","check-tiktok",""))+'<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@ikyhdyat">Lihat TikTok</a></div>'+(tiktokSync?.lastError?'<p class="small" style="color:#ffb4a7">Catatan sinkron: '+txt(tiktokSync.lastError.message)+'</p>':"")+oauthNotice+'</section></div>'+
+'<section class="panel"><div class="section-head"><h3>Sinkronisasi TikTok '+(tiktokConfig?.mode==='sandbox'?'<span class="pill">SANDBOX</span>':'')+'</h3>'+status+'</div><p class="muted small">'+message+'</p><div class="buttons">'+(live?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary"))+(live?btn("Kelola Akun","connect-tiktok",""):btn("Cek Koneksi","check-tiktok",""))+'<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@ikyhdyat">Lihat TikTok</a></div>'+(tiktokSync?.lastError?'<p class="small" style="color:#ffb4a7">Catatan sinkron: '+txt(tiktokSync.lastError.message)+'</p>':"")+sandboxNotice+oauthNotice+'</section></div>'+
 '<div class="grid cols4" style="margin-top:15px">'+
-metric("Followers TikTok",live?n(live.followers):"—",live?"Dari TikTok resmi":"Belum terhubung")+
-metric("Total Likes TikTok",live?.likes!=null?n(live.likes):"—",live?"Dari TikTok resmi":"Belum terhubung")+
-metric("Total Video",live?.video_count!=null?n(live.video_count):"—","Video publik akun")+
-metric("Views 20 video terbaru",views,live?.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":"Perlu izin video.list")+
-'</div><div class="grid cols2" style="margin-top:15px"><section class="panel"><div class="section-head"><h3>Riwayat Pertumbuhan Followers</h3><span class="muted small">Data riil</span></div>'+growthChart(tiktokSync?.history||[])+(live?'<p class="muted small">Riwayat direkam setiap sinkronisasi. Tidak ada backfill data buatan.</p>':"")+'</section>'+
+metric("Followers TikTok",live?.followers!=null?n(live.followers):"—",isSandbox?"Nilai API Sandbox · bukan validasi live":live?"Data API":"Belum terhubung")+
+metric("Total Likes TikTok",live?.likes!=null?n(live.likes):"—",isSandbox?"Nilai API Sandbox · bukan validasi live":live?"Data API":"Belum terhubung")+
+metric("Total Video",live?.video_count!=null?n(live.video_count):"—",isSandbox?"Nilai API Sandbox · bukan validasi live":"Video publik akun")+
+metric("Views 20 video terbaru",views,txt(videoHint))+
+'</div><div class="grid cols2" style="margin-top:15px"><section class="panel"><div class="section-head"><h3>Riwayat Pertumbuhan Followers</h3><span class="muted small">'+(isSandbox?"Data uji Sandbox":"Data API")+'</span></div>'+(allSandboxZero?empty("Snapshot Sandbox saat ini semuanya 0. Grafik pertumbuhan live belum tersedia; tidak akan dibuat dari angka uji.") : growthChart(tiktokSync?.history||[]))+(live?'<p class="muted small">Riwayat dimulai sejak sinkronisasi berhasil. Nilai Sandbox tidak dapat diasumsikan mewakili performa live.</p>':"")+'</section>'+
 '<section class="panel"><div class="section-head"><h3>Jadwal Terdekat</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+(next.length?next.map(x=>'<div class="item"><div class="itemtop"><div><h4>'+txt(x.title)+'</h4><p>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</p></div>'+chip("Terjadwal")+'</div></div>').join(""):empty("Belum ada konten terjadwal. Tambahkan tanggal pada ide konten."))+'</section></div>'+
 '<section class="panel" style="margin-top:15px"><div class="section-head"><h3>Aksi Cepat</h3></div><div class="buttons">'+btn("Buat Ide","new-idea","primary")+btn("Jadwalkan Konten","new-idea","")+btn("Mulai Produksi","go-production","")+btn("Tambah Brand","new-brand","")+'</div></section>';
 }
