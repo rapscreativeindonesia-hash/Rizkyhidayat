@@ -395,6 +395,7 @@ function save(){
 }
 function scheduleCloudSave(){
  if(cloudAccess!=="ok"&&cloudAccess!=="saving")return;
+ cloudAccess="saving";
  clearTimeout(cloudSaveTimer);
  cloudSaveTimer=setTimeout(()=>{syncCloudWorkspace().catch(e=>console.error("Cloud sync failed",e));},450);
 }
