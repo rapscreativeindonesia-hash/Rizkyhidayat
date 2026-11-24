@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#100c1b">
-<title>Iky Creator Hub — Workspace</title>
+<meta name="theme-color" content="#0b141c">
+<title>Rizky Hidayat — Freelance Content Creator</title>
 <style>
 :root{--bg:#090811;--surface:#171321;--surface2:#1d172b;--line:#362b49;--text:#f4efff;--muted:#a99bb9;--purple:#aa69ff;--purple2:#6936bf;--good:#78e6b1;--danger:#ff839b;--radius:18px;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}
@@ -42,13 +42,71 @@ a.link{color:#cda9ff;word-break:break-all;text-decoration:none}.actions-right{di
 @media(max-width:1180px){.cols4{grid-template-columns:repeat(2,minmax(0,1fr))}.cols2{grid-template-columns:1fr}.cols3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:790px){.layout{display:block}.sidebar{height:auto;position:static;padding:12px;border-bottom:1px solid var(--line)}.logo{padding:0 6px 10px}.profile,.sidefoot{display:none}.nav{flex-direction:row;overflow:auto;scrollbar-width:none}.nav button{min-width:max-content;padding:10px}.nav-icon{display:none}.main{padding:22px 13px}.top{align-items:flex-start}.top h2{font-size:23px}.date{font-size:11px}.cols3{grid-template-columns:1fr}.day{min-height:69px;padding:5px}.calendar{gap:2px}.event{font-size:8px;padding:4px 3px}.daynum{font-size:10px}.panel{padding:15px}.form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:1}}
 @media(max-width:430px){.cols4{grid-template-columns:1fr 1fr}.kpi{font-size:22px}.top p{font-size:11px}.date{display:none}.day{min-height:60px}}
+
+/* Creator dashboard V2 — soft blue / ink / off-white / mocha */
+:root{--bg:#0b131a;--surface:#14222d;--surface2:#1b2a34;--line:#314450;--text:#f2f5f3;--muted:#a7b7c0;--purple:#98c3da;--purple2:#547b91;--good:#9dd6ca;--danger:#f5a9a8;--mocha:#b69a83;--radius:20px;color-scheme:dark}
+html,body{background:#0b131a;color:var(--text)}
+body{background:radial-gradient(ellipse at 89% 6%,#1c3a4c 0,transparent 45%),radial-gradient(ellipse at 8% 93%,#392b29 0,transparent 37%),#0b131a}
+.sidebar{background:linear-gradient(171deg,#0b1821 0%,#101b23 61%,#17181b 100%);border-color:#2b414b;padding:25px 16px}
+.logo{padding:5px 8px 27px;gap:12px}
+.rh-logo{width:49px;height:49px;flex:0 0 49px;display:grid;place-items:center;padding:0;letter-spacing:-4px;transform:none;color:#e6f4f9;background:linear-gradient(145deg,#203747,#121e29);border:1px solid #557587;border-radius:15px;font:800 23px/1 Georgia,serif;box-shadow:inset 0 1px #bdd7e51f,0 6px 18px #0003}
+.logo h1{font-size:17px;line-height:1.12;letter-spacing:-.4px}.logo p{font-size:10px;line-height:1.35;color:#adc5d2;white-space:normal;max-width:145px}
+.profile{background:#172833;border-color:#344b57;padding:16px}.profile-kicker{display:block;margin-bottom:6px!important;font-size:9px!important;letter-spacing:.17em;color:#b8a493!important;font-weight:800}.profile strong{font-size:15px}
+.nav button{color:#c0d1db}.nav button:hover{background:#213641;color:#f6fbff}
+.nav button.active{color:#11222e;background:linear-gradient(107deg,#c1dce9,#8ebbcf);border-color:#b3d8ea;box-shadow:0 6px 23px #608e9c24}
+.nav button.active .nav-icon{color:#254b60}
+.main{max-width:1660px}.date{background:#15232c;border-color:#334956;color:#c2d2d9}
+.panel{background:linear-gradient(145deg,#182630,#111d26);border-color:#2d4350;box-shadow:0 12px 32px #050b1024}
+.panel h3{color:#f0f4f3}.gradient{background:linear-gradient(116deg,#243846,#17242d);border-color:#3b6378}
+.pill{background:#213844;border:1px solid #476b7c;color:#c1e1ee}.pill.ok{background:#19362e;border-color:#4b8a73;color:#b9ecce}.pill.warn{background:#382f28;border-color:#7b6552;color:#e2c4a4}
+.button{background:#21323d;border-color:#49616c;color:#e9f1f5}.button:hover{border-color:#a4c8d7}
+.button.primary{background:linear-gradient(115deg,#b2d4e4,#8fb8cb);color:#10242e;border-color:#bedee9}
+.button.ghost{color:#d6e6ef}.empty{border-color:#3b5867;color:#a9bec9}
+.kpi-label{color:#a9c2d0}.field{color:#c5d9e2}
+input,select,textarea{background:#101c24;color:#edf5f8;border-color:#455d69}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid #acd0e3;outline-offset:3px}
+.metricline{background:#29404c}.metricline span{background:linear-gradient(90deg,#6d97af,#bcdce5)}
+.calendar .day{background:#11222c;border-color:#324956}.calendar .day:hover{border-color:#9bc4d7}.calendar .day.today{border-color:#aacdda;box-shadow:inset 0 0 0 1px #739bb0}
+.music-widget{padding:13px 13px 11px;background:radial-gradient(circle at 90% 4%,var(--mood-light,#294e67) 0,transparent 62%),linear-gradient(153deg,#172a35,#13202a 71%);border:1px solid #426071;box-shadow:0 14px 26px #050b1236;transition:background 650ms ease,border-color 650ms ease;overflow:hidden}
+.music-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.music-overline{font-size:10px;letter-spacing:.22em;font-weight:800;color:#d6e4e8}.music-equalizer{display:flex;align-items:end;gap:3px;height:15px}.music-equalizer i{display:block;width:3px;height:6px;background:#b5d7e5;border-radius:4px}.music-widget.is-playing .music-equalizer i{animation:musicEQ 900ms ease-in-out infinite alternate}.music-equalizer i:nth-child(2){height:12px;animation-delay:.2s}.music-equalizer i:nth-child(3){height:9px;animation-delay:.4s}.music-equalizer i:nth-child(4){height:14px;animation-delay:.1s}
+@keyframes musicEQ{from{height:4px;opacity:.5}to{height:15px;opacity:1}}
+.music-album{height:82px;position:relative;display:grid;place-items:center;margin:11px 0 5px;border:1px solid #ffffff25;border-radius:12px;background:linear-gradient(120deg,#172d3b,#406b82 60%,#8bb1c1);overflow:hidden;transition:background 700ms ease}
+.music-widget[data-mood="1"] .music-album{background:linear-gradient(120deg,#211d1b,#715545 60%,#baa48c)}
+.music-widget[data-mood="2"] .music-album{background:linear-gradient(120deg,#192833,#425b69 58%,#c8d7d9)}
+.music-album:after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 15%,#ffffff1e 50%,transparent 73%);transform:translateX(-100%);animation:musicShine 6s ease-in-out infinite}
+@keyframes musicShine{50%{transform:translateX(90%)}100%{transform:translateX(100%)}}
+.music-disc{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;border:5px solid #0e1d29ab;box-shadow:0 7px 24px #0007,inset 0 0 0 2px #ffffff22;background:repeating-radial-gradient(circle at 50% 50%,#172d39 0,#162c38 3px,#244358 4px,#11212e 7px)}.music-disc span{font:700 17px Georgia,serif;color:#e6f4f7}.music-widget.is-playing .music-disc{animation:musicSpin 6s linear infinite}@keyframes musicSpin{to{transform:rotate(360deg)}}
+.music-meta strong{font-size:15px;letter-spacing:-.3px}.music-meta small{font-size:10px;display:block;margin-top:1px;color:#b2c6d0}
+.music-controls{display:flex;align-items:center;gap:11px;margin-top:12px}.music-controls button{border:0;cursor:pointer}.music-play{height:36px;width:36px;border-radius:50%;background:#d6e9ef;color:#122a37;font-size:15px;box-shadow:0 5px 18px #0004}.music-secondary{background:transparent;color:#d9e8ed;font-size:20px}.music-state{margin-left:auto;color:#c6d9de;font-size:9px;letter-spacing:.12em;font-weight:750}
+.music-vol{display:flex;align-items:center;gap:9px;margin-top:10px}.music-vol span{font-size:9px;letter-spacing:.13em;color:#d7e5e9}.music-vol input{padding:0;margin:0;accent-color:#b8d8e6;height:3px;border:0;cursor:pointer}.music-caption{margin:9px 0 0!important;color:#b9c9cf!important;font-size:10px!important}
+.tt-dashboard{display:flex;flex-direction:column;gap:16px}
+.tt-panel{background:radial-gradient(circle at 85% 0,#284c5a77,transparent 38%),linear-gradient(123deg,#14242e,#101e27 75%);border:1px solid #46606c;border-radius:24px;padding:clamp(18px,2.5vw,29px);box-shadow:0 24px 48px #040b1230}
+.tt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}.tt-eyebrow{color:#b3bfc4;font-weight:800;font-size:10px;letter-spacing:.24em}
+.tt-status{display:flex;align-items:center;gap:7px;font-size:11px;color:#c9dae1;border:1px solid #46616f;background:#182c36;padding:8px 12px;border-radius:99px}
+.tt-led{width:8px;height:8px;background:#91d9bc;border-radius:50%;box-shadow:0 0 0 4px #7fe1b117}.tt-led.offline{background:#aab7bf;box-shadow:none}.tt-led.testing{background:#e1c5a2;box-shadow:0 0 0 4px #dcb48f23}
+.tt-profile-row{display:flex;align-items:center;gap:17px;min-width:0}
+.tt-avatar{width:74px;height:74px;flex:0 0 74px;object-fit:cover;border-radius:23px;background:linear-gradient(135deg,#8dbbd0,#28465a);border:3px solid #a8cbd9;box-shadow:0 10px 22px #0003}
+.tt-avatar-fallback{display:grid;place-items:center;font:700 23px Georgia,serif;color:#f6fbfc}
+.tt-profile-copy{flex:1;min-width:0}.tt-profile-copy h3{font-size:25px;margin:0 0 4px;font-weight:760;letter-spacing:-.05em}.tt-handle{font-size:13px;color:#aec4cf}.tt-subtext{font-size:11px;color:#bba895;margin-top:8px}.tt-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.tt-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-top:23px}
+.tt-metric{background:#ffffff09;border:1px solid #426070;border-radius:15px;padding:15px;min-width:0}.tt-metric .tt-metric-label{font-size:11px;color:#bed1d9}.tt-metric .tt-metric-value{font-size:clamp(23px,2.7vw,34px);font-weight:770;letter-spacing:-.045em;margin:9px 0 5px}.tt-metric .tt-metric-note{color:#a4b8c2;font-size:10px;line-height:1.4}
+.tt-lower{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(240px,.65fr);gap:12px;margin-top:13px}.tt-lower-card{border:1px solid #395463;background:#10202a8c;border-radius:16px;padding:19px;min-width:0}.tt-lower-card h4{font-size:14px;margin:0 0 6px}.tt-lower-card p{font-size:12px;color:#bacbd1;line-height:1.6;margin:6px 0}
+.tt-disclaimer{padding:11px 14px;border-radius:12px;margin-top:12px;background:#65513d33;border:1px solid #8a70554f;color:#e4cdb7;font-size:11px;line-height:1.55}
+.tt-sync-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.tt-connection{font-size:11px;line-height:1.6;color:#bfd1d9}.tt-last-updated{font-size:11px;color:#c3d6dd}
+.tt-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.tt-quick .panel{min-height:150px}.tt-schedule{list-style:none;margin:10px 0 0;padding:0}.tt-schedule li{border-top:1px solid #344b56;padding:12px 0;font-size:13px;color:#c6d7df}.tt-schedule li strong{color:#eef4f6;display:block}
+.tt-small-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px}
+.tt-fade{animation:ttFade .6s ease}@keyframes ttFade{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(max-width:1100px){.tt-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.tt-lower{grid-template-columns:1fr}}
+@media(max-width:790px){.sidebar{padding:12px}.logo{padding:5px 5px 12px}.music-widget{display:block;margin:14px 3px 0;max-width:450px}.music-album{height:62px;margin:6px 0}.music-disc{width:48px;height:48px}.music-caption{display:none}.tt-profile-row{align-items:flex-start;flex-wrap:wrap}.tt-actions{margin:0;width:100%}.tt-actions .button{flex:1}.tt-profile-copy h3{font-size:21px}.tt-quick{grid-template-columns:1fr}}
+@media(max-width:460px){.tt-avatar{height:61px;width:61px;flex-basis:61px;border-radius:17px}.tt-metrics{gap:8px}.tt-metric{padding:10px}.tt-head{margin-bottom:16px}.tt-panel{border-radius:18px;padding:14px}.tt-metric .tt-metric-value{font-size:24px}.tt-metric .tt-metric-label{font-size:10px}.tt-metric .tt-metric-note{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.music-widget.is-playing .music-disc,.music-widget.is-playing .music-equalizer i,.music-album:after{animation:none}}
 </style>
 </head>
 <body>
 <div class="layout">
 <aside class="sidebar">
-<div class="logo"><div class="logo-mark">//</div><div><h1>Iky Creator Hub</h1><p>Content • Growth • Workspace</p></div></div>
-<div class="profile"><strong>Iky / Rizky Hidayat</strong><span id="side-handle">@ikyhdyat</span></div>
+<div class="logo"><div class="logo-mark rh-logo" role="img" aria-label="Monogram RH">RH</div><div class="brand-copy"><h1>Rizky Hidayat</h1><p>Freelance Content Creator</p></div></div>
+<div class="profile"><span class="profile-kicker">CREATOR SPACE</span><strong>Rizky Hidayat</strong><span id="side-handle">@ikyhdyat</span></div>
 <nav class="nav" aria-label="Menu utama">
 <button data-page="dashboard" class="active"><span class="nav-icon">⌂</span>Dashboard</button>
 <button data-page="ideas"><span class="nav-icon">✦</span>Ide / Library</button>
@@ -56,9 +114,16 @@ a.link{color:#cda9ff;word-break:break-all;text-decoration:none}.actions-right{di
 <button data-page="production"><span class="nav-icon">▷</span>Produksi Content</button>
 <button data-page="brand"><span class="nav-icon">◇</span>Brand</button>
 </nav>
-<div class="sidefoot"><b>Workspace Pribadi</b><small>Data tersimpan di browser perangkat ini. Jangan menganggap statistik sebagai sinkron TikTok sebelum API resmi terhubung.</small></div>
+<section class="sidefoot music-widget" id="music-widget" aria-label="Studio Mood Player">
+<div class="music-top"><span class="music-overline">STUDIO RADIO</span><span class="music-equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
+<div class="music-album" aria-hidden="true"><div class="music-disc"><span>RH</span></div><span class="music-shine"></span></div>
+<div class="music-meta"><strong id="music-track">Blue Hour</strong><small id="music-subtitle">Original ambient • Mood 01</small></div>
+<div class="music-controls"><button type="button" id="music-next" class="music-secondary" aria-label="Ganti suasana">↻</button><button type="button" id="music-toggle" class="music-play" aria-label="Putar musik" aria-pressed="false">▶</button><span id="music-state" class="music-state">PAUSED</span></div>
+<div class="music-vol"><span>VOL</span><input id="music-volume" type="range" min="0" max="100" value="35" aria-label="Volume musik ambient"></div>
+<p class="music-caption">Visual berubah otomatis setiap 3 detik.</p>
+</section>
 </aside>
-<main class="main"><header class="top"><div><h2 id="page-title">Dashboard</h2><p id="page-subtitle">Ringkasan perjalananmu sebagai content creator.</p></div><div class="date" id="now"></div></header><div id="app"></div><footer aria-label="Dokumen hukum" style="display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin:28px 0 0;padding:22px 8px 8px;border-top:1px solid #362b49;color:#b9a9ca;font-size:12px"><span>© 2026 Iky Creator Hub</span><a href="/privacy.html" style="color:#cfb3ff">Privacy Policy</a><a href="/terms.html" style="color:#cfb3ff">Terms of Service</a></footer></main>
+<main class="main"><header class="top"><div><h2 id="page-title">Dashboard</h2><p id="page-subtitle">Ringkasan perjalananmu sebagai content creator.</p></div><div class="date" id="now"></div></header><div id="app"></div><footer aria-label="Dokumen hukum" style="display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin:28px 0 0;padding:22px 8px 8px;border-top:1px solid #362b49;color:#b9a9ca;font-size:12px"><span>© 2026 Rizky Hidayat</span><a href="/privacy.html" style="color:#aacbd9">Privacy Policy</a><a href="/terms.html" style="color:#cfb3ff">Terms of Service</a></footer></main>
 </div>
 <div class="modal-layer" id="modal-layer" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><h3 id="modal-title"></h3><button type="button" class="button ghost" data-action="close">Tutup ✕</button></div><div id="modal-content"></div></div></div>
 <script>
@@ -124,38 +189,46 @@ const pts=h.map((v,i)=>(Math.round((i/(h.length-1))*500))+","+(Math.round(95-((v
 return '<svg viewBox="0 0 520 120" role="img" aria-label="Grafik followers berdasarkan snapshot TikTok API" style="width:100%;max-height:185px;overflow:visible"><path d="M0 110 H520" stroke="#5a486b" stroke-width="1" fill="none"/><polyline points="'+pts+'" fill="none" stroke="#bc75ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="itemtop small muted"><span>Awal '+n(h[0].followers)+' followers</span><span>Terakhir '+n(h[h.length-1].followers)+' followers</span></div>';
 }
 function dashboard(){
-const scheduled=state.ideas.filter(x=>!!x.date),done=state.ideas.filter(x=>x.stage==="Final");
-const next=scheduled.slice().sort((a,b)=>a.date.localeCompare(b.date)).filter(x=>x.date>=today()).slice(0,5);
-const live=tiktokSync&&tiktokSync.connected&&tiktokSync.latest?tiktokSync.latest:null;
-const isSandbox=tiktokConfig?.mode==="sandbox";
-const allSandboxZero=!!(isSandbox&&live&&live.followers===0&&live.likes===0&&live.video_count===0);
-const grantedScopes=new Set((tiktokSync?.scope||"").split(",").map(s=>s.trim()).filter(Boolean));
-const status=live?(isSandbox?'<span class="pill warn">Terhubung · Mode uji Sandbox</span>':'<span class="pill ok">Terhubung · TikTok API</span>'):tiktokSync?.connected?'<span class="pill warn">Terhubung · menunggu data</span>':'<span class="pill warn">Belum tersinkron</span>';
-const message=live?'Terakhir sinkron: '+new Date(live.synced_at).toLocaleString("id-ID")+' · Akun: @'+txt(live.username):'Hubungkan akun @ikyhdyat melalui izin resmi TikTok. Data belum tersedia tanpa OAuth.';
-const views=(live&&live.recent_video_count>0)?n(live.recent_views):"—";
-const videoHint=!live?"Belum ada data video":live.video_error?"Video API: "+live.video_error:(live.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":!grantedScopes.has("video.list")?"Izin video.list belum disetujui":"Belum ada video yang diberikan API");
-const sandboxNotice=isSandbox&&tiktokSync?.connected?'<p class="small" style="color:#f2c07f;margin-top:10px">Mode Sandbox untuk menguji koneksi. Angka dari API Sandbox belum tentu sama dengan statistik akun TikTok publik. '+(allSandboxZero?'TikTok mengembalikan 0 untuk tiga metrik akun; angka tersebut belum dapat dipastikan sebagai nilai live.':'Data ini belum diverifikasi sebagai metrik Production.')+'</p>':"";
-const oauthParams=new URLSearchParams(window.location.search);
-const oauthResult=oauthParams.get("tiktok_status");
-const oauthCategory=oauthParams.get("oauth_error");
-const oauthLogId=oauthParams.get("oauth_log_id");
-const oauthMessages={invalid_oauth_session:"Sesi otorisasi tidak cocok. Klik Hubungkan TikTok lagi.",state_expired:"Sesi otorisasi sudah kedaluwarsa. Klik Hubungkan TikTok lagi.",authorization_denied:"Izin TikTok tidak diberikan.",wrong_account:"Akun TikTok tidak cocok. Gunakan @ikyhdyat.",different_account:"Akun lain sudah terhubung.",link_failed:"Gagal menyambungkan akun TikTok.",token_exchange_failed:"Pertukaran token TikTok gagal.",missing_tiktok_keys:"Kredensial TikTok belum dipasang.",no_code:"TikTok tidak mengirim kode otorisasi."};
-const oauthCategories={invalid_client:"Client Key atau Client Secret salah, tidak cocok, atau dari aplikasi berbeda. Periksa pasangan kredensial Sandbox.",invalid_grant:"Kode otorisasi kadaluarsa/sudah dipakai, atau Redirect URI tidak sama persis. Ulangi otorisasi baru dan cocokkan callback.",invalid_request:"Permintaan token tidak valid. Periksa pengaturan aplikasi.",invalid_scope:"TikTok menolak salah satu scope yang diminta. Periksa scope pada Sandbox.",unauthorized_client:"Aplikasi TikTok belum berizin untuk metode otorisasi ini.",unsupported_grant_type:"TikTok menolak jenis permintaan token.",temporarily_unavailable:"Layanan TikTok sedang tidak tersedia. Coba kembali nanti.",server_error:"Layanan TikTok mengalami kesalahan. Coba kembali nanti.",unknown_error:"Respons TikTok tidak memuat kategori error yang dikenal."};
-const oauthDetail=oauthResult==="token_exchange_failed"?(oauthCategories[oauthCategory]||"Periksa kredensial Sandbox, scopes dan Redirect URI."):"";
-const oauthLog=oauthLogId&&/^[A-Za-z0-9_-]{1,100}$/.test(oauthLogId)?" TikTok Log ID: "+oauthLogId:"";
-const oauthNotice=oauthResult&&oauthResult!=="connected"?'<p class="small" style="color:#ffb4a7">'+txt((oauthMessages[oauthResult]||"Otorisasi TikTok gagal.")+" "+oauthDetail+oauthLog)+'</p>':"";
-
-return '<div class="grid cols2"><section class="panel gradient hero"><span class="pill">Personal Creator Workspace</span><h3 style="margin-top:14px">Halo, Iky.</h3><p>Seluruh ide, kalender, produksi, dan kerja sama brand dalam satu tempat.</p><div class="buttons" style="margin-top:20px">'+btn("+ Tambah Ide","new-idea","primary")+btn("Tambah Brand","new-brand","")+'</div></section>'+
-'<section class="panel"><div class="section-head"><h3>Sinkronisasi TikTok '+(tiktokConfig?.mode==='sandbox'?'<span class="pill">SANDBOX</span>':'')+'</h3>'+status+'</div><p class="muted small">'+message+'</p><div class="buttons">'+(live?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary"))+(live?btn("Kelola Akun","connect-tiktok",""):btn("Cek Koneksi","check-tiktok",""))+'<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@ikyhdyat">Lihat TikTok</a></div>'+(tiktokSync?.lastError?'<p class="small" style="color:#ffb4a7">Catatan sinkron: '+txt(tiktokSync.lastError.message)+'</p>':"")+sandboxNotice+oauthNotice+'</section></div>'+
-'<div class="grid cols4" style="margin-top:15px">'+
-metric("Followers TikTok",live?.followers!=null?n(live.followers):"—",isSandbox?"Nilai API Sandbox · bukan validasi live":live?"Data API":"Belum terhubung")+
-metric("Total Likes TikTok",live?.likes!=null?n(live.likes):"—",isSandbox?"Nilai API Sandbox · bukan validasi live":live?"Data API":"Belum terhubung")+
-metric("Total Video",live?.video_count!=null?n(live.video_count):"—",isSandbox?"Nilai API Sandbox · bukan validasi live":"Video publik akun")+
-metric("Views 20 video terbaru",views,txt(videoHint))+
-'</div><div class="grid cols2" style="margin-top:15px"><section class="panel"><div class="section-head"><h3>Riwayat Pertumbuhan Followers</h3><span class="muted small">'+(isSandbox?"Data uji Sandbox":"Data API")+'</span></div>'+(allSandboxZero?empty("Snapshot Sandbox saat ini semuanya 0. Grafik pertumbuhan live belum tersedia; tidak akan dibuat dari angka uji.") : growthChart(tiktokSync?.history||[]))+(live?'<p class="muted small">Riwayat dimulai sejak sinkronisasi berhasil. Nilai Sandbox tidak dapat diasumsikan mewakili performa live.</p>':"")+'</section>'+
-'<section class="panel"><div class="section-head"><h3>Jadwal Terdekat</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+(next.length?next.map(x=>'<div class="item"><div class="itemtop"><div><h4>'+txt(x.title)+'</h4><p>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</p></div>'+chip("Terjadwal")+'</div></div>').join(""):empty("Belum ada konten terjadwal. Tambahkan tanggal pada ide konten."))+'</section></div>'+
-'<section class="panel" style="margin-top:15px"><div class="section-head"><h3>Aksi Cepat</h3></div><div class="buttons">'+btn("Buat Ide","new-idea","primary")+btn("Jadwalkan Konten","new-idea","")+btn("Mulai Produksi","go-production","")+btn("Tambah Brand","new-brand","")+'</div></section>';
+ const scheduled=state.ideas.filter(x=>!!x.date),next=scheduled.slice().sort((a,b)=>a.date.localeCompare(b.date)).filter(x=>x.date>=today()).slice(0,4);
+ const connected=!!tiktokSync?.connected,live=connected&&tiktokSync?.latest?tiktokSync.latest:null;
+ const isSandbox=tiktokConfig?.mode==="sandbox";
+ const allZero=!!(isSandbox&&live&&live.followers===0&&live.likes===0&&live.video_count===0);
+ const username=live?.username||"ikyhdyat";
+ const name=live?.display_name||"Rizky Hidayat";
+ const pic=live?.avatar_url?'<img class="tt-avatar" src="'+txt(live.avatar_url)+'" alt="Foto profil TikTok @'+txt(username)+'" referrerpolicy="no-referrer" loading="lazy">':'<div class="tt-avatar tt-avatar-fallback" aria-label="Foto profil belum tersedia">RH</div>';
+ const age=live?.synced_at?new Date(live.synced_at).toLocaleString("id-ID"):"Menunggu sinkronisasi";
+ const ageMarkup=live?.synced_at?'<span id="sync-age" data-synced-at="'+txt(live.synced_at)+'">Memperbarui status...</span>':"Data belum tersedia";
+ const follower=allZero?"—":live?.followers!=null?n(live.followers):"—";
+ const likes=allZero?"—":live?.likes!=null?n(live.likes):"—";
+ const videos=allZero?"—":live?.video_count!=null?n(live.video_count):"—";
+ const views=live?.recent_video_count>0?n(live.recent_views):"—";
+ const scopeNames=new Set((tiktokSync?.scope||"").split(",").map(x=>x.trim()).filter(Boolean));
+ const videoNote=live?.video_error?"TikTok API: "+txt(live.video_error):!connected?"Hubungkan TikTok":!scopeNames.has("video.list")?"Izin video.list belum tersedia":live?.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":"Tidak ada video dari API";
+ const statusText=connected?"LIVE • TEROTORISASI":"BELUM TERHUBUNG";
+ const moodNote=isSandbox?"API Sandbox · data uji":"API TikTok";
+ const button=connected?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary");
+ const errorMessages={invalid_oauth_session:"Sesi otorisasi tidak cocok.",state_expired:"Sesi otorisasi kedaluwarsa.",authorization_denied:"Izin akun tidak diberikan.",wrong_account:"Akun TikTok bukan @ikyhdyat.",token_exchange_failed:"Gagal meminta token TikTok. Periksa izin aplikasi.",link_failed:"Gagal menautkan akun.",different_account:"Akun lain sudah tertaut."};
+ const params=new URLSearchParams(location.search),oauthErr=params.get("tiktok_status");
+ const oauthInfo=oauthErr&&oauthErr!=="connected"?'<div class="tt-disclaimer">'+txt(errorMessages[oauthErr]||"Terjadi kendala otorisasi.")+'</div>':"";
+ const warning=allZero?'Koneksi akun berhasil. TikTok Sandbox mengembalikan nilai 0 untuk metrik akun ini; nilai tersebut tidak ditampilkan sebagai statistik live.':isSandbox?'Status LIVE berarti sesi akun terotorisasi. API tetap dalam mode pengujian Sandbox; statistik mungkin berbeda dari akun publik.':"Statistik mengikuti respons API dan terakhir diperbarui sesuai jadwal sinkronisasi.";
+ return '<div class="tt-dashboard tt-fade"><section class="tt-panel" aria-label="TikTok Performance Center">'+
+ '<div class="tt-head"><span class="tt-eyebrow">RIZKY HIDAYAT / TIKTOK PERFORMANCE</span><div class="tt-status"><span class="tt-led '+(connected?(isSandbox?'testing':''):'offline')+'"></span><strong>'+statusText+'</strong><span>· '+moodNote+'</span></div></div>'+
+ '<div class="tt-profile-row">'+pic+'<div class="tt-profile-copy"><h3>'+txt(name)+'</h3><div class="tt-handle">@'+txt(username)+' · TikTok</div><div class="tt-subtext">'+(connected?'Akun telah diotorisasi melalui TikTok Login Kit':'Hubungkan akun untuk menampilkan profil dan statistik')+'</div></div><div class="tt-actions">'+button+(connected?btn("Kelola Koneksi","connect-tiktok",""):'')+'</div></div>'+
+ '<div class="tt-metrics">'+
+ '<div class="tt-metric"><div class="tt-metric-label">Followers</div><div class="tt-metric-value">'+follower+'</div><div class="tt-metric-note">'+(allZero?'Belum tervalidasi sebagai data live':connected?'Jumlah dari API '+(isSandbox?'Sandbox':'TikTok'):'Menunggu izin akun')+'</div></div>'+
+ '<div class="tt-metric"><div class="tt-metric-label">Total Likes</div><div class="tt-metric-value">'+likes+'</div><div class="tt-metric-note">'+(allZero?'Menunggu data Production':'Statistik akun TikTok')+'</div></div>'+
+ '<div class="tt-metric"><div class="tt-metric-label">Total Video</div><div class="tt-metric-value">'+videos+'</div><div class="tt-metric-note">'+(allZero?'Belum tersedia sebagai data live':'Video publik akun')+'</div></div>'+
+ '<div class="tt-metric"><div class="tt-metric-label">Views 20 Video</div><div class="tt-metric-value">'+views+'</div><div class="tt-metric-note">'+videoNote+'</div></div>'+
+ '</div><div class="tt-lower"><div class="tt-lower-card"><div class="tt-sync-row"><h4>Follower Growth</h4><span class="tt-last-updated">Grafik berdasarkan snapshot API</span></div>'+
+ (allZero?empty("Belum tersedia pertumbuhan akun yang tervalidasi. Snapshot Sandbox saat ini mengembalikan 0.") : growthChart(tiktokSync?.history||[]))+
+ '</div><div class="tt-lower-card"><h4>Live Connection</h4><p><span class="tt-led '+(connected?'':'offline')+'" style="display:inline-block;margin-right:7px"></span>'+(connected?'Terhubung ke @'+txt(username):'Akun belum dihubungkan')+'</p>'+
+ '<p>Terakhir sinkron: <b>'+txt(age)+'</b></p><p>'+ageMarkup+'</p><p>Pembaruan indikator setiap 1 detik; data API sesuai jadwal server.</p><div class="tt-small-actions"><a class="button ghost" href="https://www.tiktok.com/@ikyhdyat" target="_blank" rel="noopener noreferrer">Lihat TikTok</a></div></div></div>'+
+ (connected?'<div class="tt-disclaimer">'+warning+'</div>':'')+oauthInfo+'</section>'+
+ '<div class="tt-quick"><section class="panel"><div class="section-head"><h3>Kalender & Jadwal Konten</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+
+ (next.length?'<ul class="tt-schedule">'+next.map(x=>'<li><strong>'+txt(x.title)+'</strong>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</li>').join("")+'</ul>':empty("Belum ada konten terjadwal. Tentukan tanggal pada ide konten."))+'</section>'+
+ '<section class="panel"><div class="section-head"><h3>Creative Workspace</h3><span class="pill">5 halaman</span></div><p class="muted small">Mulai dari ide, jadwalkan produksi, dan kelola kolaborasi brand dalam satu workspace.</p><div class="tt-small-actions">'+btn("+ Tambah Ide","new-idea","primary")+btn("Produksi","go-production","")+btn("Tambah Brand","new-brand","")+'</div></section></div></div>';
 }
+
 function ideaCard(x){return '<section class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.stage)+'</div><p class="muted small">Hook: '+txt(x.hook||"Belum diisi")+'</p><div class="tagrow">'+chip(x.pillar||"Umum")+chip(x.platform||"TikTok")+(x.date?chip(fmt(x.date)):"")+'</div><p class="muted small">'+txt(x.notes||"Belum ada catatan.")+'</p><div class="buttons">'+btn("Edit","edit-idea","","data-id='"+txt(x.id)+"'")+btn("Produksi","move-idea","primary","data-id='"+txt(x.id)+"'") + btn("Hapus","delete-idea","danger","data-id='"+txt(x.id)+"'")+'</div></section>';}
 function assetCard(x){return '<div class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.kind)+'</div><a class="link small" href="'+txt(x.url)+'" target="_blank" rel="noopener noreferrer">'+txt(x.url)+'</a><div class="buttons" style="margin-top:12px">'+btn("Hapus","delete-asset","danger","data-id='"+txt(x.id)+"'")+'</div></div>';}
 function ideas(){return '<div class="toolbar"><div class="buttons">'+btn("Ide Konten","tab-ideas",libTab==="ideas"?"primary":"")+btn("Library Aset","tab-assets",libTab==="assets"?"primary":"")+'</div>'+btn(libTab==="ideas"?"+ Tambah Ide":"+ Tambah Aset",libTab==="ideas"?"new-idea":"new-asset","primary")+'</div>'+
@@ -206,6 +279,65 @@ if(e.target.id==="brand-form"){var b=state.brands.find(function(x){return x.id==
 if(e.target.id==="profile-form"){state.profile.handle=get("handle");["followers","views","likes","videos"].forEach(function(k){state.profile[k]=Math.max(0,Number(get(k))||0);});}
 save();close();render();});
 document.getElementById("modal-layer").addEventListener("click",function(e){if(e.target===this)close();});document.addEventListener("keydown",function(e){if(e.key==="Escape")close();});
+
+/* Original generative ambient player (no licensed tracks or Spotify credentials) */
+const MUSIC_MOODS=[
+ {title:"Blue Hour",subtitle:"Original ambient • Mood 01",color:"#3a718c",notes:[196,246.94,293.66]},
+ {title:"Coffee Break",subtitle:"Original ambient • Mood 02",color:"#705645",notes:[174.61,220,261.63]},
+ {title:"Afterglow",subtitle:"Original ambient • Mood 03",color:"#486578",notes:[164.81,220,329.63]}
+];
+let musicMood=0,musicPlaying=false,musicAudio=null,musicMaster=null,musicOscillators=[],musicInterval=null;
+function setMusicMood(index){
+ musicMood=(index+MUSIC_MOODS.length)%MUSIC_MOODS.length;
+ const w=document.getElementById("music-widget"),m=MUSIC_MOODS[musicMood];if(!w)return;
+ w.dataset.mood=String(musicMood);w.style.setProperty("--mood-light",m.color);
+ document.getElementById("music-track").textContent=m.title;
+ document.getElementById("music-subtitle").textContent=m.subtitle;
+ if(musicAudio&&musicPlaying){
+  musicOscillators.forEach((osc,i)=>osc.frequency.setTargetAtTime(m.notes[i],musicAudio.currentTime,.38));
+ }
+}
+async function toggleMusic(){
+ const w=document.getElementById("music-widget"),btn=document.getElementById("music-toggle");
+ if(!w||!btn)return;
+ if(!musicAudio){
+  const AudioClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioClass){document.getElementById("music-state").textContent="UNSUPPORTED";return;}
+  musicAudio=new AudioClass();musicMaster=musicAudio.createGain();musicMaster.gain.value=0;musicMaster.connect(musicAudio.destination);
+  MUSIC_MOODS[0].notes.forEach((freq,i)=>{
+   const oscillator=musicAudio.createOscillator(),gain=musicAudio.createGain();
+   oscillator.type=i===1?"triangle":"sine";oscillator.frequency.value=freq;
+   gain.gain.value=i===0?.18:i===1?.045:.07;
+   oscillator.connect(gain).connect(musicMaster);oscillator.start();musicOscillators.push(oscillator);
+  });
+ }
+ try{await musicAudio.resume();}catch(_){}
+ musicPlaying=!musicPlaying;const volume=document.getElementById("music-volume").value/100;
+ musicMaster.gain.setTargetAtTime(musicPlaying?volume*.30:0,musicAudio.currentTime,.12);
+ w.classList.toggle("is-playing",musicPlaying);btn.textContent=musicPlaying?"Ⅱ":"▶";btn.setAttribute("aria-pressed",String(musicPlaying));btn.setAttribute("aria-label",musicPlaying?"Jeda musik":"Putar musik");
+ document.getElementById("music-state").textContent=musicPlaying?"PLAYING":"PAUSED";
+}
+function updateLiveIndicator(){
+ const el=document.getElementById("sync-age");if(!el)return;
+ const at=new Date(el.dataset.syncedAt).getTime();if(!Number.isFinite(at))return;
+ const sec=Math.max(0,Math.floor((Date.now()-at)/1000));
+ const text=sec<60?sec+" detik":sec<3600?Math.floor(sec/60)+" menit "+sec%60+" detik":Math.floor(sec/3600)+" jam "+Math.floor(sec%3600/60)+" menit";
+ el.textContent="Data API diperbarui "+text+" lalu";
+}
+document.addEventListener("click",e=>{
+ if(e.target.closest("#music-toggle")){toggleMusic();return;}
+ if(e.target.closest("#music-next")){setMusicMood(musicMood+1);return;}
+});
+document.getElementById("music-volume")?.addEventListener("input",e=>{
+ if(musicMaster&&musicAudio&&musicPlaying)musicMaster.gain.setTargetAtTime((Number(e.target.value)/100)*.30,musicAudio.currentTime,.1);
+});
+setMusicMood(0);
+setInterval(()=>{setMusicMood(musicMood+1);},3000);
+setInterval(updateLiveIndicator,1000);
+setInterval(()=>{
+ if(page==="dashboard"&&document.visibilityState==="visible"&&tiktokSync?.connected)loadTikTok();
+},60000);
+
 render();
 loadTikTok();
 })();
