@@ -43,7 +43,7 @@ async function recentVideos(token){const fields="id,title,create_time,cover_imag
 const WORKSPACE_FIELDS={
  ideas:["id","title","hook","pillar","platform","stage","notes","date","content_type","goal","shoot_date","brand_id","campaign","script","shots","checklist","references","caption","hashtags","published_url","folder_url","updated_at"],
  assets:["id","title","url","kind","updated_at"],
- brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","dp","paid","post_date","brief_must","brief_avoid","references","files","final_links","deliverables_checklist","updated_at"]
+ brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","rate_card","rate_notes","dp","paid","post_date","brief_must","brief_avoid","references","files","final_links","deliverables_checklist","updated_at"]
 };
 const WORKSPACE_NESTED={
  script:{id:90,type:40,text:6000},
