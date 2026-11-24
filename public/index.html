@@ -264,11 +264,6 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
 }
 
 /* Reliable workspace save feedback and restored draft UI */
-.storage-pill{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #526d7b;background:#203341;border-radius:14px;padding:11px 15px;color:#cce2eb;font:600 12px/1.5 "Manrope",sans-serif;margin-bottom:16px}
-.storage-pill.ok{border-color:#406e63;color:#bce6d4}
-.storage-pill.local{border-color:#8b6b52;background:#362d28;color:#f0d4b9}
-.storage-pill button{border:1px solid #c5a98a;background:transparent;border-radius:9px;color:#f0d4b9;padding:7px 10px;font:inherit;cursor:pointer}
-.storage-pill button:hover{background:#5c4438}
 #save-notice{position:fixed;bottom:24px;right:24px;z-index:10000;width:min(420px,calc(100vw - 32px));padding:15px 19px;border:1px solid #64a38e;border-radius:12px;background:#193b35;color:#e4f7ee;box-shadow:0 12px 40px #0007;font:600 13px/1.55 "Manrope",sans-serif;opacity:0;visibility:hidden;transform:translateY(10px);transition:.15s ease;pointer-events:none}
 #save-notice.visible{opacity:1;visibility:visible;transform:translateY(0)}
 #save-notice[data-kind="warn"]{background:#47352a;border-color:#c39c72;color:#fff0dd}
@@ -381,17 +376,11 @@ function notice(message,kind){
  el.textContent=message;el.dataset.kind=kind||"ok";el.classList.add("visible");
  clearTimeout(notice._timer);notice._timer=setTimeout(()=>el.classList.remove("visible"),7000);
 }
-function storageBanner(){
- if(cloudAccess==="ok")return '<div class="storage-pill ok">☁ Tersinkron dengan Cloudflare'+(cloudLastSaved?" · "+new Date(cloudLastSaved).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}):"")+'</div>';
- if(cloudAccess==="checking")return '<div class="storage-pill">Memeriksa penyimpanan Cloudflare…</div>';
- if(cloudAccess==="saving")return '<div class="storage-pill">Menyimpan ke Cloudflare…</div>';
- return '<div class="storage-pill local">Data perangkat ini saja. <button type="button" data-action="connect-tiktok">Aktifkan sinkronisasi cloud</button></div>';
-}
 function save(){
  ensureDeleted(state);
  if(!writeLocal())throw new Error("Browser menolak menyimpan data. Konten masih ada di formulir; salin dulu sebelum menutupnya.");
  if(cloudAccess==="ok"||cloudAccess==="saving")scheduleCloudSave();
- else notice("Tersimpan di browser ini. Aktifkan sinkronisasi cloud untuk akses dari perangkat lain.","warn");
+ else notice("Konten tersimpan di perangkat ini.","ok");
 }
 function scheduleCloudSave(){
  if(cloudAccess!=="ok"&&cloudAccess!=="saving")return;
@@ -422,7 +411,7 @@ async function syncCloudWorkspace(){
  cloudBusy=true;cloudAccess="saving";
  try{
    const r=await fetch("/api/workspace",{method:"PUT",headers:{"content-type":"application/json"},credentials:"same-origin",body:JSON.stringify({workspace:state})});
-   if(r.status===401){cloudAccess="local";notice("Data tersimpan lokal. Sesi cloud belum aktif di perangkat ini.","warn");return;}
+   if(r.status===401){cloudAccess="local";notice("Konten tersimpan di perangkat ini.","warn");return;}
    const j=await r.json();
    if(!r.ok||!j.ok)throw new Error(j.error||"Server gagal menyimpan");
    state=mergeClientWorkspace(state,j.workspace); // Do not discard local changes made during the request.
@@ -447,7 +436,7 @@ function metric(label,value,description){return '<section class="panel"><div cla
 function empty(txt){return '<div class="empty">'+esc(txt)+'</div>';}
 function txt(t){return esc(t);}
 function setpage(p){page=p;render();}
-function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide / Library","Bank ide, referensi, dan aset untuk produksi."],calendar:["Kalender Konten","Rencanakan jadwal konten di satu kalender."],production:["Produksi Content","Kelola proses konten dari ide sampai final."],brand:["Brand","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.querySelector(".top")?.classList.toggle("dashboard-top",page==="dashboard");const sh=document.getElementById("side-handle");if(sh)sh.textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=(page==="dashboard"?"":storageBanner())+({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
+function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide / Library","Bank ide, referensi, dan aset untuk produksi."],calendar:["Kalender Konten","Rencanakan jadwal konten di satu kalender."],production:["Produksi Content","Kelola proses konten dari ide sampai final."],brand:["Brand","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.querySelector(".top")?.classList.toggle("dashboard-top",page==="dashboard");const sh=document.getElementById("side-handle");if(sh)sh.textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
 function growthChart(history){
 if(!Array.isArray(history)||history.length<2)return '<div class="empty">Grafik pertumbuhan muncul setelah minimal dua sinkronisasi berhasil.</div>';
 const h=history.filter(x=>Number.isFinite(x.followers)).slice(-60);if(h.length<2)return '<div class="empty">Belum ada data pertumbuhan yang cukup.</div>';
