@@ -175,7 +175,7 @@ export default {
     }
     if(!originAllowed(req))return json({error:"invalid_origin"},403);
     if(path==="/api/tiktok/config"&&req.method==="GET"){
-      return json({oauth_diagnostics:"retry-v4",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
+      return json({oauth_diagnostics:"mutable-redirect-v5",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
     }
     if(path==="/api/tiktok/health"&&req.method==="GET"){
       const [a,b]=await Promise.all([
