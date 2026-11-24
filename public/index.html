@@ -898,8 +898,14 @@ function draftKey(form){return DRAFT_PREFIX+form.getAttribute("id")+":"+(form.el
 function saveDraft(form){
  if(!form||!["idea-form","content-form","asset-form","brand-form","profile-form"].includes(form.getAttribute("id")))return;
  const values=Object.fromEntries(new FormData(form).entries());
- const sections={};for(const kind of RH_BUILDER_KEYS)if(form.querySelector('.rh-builder-list[data-kind="'+kind+'"]'))sections[kind]=rhCollectRows(form,kind);
- const draft=JSON.stringify({values,sections,draftContentId:form.dataset.draftContentId||"",updated_at:Date.now()});
+ const isCollab=form.getAttribute("id")==="brand-form",sections={};
+ for(const kind of RH_BUILDER_KEYS){
+   if(isCollab&&["script","shots","checklist"].includes(kind))continue;
+   if(form.querySelector('.rh-builder-list[data-kind="'+kind+'"]'))sections[kind]=rhCollectRows(form,kind);
+ }
+ const inlineContent=isCollab?rhCollectCollabContent(form):null;
+ const deletedContentIds=isCollab?JSON.parse(form.dataset.deletedContentIds||"[]"):null;
+ const draft=JSON.stringify({values,sections,inlineContent,deletedContentIds,draftContentId:form.dataset.draftContentId||"",updated_at:Date.now()});
  try{localStorage.setItem(draftKey(form),draft);}
  catch(e){try{sessionStorage.setItem(draftKey(form),draft);}catch(_){}}
 }
@@ -915,9 +921,22 @@ function restoreFormDraft(form){
    const field=form.elements.namedItem(key);
    if(field&&"value" in field)field.value=String(value);
   }
+  const isCollab=form.getAttribute("id")==="brand-form";
   if(parsed.sections&&typeof parsed.sections==="object"){
-    for(const kind of RH_BUILDER_KEYS)if(Array.isArray(parsed.sections[kind]))rhReplaceBuilderRows(form,kind,parsed.sections[kind]);
-    rhRefreshShotChoices(form);
+    for(const kind of RH_BUILDER_KEYS){
+      if(isCollab&&["script","shots","checklist"].includes(kind))continue;
+      if(Array.isArray(parsed.sections[kind]))rhReplaceBuilderRows(form,kind,parsed.sections[kind]);
+    }
+    if(!isCollab)rhRefreshShotChoices(form);
+  }
+  if(isCollab){
+    if(Array.isArray(parsed.inlineContent)&&parsed.inlineContent.length){
+      const list=form.querySelector(".rh-collab-content-list");
+      if(list)list.innerHTML=parsed.inlineContent.map((item,i)=>rhCollabContentCard(item,i===0)).join("");
+    }
+    form.dataset.deletedContentIds=JSON.stringify(Array.isArray(parsed.deletedContentIds)?parsed.deletedContentIds:[]);
+    rhPdfInput(form);
+    form.querySelectorAll(".rh-collab-content-card").forEach(card=>rhRefreshShotChoices(card));
   }
   const marker=document.createElement("div");marker.className="restored-draft";
   marker.textContent="Draf tulisan sebelumnya dipulihkan otomatis.";
@@ -933,14 +952,34 @@ document.addEventListener("input",e=>{
  if(e.target.matches?.(".rh-editor-form textarea"))rhFitTextarea(e.target);
  const form=e.target.closest("form");
  if(form){
-   if(form.getAttribute("id")==="content-form"&&e.target.closest('.rh-builder-list[data-kind="script"]'))rhRefreshShotChoices(form);
+   if(e.target.closest('.rh-builder-list[data-kind="script"]')){
+     const scope=e.target.closest(".rh-collab-content-card")||form;
+     rhRefreshShotChoices(scope);
+   }
+   if(e.target.matches?.('[data-content-field="title"]')){
+     const card=e.target.closest(".rh-collab-content-card");
+     const title=card?.querySelector(".rh-card-video-title");
+     if(title)title.textContent=e.target.value||"Konten baru";
+   }
    saveDraft(form);
    queueWorkingContent(form);
  }
 });
-document.addEventListener("change",e=>{
+document.addEventListener("change",async e=>{
  const form=e.target.closest("form");
- if(form){saveDraft(form);queueWorkingContent(form);}
+ if(!form)return;
+ if(e.target.matches("[data-brief-file]")){
+   const submit=form.querySelector('button[type="submit"]');
+   if(submit)submit.disabled=true;
+   try{await rhHandlePdfUpload(form,e.target.files?.[0]);}
+   catch(error){
+     const status=form.querySelector("[data-brief-status]");
+     if(status)status.textContent="Gagal: "+String(error.message||error);
+     alert(String(error.message||error));
+   }finally{if(submit)submit.disabled=false;e.target.value="";}
+   return;
+ }
+ saveDraft(form);queueWorkingContent(form);
 });
 window.addEventListener("resize",()=>{
  const open=document.querySelector("#modal-layer.open .rh-editor-form");
@@ -1070,8 +1109,10 @@ async function rhHandlePdfUpload(form,file){
  saveDraft(form);
  notice(cloud?"PDF tersimpan di Cloudflare dan perangkat ini.":"PDF tersimpan di perangkat ini. Simpan Collaboration untuk menautkannya.","ok");
 }
-async function rhOpenBriefPdf(form){
- const meta=rhBriefPdfMeta(form);
+async function rhOpenBriefPdf(source){
+ const meta=source?.querySelector?rhBriefPdfMeta(source):{
+   id:source?.brief_pdf_id||"",name:source?.brief_pdf_name||"",size:source?.brief_pdf_size||0,cloud:source?.brief_pdf_cloud||"no"
+ };
  if(!meta.id){alert("Belum ada PDF yang dilampirkan.");return;}
  const tab=window.open("about:blank","_blank");
  try{
@@ -1112,20 +1153,50 @@ document.addEventListener("click",function(e){
    const list=row?.parentElement||el.closest(".rh-builder-section")?.querySelector(".rh-builder-list");
    const kind=list?.dataset.kind;
    if(!list||!kind)return;
+   const scope=el.closest(".rh-collab-content-card")||form;
    if(a==="builder-add"){
      const seed=kind==="script"?{id:id(),type:"Edukasi",text:""}:
        kind==="shots"?{id:id(),text:"",angle:"",scriptId:"",checked:false}:
        ["checklist","deliverables_checklist"].includes(kind)?{id:id(),text:"",checked:false}:{id:id(),label:"",url:""};
-     list.insertAdjacentHTML("beforeend",rhBuilderRow(kind,seed,rhLoadScriptRows(form)));
+     list.insertAdjacentHTML("beforeend",rhBuilderRow(kind,seed,rhLoadScriptRows(scope)));
      rhFitTextareas(list.lastElementChild);
      list.lastElementChild?.querySelector("textarea,input[data-field='text'],input[data-field='label']")?.focus();
    }
    if(a==="builder-remove"&&row)row.remove();
    if(a==="builder-up"&&row?.previousElementSibling)list.insertBefore(row,row.previousElementSibling);
    if(a==="builder-down"&&row?.nextElementSibling)list.insertBefore(row.nextElementSibling,row);
-   if(kind==="script")rhRefreshShotChoices(form);
+   if(kind==="script")rhRefreshShotChoices(scope);
    saveDraft(form);queueWorkingContent(form);
    return;
+ }
+ if(a==="collab-add-content"){
+   const form=el.closest("form"),list=form?.querySelector(".rh-collab-content-list");
+   if(!list)return;
+   list.insertAdjacentHTML("beforeend",rhCollabContentCard({},true));
+   const card=list.lastElementChild;
+   rhFitTextareas(card);
+   card.scrollIntoView({block:"nearest",behavior:"smooth"});
+   saveDraft(form);
+   return;
+ }
+ if(a==="collab-remove-content"){
+   const card=el.closest(".rh-collab-content-card"),form=el.closest("form");
+   if(!card||!form)return;
+   const existing=state.ideas.find(x=>x.id===card.dataset.contentId);
+   if(existing&&!confirm("Hapus proyek konten ini saat Collaboration disimpan?"))return;
+   if(existing){
+     const deleted=new Set(JSON.parse(form.dataset.deletedContentIds||"[]"));
+     deleted.add(existing.id);form.dataset.deletedContentIds=JSON.stringify([...deleted]);
+   }
+   card.remove();saveDraft(form);return;
+ }
+ if(a==="brief-open"){rhOpenBriefPdf(el.closest("form"));return;}
+ if(a==="brand-open-pdf"){const brand=state.brands.find(x=>x.id===which);if(brand)rhOpenBriefPdf(brand);return;}
+ if(a==="brief-remove"){
+   const form=el.closest("form");if(!form)return;
+   if(!confirm("Lepaskan PDF dari Collaboration ini?"))return;
+   for(const key of ["brief_pdf_id","brief_pdf_name","brief_pdf_size","brief_pdf_cloud","brief_pdf_date"]){const field=form.querySelector('[name="'+key+'"]');if(field)field.value="";}
+   rhPdfInput(form);saveDraft(form);return;
  }
  if(a==="close"){close();return;}
  if(a==="new-content"){contentForm(null,el.dataset.date||"",el.dataset.brandId||"");return;}
@@ -1205,10 +1276,26 @@ document.addEventListener("submit",function(e){
      // Store incomplete website and reference links as drafts without blocking save.
      let b=state.brands.find(x=>x.id===get("id"));
      if(!b){b={id:id()};state.brands.push(b);}
-     for(const field of ["name","industry","contact","phone","email","website","social","campaign","goal","collaboration_type","status","deadline","post_date","deliverables","notes","brief_must","brief_avoid","compensation_type","barter","rate_notes"])b[field]=get(field);
-     for(const field of ["value","rate_card","dp","paid"])b[field]=Math.max(0,Number(get(field))||0);
+     for(const field of ["name","industry","contact","phone","email","website","social","campaign","goal","collaboration_type","status","deadline","post_date","deliverables","notes","brief_text","brief_must","brief_avoid","compensation_type","barter","rate_notes","brief_pdf_id","brief_pdf_name","brief_pdf_cloud","brief_pdf_date"])b[field]=get(field);
+     for(const field of ["value","rate_card","dp","paid","brief_pdf_size"])b[field]=Math.max(0,Number(get(field))||0);
      b.deliverables_checklist=rhCollectRows(form,"deliverables_checklist");
      b.references=refs;b.files=files;b.final_links=finalLinks;b.updated_at=Date.now();
+     // Save the production editors as the same Content projects shown on Content and Calendar.
+     const productions=rhCollectCollabContent(form);
+     for(const edited of productions){
+       let project=state.ideas.find(x=>x.id===edited.id);
+       if(project&&project.brand_id&&project.brand_id!==b.id)continue;
+       if(!project){project={id:edited.id,stage:"Ide"};state.ideas.push(project);}
+       Object.assign(project,edited,{brand_id:b.id,campaign:b.campaign||"",updated_at:Date.now()});
+     }
+     const removed=JSON.parse(form.dataset.deletedContentIds||"[]");
+     ensureDeleted(state);
+     for(const deletedId of removed){
+       const linked=state.ideas.find(x=>x.id===deletedId);
+       if(!linked||linked.brand_id!==b.id)continue;
+       state.deleted.ideas[deletedId]=Date.now();
+       state.ideas=state.ideas.filter(x=>x.id!==deletedId);
+     }
    }else if(form.getAttribute("id")==="profile-form"){
      state.profile.handle=get("handle");
      for(const field of ["followers","views","likes","videos"])state.profile[field]=Math.max(0,Number(get(field))||0);
