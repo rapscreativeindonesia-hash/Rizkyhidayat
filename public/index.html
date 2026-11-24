@@ -133,7 +133,7 @@ const grantedScopes=new Set((tiktokSync?.scope||"").split(",").map(s=>s.trim()).
 const status=live?(isSandbox?'<span class="pill warn">Terhubung · Mode uji Sandbox</span>':'<span class="pill ok">Terhubung · TikTok API</span>'):tiktokSync?.connected?'<span class="pill warn">Terhubung · menunggu data</span>':'<span class="pill warn">Belum tersinkron</span>';
 const message=live?'Terakhir sinkron: '+new Date(live.synced_at).toLocaleString("id-ID")+' · Akun: @'+txt(live.username):'Hubungkan akun @ikyhdyat melalui izin resmi TikTok. Data belum tersedia tanpa OAuth.';
 const views=(live&&live.recent_video_count>0)?n(live.recent_views):"—";
-const videoHint=live?.video_error?"Video API: "+live.video_error:(live?.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":!grantedScopes.has("video.list")?"Izin video.list belum disetujui":"Belum ada video yang diberikan API");
+const videoHint=!live?"Belum ada data video":live.video_error?"Video API: "+live.video_error:(live.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":!grantedScopes.has("video.list")?"Izin video.list belum disetujui":"Belum ada video yang diberikan API");
 const sandboxNotice=isSandbox&&tiktokSync?.connected?'<p class="small" style="color:#f2c07f;margin-top:10px">Mode Sandbox untuk menguji koneksi. Angka dari API Sandbox belum tentu sama dengan statistik akun TikTok publik. '+(allSandboxZero?'TikTok mengembalikan 0 untuk tiga metrik akun; angka tersebut belum dapat dipastikan sebagai nilai live.':'Data ini belum diverifikasi sebagai metrik Production.')+'</p>':"";
 const oauthParams=new URLSearchParams(window.location.search);
 const oauthResult=oauthParams.get("tiktok_status");
