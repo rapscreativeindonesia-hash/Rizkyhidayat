@@ -105,7 +105,7 @@ async function connectTikTok(){
   return;
  }
  if(!await ensureTikTokAdmin())return;
- window.location.assign("/api/tiktok/connect");
+ const r=await fetch("/api/tiktok/connect",{method:"POST",credentials:"same-origin"}); const j=await r.json(); if(!r.ok||!j.authorize_url)throw Error(j.error||"Koneksi gagal"); window.location.assign(j.authorize_url);
  }catch(e){alert("Tidak bisa menghubungkan TikTok: "+e.message);}
 }
 async function refreshTikTok(){
