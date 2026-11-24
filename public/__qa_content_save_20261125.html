@@ -1,15 +1,15 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Content Save QA</title></head><body><h1>Content Save QA</h1><pre id="qa-result">running</pre><iframe id="dash" src="/?qa-save-isolated=20261125" style="position:absolute;top:-4000px;width:1060px;height:860px" title="Isolated save test"></iframe><script>
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Content Save QA</title></head><body><h1>Content Save QA</h1><pre id="qa-result">running</pre><iframe id="dash" src="about:blank" style="position:absolute;top:-4000px;width:1060px;height:860px" title="Isolated save test"></iframe><script>
 const report=(info)=>{document.getElementById("qa-result").textContent=JSON.stringify(info)};
 const sleep=ms=>new Promise(ok=>setTimeout(ok,ms));
 const ensure=(v,msg)=>{if(!v)throw Error(msg)};
 async function run(){
  const f=document.getElementById("dash");let reload=false;
  try{
-  await sleep(220);
+  await sleep(50);
   const w=f.contentWindow,d=w.document;
   ensure(d.querySelector('[data-page="production"]'),"navigation missing");
-  d.querySelector('[data-page="production"]').click();await sleep(180);
-  const add=d.querySelector('[data-action="new-content"]');ensure(add,"new-content button missing");add.click();await sleep(150);
+  d.querySelector('[data-page="production"]').click();await sleep(35);
+  const add=d.querySelector('[data-action="new-content"]');ensure(add,"new-content button missing");add.click();await sleep(30);
   const form=d.getElementById("content-form");ensure(form,"content form missing");
   const title="QA isolated Content "+Date.now();
   const set=(e,value)=>{ensure(e,"field missing");e.value=value;e.dispatchEvent(new w.Event("input",{bubbles:true}));};
@@ -17,7 +17,7 @@ async function run(){
   set(form.querySelector('.rh-builder-list[data-kind="script"] textarea[data-field="text"]'),"Script Hook tersimpan");
   const ref=form.querySelector('.rh-builder-list[data-kind="references"] input[data-field="url"]');ensure(ref,"ref input missing");set(ref,"tautan belum lengkap tanpa https");
   let fired=0;form.addEventListener("submit",()=>fired++);
-  const b=form.querySelector('button[type="submit"]');ensure(b,"submit button missing");b.click();await sleep(400);
+  const b=form.querySelector('button[type="submit"]');ensure(b,"submit button missing");b.click();await sleep(90);
   const local=JSON.parse(w.localStorage.getItem("iky-creator-hub-local-v1")||"{}");
   const item=(local.ideas||[]).find(x=>x.title===title);
   const count1=(d.querySelectorAll(".rh-project-card")||[]).length;
@@ -28,9 +28,9 @@ async function run(){
   ensure(!hadModal,"Form did not close after save");
   f.onload=null;
   const loadPromise=new Promise((ok,bad)=>{f.onload=ok;setTimeout(()=>bad(Error("reload timeout")),10000)});
-  f.src="/?qa-save-reload="+Date.now();await loadPromise;await sleep(300);
+  f.src="/?qa-save-reload="+Date.now();await loadPromise;await sleep(70);
   const reloadedCount=(f.contentWindow.document.querySelectorAll(".rh-project-card")||[]).length;
-  f.contentWindow.document.querySelector('[data-page="production"]').click();await sleep(100);
+  f.contentWindow.document.querySelector('[data-page="production"]').click();await sleep(30);
   const afterReload=f.contentWindow.document.body.innerText.includes(title);
   const after=JSON.parse(f.contentWindow.localStorage.getItem("iky-creator-hub-local-v1")||"{}");
   const storedAgain=(after.ideas||[]).some(x=>x.title===title);
@@ -38,5 +38,5 @@ async function run(){
   f.contentWindow.localStorage.removeItem("iky-creator-hub-local-v1");
  }catch(e){report({ok:false,error:String(e?.message||e)});}
 }
-document.getElementById("dash").addEventListener("load",run,{once:true});
+const iframe=document.getElementById("dash");iframe.src="/?qa-save-isolated=20261125";iframe.addEventListener("load",run,{once:true});
 </script></body></html>
