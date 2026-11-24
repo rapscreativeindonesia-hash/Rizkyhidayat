@@ -958,6 +958,139 @@ function select(label,name,options,selected){return '<label class="field">'+labe
 function ideaForm(id,date){var x=state.ideas.find(function(a){return a.id===id;})||{title:"",hook:"",pillar:"Education",platform:"TikTok",stage:"Ide",notes:"",date:date||""};modal(id?"Edit Ide":"Tambah Ide Konten",'<form id="idea-form"><input type="hidden" name="id" value="'+txt(id||"")+'"><div class="form-grid">'+input("Judul Konten *","title",x.title,"text","required maxlength=160")+input("Hook / Opening","hook",x.hook)+select("Pilar Konten","pillar",["Education","Entertainment","Lifestyle","UGC","Travel","Product","Lainnya"],x.pillar)+select("Platform","platform",["TikTok","Instagram","YouTube","Threads","Facebook","Multiplatform"],x.platform)+input("Tanggal Posting","date",x.date,"date")+'<label class="field wide">Konsep / Catatan<textarea name="notes">'+txt(x.notes)+'</textarea></label></div><p class="rh-helper">Script lengkap dan shot list dapat dilanjutkan dari halaman Content.</p>'+formFooter()+'</form>');}
 function assetForm(){modal("Tambah Tautan Aset",'<form id="asset-form"><div class="form-grid">'+input("Nama Aset *","title","","text","required")+input("Link HTTPS *","url","","url","required pattern=https?://.+")+select("Jenis","kind",["Referensi","Footage","Folder","Dokumen","Audio","Foto"],"Referensi")+'</div>'+formFooter()+'</form>');}
 
+
+/* Collaboration includes its own connected production editors and PDF/text brief. */
+function rhCollabContentCard(item={},opened=false){
+ const itemId=item.id||id();
+ const scripts=Array.isArray(item.script)&&item.script.length?item.script:
+  (item.hook?[{id:id(),type:"Hook",text:item.hook}]:[{id:id(),type:"Hook",text:""},{id:id(),type:"Edukasi",text:""},{id:id(),type:"CTA",text:""}]);
+ const shots=Array.isArray(item.shots)?item.shots:[];
+ const checks=Array.isArray(item.checklist)&&item.checklist.length?item.checklist:CONTENT_CHECKS.map(x=>({id:id(),text:x,checked:false}));
+ const refs=Array.isArray(item.references)?item.references:[];
+ const platforms=["TikTok","Instagram","Instagram Reels","YouTube","YouTube Shorts","Facebook","Threads","Multiplatform"];
+ const options=platforms.map(v=>'<option value="'+txt(v)+'"'+((item.platform||"TikTok")===v?" selected":"")+'>'+txt(v)+'</option>').join("");
+ return '<details class="rh-collab-content-card" data-content-id="'+txt(itemId)+'"'+(opened?" open":"")+'>'
+ +'<summary><span class="rh-card-video-icon">▶</span><span class="rh-card-video-title">'+txt(item.title||"Konten baru")+'</span><span class="rh-card-video-meta">'+txt(item.platform||"TikTok")+'</span></summary>'
+ +'<div class="rh-collab-content-body">'
+ +'<div class="rh-collab-fields"><label class="field">Judul Konten<input data-content-field="title" value="'+txt(item.title||"")+'" placeholder="Contoh: UGC Video 1"></label>'
+ +'<label class="field">Platform<select data-content-field="platform">'+options+'</select></label>'
+ +'<label class="field">Tanggal Shooting<input type="date" data-content-field="shoot_date" value="'+txt(item.shoot_date||"")+'"></label>'
+ +'<label class="field">Tanggal Posting<input type="date" data-content-field="date" value="'+txt(item.date||"")+'"></label></div>'
+ +rhBuilder("script","Script per Kalimat",scripts,[],scripts)
+ +rhBuilder("shots","Shot List",shots,[{id:id(),text:"",angle:"",checked:false}],scripts)
+ +rhBuilder("checklist","Checklist Produksi",checks,[],scripts)
+ +rhBuilder("references","Link Referensi Content",refs,[{id:id(),label:"",url:""}],scripts)
+ +'<div class="rh-collab-fields"><label class="field rh-wide">Konsep / Catatan<textarea data-content-field="notes" placeholder="Catatan untuk produksi">'+txt(item.notes||"")+'</textarea></label>'
+ +'<label class="field rh-wide">Caption<textarea data-content-field="caption" placeholder="Caption posting">'+txt(item.caption||"")+'</textarea></label>'
+ +'<label class="field">Hashtag<input data-content-field="hashtags" value="'+txt(item.hashtags||"")+'" placeholder="#ugc"></label>'
+ +'<label class="field">Link Hasil Konten<input data-content-field="published_url" value="'+txt(item.published_url||"")+'" placeholder="Link jika sudah diposting"></label></div>'
+ +'<div class="rh-collab-content-footer">'+btn("Hapus Konten","collab-remove-content","danger")+'</div>'
+ +'</div></details>';
+}
+function rhCollectCollabContent(form){
+ return [...form.querySelectorAll(".rh-collab-content-card")].map(card=>{
+   const get=k=>String(card.querySelector('[data-content-field="'+k+'"]')?.value||"").trim();
+   const item={id:card.dataset.contentId||id(),title:get("title"),platform:get("platform")||"TikTok",date:get("date"),shoot_date:get("shoot_date"),notes:get("notes"),caption:get("caption"),hashtags:get("hashtags"),published_url:get("published_url")};
+   for(const kind of ["script","shots","checklist","references"])item[kind]=rhCollectRows(card,kind);
+   const meaningful=item.title||item.script.some(x=>x.text)||item.shots.some(x=>x.text)||item.notes||item.caption||item.date;
+   if(!meaningful&&!state.ideas.some(x=>x.id===item.id))return null;
+   item.title=item.title||"Konten belum diberi judul";
+   item.content_type="UGC";item.goal="Awareness";
+   item.hook=item.script.find(x=>x.type==="Hook")?.text||"";
+   item.pillar="UGC";item.updated_at=Date.now();
+   return item;
+ }).filter(Boolean);
+}
+function rhListCollabContent(brandId){
+ const connected=state.ideas.filter(x=>x.brand_id===brandId);
+ return connected.length?connected.map((item,i)=>rhCollabContentCard(item,false)).join(""):rhCollabContentCard({},true);
+}
+function rhBriefPdfMeta(form){
+ const get=k=>String(form.querySelector('[name="'+k+'"]')?.value||"");
+ return {id:get("brief_pdf_id"),name:get("brief_pdf_name"),size:Math.max(0,Number(get("brief_pdf_size"))||0),cloud:get("brief_pdf_cloud"),uploaded_at:get("brief_pdf_date")};
+}
+function rhPdfInput(form){
+ if(!form)return;
+ const meta=rhBriefPdfMeta(form);
+ const box=form.querySelector("[data-brief-preview]"),status=form.querySelector("[data-brief-status]");
+ if(box)box.innerHTML=meta.id?'<span class="rh-pdf-name">'+txt(meta.name||"Brief.pdf")+'</span><span class="rh-pdf-weight">'+Math.round(meta.size/1024)+' KB</span>'+btn("Buka PDF","brief-open","") +btn("Hapus","brief-remove","danger"):"";
+ if(status)status.textContent=meta.id?(meta.cloud==="yes"?"PDF tersimpan di Cloudflare dan perangkat ini":"PDF tersimpan di perangkat ini"):"Pilih PDF maksimal 8 MB, atau isi brief teks di bawah.";
+}
+let rhPdfDB=null;
+function rhOpenPdfDB(){
+ if(!("indexedDB" in window))return Promise.reject(Error("Penyimpanan file tidak didukung browser ini"));
+ if(rhPdfDB)return rhPdfDB;
+ rhPdfDB=new Promise((resolve,reject)=>{
+   const req=indexedDB.open("rh-collaboration-brief-pdf",1);
+   req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains("briefs"))db.createObjectStore("briefs",{keyPath:"id"});};
+   req.onsuccess=()=>resolve(req.result);
+   req.onerror=()=>reject(req.error||Error("Gagal membuka penyimpanan PDF"));
+ }).catch(err=>{rhPdfDB=null;throw err;});
+ return rhPdfDB;
+}
+async function rhPutPdfLocal(key,blob,name){
+ const db=await rhOpenPdfDB();
+ return new Promise((resolve,reject)=>{
+   const tx=db.transaction("briefs","readwrite");
+   tx.objectStore("briefs").put({id:key,blob,name,created_at:Date.now()});
+   tx.oncomplete=()=>resolve(true);
+   tx.onerror=()=>reject(tx.error||Error("Gagal menyimpan PDF di perangkat"));
+   tx.onabort=()=>reject(tx.error||Error("Penyimpanan PDF dibatalkan"));
+ });
+}
+async function rhGetPdfLocal(key){
+ const db=await rhOpenPdfDB();
+ return new Promise((resolve,reject)=>{
+   const tx=db.transaction("briefs","readonly"),req=tx.objectStore("briefs").get(key);
+   req.onsuccess=()=>resolve(req.result?.blob||null);
+   req.onerror=()=>reject(req.error||Error("Gagal membaca PDF"));
+ });
+}
+async function rhHandlePdfUpload(form,file){
+ if(!file)return;
+ const status=form.querySelector("[data-brief-status]");
+ if(file.size>8*1024*1024)throw Error("PDF terlalu besar. Maksimal 8 MB.");
+ const bytes=await file.arrayBuffer(),header=new TextDecoder().decode(bytes.slice(0,5));
+ if(header!=="%PDF-")throw Error("File tidak dikenali sebagai PDF yang valid.");
+ const key="pdf_"+id();
+ if(status)status.textContent="Menyimpan PDF…";
+ let local=false,cloud=false;
+ try{await rhPutPdfLocal(key,new Blob([bytes],{type:"application/pdf"}),file.name);local=true;}
+ catch(error){console.warn("Local PDF store failed:",error);}
+ try{
+   const response=await fetch("/api/collaboration-pdf/"+key,{method:"PUT",credentials:"same-origin",headers:{"content-type":"application/pdf"},body:bytes});
+   cloud=response.ok;
+ }catch(error){console.warn("Cloud PDF upload unavailable:",error);}
+ if(!local&&!cloud)throw Error("PDF belum tersimpan. Cek ruang penyimpanan browser atau sesi akun.");
+ const values={brief_pdf_id:key,brief_pdf_name:file.name.slice(0,180),brief_pdf_size:String(file.size),brief_pdf_cloud:cloud?"yes":"no",brief_pdf_date:String(Date.now())};
+ for(const [field,value] of Object.entries(values)){
+   const el=form.querySelector('[name="'+field+'"]');if(el)el.value=value;
+ }
+ rhPdfInput(form);
+ saveDraft(form);
+ notice(cloud?"PDF tersimpan di Cloudflare dan perangkat ini.":"PDF tersimpan di perangkat ini. Simpan Collaboration untuk menautkannya.","ok");
+}
+async function rhOpenBriefPdf(form){
+ const meta=rhBriefPdfMeta(form);
+ if(!meta.id){alert("Belum ada PDF yang dilampirkan.");return;}
+ const tab=window.open("about:blank","_blank");
+ try{
+   let pdf=null;
+   try{pdf=await rhGetPdfLocal(meta.id);}catch(_){}
+   if(!pdf&&meta.cloud==="yes"){
+     const response=await fetch("/api/collaboration-pdf/"+encodeURIComponent(meta.id),{credentials:"same-origin",cache:"no-store"});
+     if(response.ok)pdf=await response.blob();
+   }
+   if(!pdf)throw Error("PDF tidak ada di perangkat ini. Jika tersimpan di perangkat lain tanpa sinkron cloud, buka PDF dari perangkat asal.");
+   const blobUrl=URL.createObjectURL(pdf);
+   if(tab)tab.location.href=blobUrl;
+   else{
+     const a=document.createElement("a");a.href=blobUrl;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();
+   }
+   setTimeout(()=>URL.revokeObjectURL(blobUrl),120000);
+ }catch(e){if(tab)tab.close();alert(e.message||"Tidak dapat membuka PDF");}
+}
+
 function brandForm(editId){
  const x=state.brands.find(a=>a.id===editId)||{name:"",contact:"",value:"",deadline:"",status:"Prospek",deliverables:"",notes:"",campaign:"",industry:"",goal:"",collaboration_type:"UGC",compensation_type:"Paid",barter:"",paid:0,dp:0};
  const contactValue=x.contact||x.pic||"";
