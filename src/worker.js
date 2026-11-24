@@ -39,6 +39,61 @@ async function tokengrant(env,details){
 }
 async function getUser(token){const fields="open_id,display_name,avatar_url,username,follower_count,following_count,likes_count,video_count";const r=await fetch(TIKTOK_USER+"?fields="+fields,{headers:{authorization:"Bearer "+token,"cache-control":"no-store"}});const j=await r.json();if(!r.ok||j.error?.code!=="ok"||!j.data?.user)throw Error("TikTok user info: "+(j.error?.code||r.status));return j.data.user;}
 async function recentVideos(token){const fields="id,title,create_time,cover_image_url,share_url,view_count,like_count,comment_count,share_count";const r=await fetch(TIKTOK_VIDEO+"?fields="+fields,{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+token},body:JSON.stringify({max_count:20})});const j=await r.json();if(!r.ok||j.error?.code!=="ok")throw Error("TikTok video list: "+(j.error?.code||r.status));return (j.data?.videos||[]).map(v=>({id:v.id,title:v.title||"",view_count:v.view_count??null,like_count:v.like_count??null,comment_count:v.comment_count??null,share_count:v.share_count??null,create_time:v.create_time??null,share_url:v.share_url||""}));}
+
+const WORKSPACE_FIELDS={
+ ideas:["id","title","hook","pillar","platform","stage","notes","date","updated_at"],
+ assets:["id","title","url","kind","updated_at"],
+ brands:["id","name","contact","value","deadline","status","deliverables","notes","updated_at"]
+};
+function blankWorkspace(){return {profile:{handle:"@ikyhdyat",updated_at:0},ideas:[],assets:[],brands:[],deleted:{ideas:{},assets:{},brands:{}}};}
+function normalizedWorkspace(input){
+ const src=input&&typeof input==="object"&&!Array.isArray(input)?input:{},out=blankWorkspace();
+ if(src.profile&&typeof src.profile==="object"&&!Array.isArray(src.profile)){
+   const keys=["handle","followers","views","likes","videos","updated_at"];
+   for(const k of keys){const v=src.profile[k];if((typeof v==="string"||typeof v==="number")&&String(v).length<250)out.profile[k]=v;}
+ }
+ for(const group of ["ideas","assets","brands"]){
+   const entries=Array.isArray(src[group])?src[group].slice(0,3000):[];
+   const seen=new Set();
+   for(const ent of entries){
+     if(!ent||typeof ent!=="object"||typeof ent.id!=="string"||!ent.id||ent.id.length>96||seen.has(ent.id))continue;
+     seen.add(ent.id);
+     const row={id:ent.id};
+     for(const field of WORKSPACE_FIELDS[group]){
+       if(field==="id")continue;
+       const val=ent[field];
+       if(field==="updated_at"){row.updated_at=Number.isFinite(Number(val))?Math.max(0,Number(val)):0;continue;}
+       if(typeof val==="string")row[field]=val.slice(0,field==="notes"||field==="deliverables"?12000:1000);
+       if(typeof val==="number"&&Number.isFinite(val))row[field]=val;
+     }
+     out[group].push(row);
+   }
+   if(src.deleted&&typeof src.deleted[group]==="object"&&src.deleted[group]){
+     for(const [id,at] of Object.entries(src.deleted[group]).slice(0,5000)){
+       if(id.length<=96&&Number.isFinite(Number(at)))out.deleted[group][id]=Math.max(0,Number(at));
+     }
+   }
+ }
+ return out;
+}
+function mergeWorkspace(base,incoming){
+ const a=normalizedWorkspace(base),b=normalizedWorkspace(incoming),merged=blankWorkspace();
+ merged.profile=(Number(b.profile.updated_at)||0)>=(Number(a.profile.updated_at)||0)?b.profile:a.profile;
+ for(const group of ["ideas","assets","brands"]){
+   const deletions={...a.deleted[group]};
+   for(const [id,at] of Object.entries(b.deleted[group]))deletions[id]=Math.max(Number(deletions[id])||0,Number(at)||0);
+   const rows=new Map();
+   for(const row of a[group])rows.set(row.id,row);
+   for(const row of b[group]){
+     const prev=rows.get(row.id);
+     if(!prev||(Number(row.updated_at)||0)>(Number(prev.updated_at)||0))rows.set(row.id,row);
+   }
+   merged[group]=[...rows.values()].filter(r=>(Number(r.updated_at)||0)>(Number(deletions[r.id])||0)).slice(0,3000);
+   merged.deleted[group]=deletions;
+ }
+ return merged;
+}
+
 export class TikTokStore {
   constructor(ctx,env){this.ctx=ctx;this.env=env;this.syncing=null;}
   async fetch(req){
@@ -103,6 +158,25 @@ export class TikTokStore {
           video_api_status:latest?.video_error?(videoCode?videoCode[1]:"failed"):latest?(latest.recent_video_count===0?"no_videos":"ok"):"not_checked",
           sync_error_present:!!lastError
         });
+      }
+      if(path==="/internal/workspace"&&req.method==="GET"){
+        const stored=await s.get("workspace");
+        return json({ok:true,workspace:normalizedWorkspace(stored),saved_at:await s.get("workspace-saved-at")||null});
+      }
+      if(path==="/internal/workspace"&&req.method==="PUT"){
+        const len=Number(req.headers.get("content-length")||0);
+        if(len>900000)return json({error:"workspace_too_large"},413);
+        const raw=await req.text();
+        if(raw.length>900000)return json({error:"workspace_too_large"},413);
+        let parsed;
+        try{parsed=JSON.parse(raw);}catch{return json({error:"invalid_json"},400);}
+        const merged=mergeWorkspace(await s.get("workspace"),parsed?.workspace);
+        const serialized=JSON.stringify(merged);
+        if(serialized.length>900000)return json({error:"workspace_too_large"},413);
+        const savedAt=new Date().toISOString();
+        await s.put("workspace",merged);
+        await s.put("workspace-saved-at",savedAt);
+        return json({ok:true,workspace:merged,saved_at:savedAt});
       }
       if(path==="/internal/status"){
         const acct=await s.get("account"),latest=await s.get("latest"),history=await s.get("history")||[],lastError=await s.get("last-error");
@@ -189,7 +263,7 @@ export default {
     }
     if(!originAllowed(req))return json({error:"invalid_origin"},403);
     if(path==="/api/tiktok/config"&&req.method==="GET"){
-      return json({oauth_diagnostics:"cross-device-status-v7",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
+      return json({oauth_diagnostics:"workspace-cloud-v8",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
     }
     if(path==="/api/tiktok/health"&&req.method==="GET"){
       const [a,b,c]=await Promise.all([
@@ -249,6 +323,15 @@ export default {
         latest:publicLatest,
         history
       });
+    }
+    if(path==="/api/workspace"&&["GET","PUT"].includes(req.method)){
+      if(!await isOwner(req,env))return json({error:"owner_authorization_required"},401);
+      const r=await proxy(env,"/internal/workspace",{
+        method:req.method,
+        headers:{"content-type":"application/json"},
+        ...(req.method==="PUT"?{body:await req.text()}:{})
+      });
+      return new Response(r.body,{status:r.status,headers:HEADER});
     }
     if(!await isOwner(req,env))return json({error:"owner_authorization_required"},401);
     if(path==="/api/tiktok/sync"&&req.method==="POST"){const r=await proxy(env,"/internal/sync",{method:"POST"});return new Response(r.body,{status:r.status,headers:HEADER});}
