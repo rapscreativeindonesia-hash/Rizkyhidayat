@@ -8,9 +8,9 @@ async function run(){
  try{
   const w=iframe.contentWindow,d=w.document;
   await delay(210);
+  d.querySelector('[data-page="brand"]').click();await delay(70);
   w.scrollTo(0,380);await delay(70);
   const before=w.scrollY;
-  d.querySelector('[data-page="brand"]').click();await delay(50);
   d.querySelector('[data-action="new-brand"]').click();await delay(90);
   const modal=d.querySelector("#modal-layer.open .modal");
   const form=d.querySelector("#brand-form");
@@ -18,7 +18,7 @@ async function run(){
   const heading=modal?.querySelector(".modal-head");
   const footer=form?.querySelector(":scope > .form-actions");
   check(modal&&area&&heading&&footer,"Pinned modal structure missing");
-  const y0={head:heading.getBoundingClientRect().top,footer:footer.getBoundingClientRect().top,modal:modal.getBoundingClientRect().top,page:w.scrollY};
+  const y0={head:heading.getBoundingClientRect().top,footer:footer.getBoundingClientRect().top,modal:modal.getBoundingClientRect().top,page:w.scrollY};tests.beforeScroll=before;
   const fixedBody=d.body.classList.contains("rh-modal-locked");
   const footerAlwaysVisible=()=>footer.getBoundingClientRect().bottom<=iframe.clientHeight+3&&footer.getBoundingClientRect().top>=-3;
   const headAlwaysVisible=()=>heading.getBoundingClientRect().top>=-3;
@@ -30,7 +30,7 @@ async function run(){
   check(Object.values(tests.collaboration).every(Boolean),"Collaboration modal failed "+JSON.stringify(tests.collaboration));
   const brandInput=form.querySelector('[name="name"]');brandInput.value="QA pinned "+Date.now();brandInput.dispatchEvent(new w.Event("input",{bubbles:true}));
   footer.querySelector('button[type="submit"]').click();await delay(130);
-  tests.saved={modalClosed:!d.querySelector("#modal-layer").classList.contains("open"),backgroundUnlocked:!d.body.classList.contains("rh-modal-locked"),brandCreated:[...d.querySelectorAll(".rh-collab-card")].some(el=>el.textContent.includes(brandInput.value)),scrollRestored:Math.abs(w.scrollY-before)<=2};
+  tests.saved={scrollAfterClose:round(w.scrollY),scrollBeforeOpen:round(before),modalClosed:!d.querySelector("#modal-layer").classList.contains("open"),backgroundUnlocked:!d.body.classList.contains("rh-modal-locked"),brandCreated:[...d.querySelectorAll(".rh-collab-card")].some(el=>el.textContent.includes(brandInput.value)),scrollRestored:Math.abs(w.scrollY-before)<=2};
   check(Object.values(tests.saved).every(Boolean),"Collaboration save after pinned scroll failed "+JSON.stringify(tests.saved));
   d.querySelector('[data-page="production"]').click();await delay(60);
   d.querySelector('[data-action="new-content"]').click();await delay(70);
