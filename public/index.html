@@ -472,6 +472,61 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
  .rh-editor-form .rh-inline-main select{font-size:16px!important}
  .rh-editor-form .rh-inline-script{grid-template-columns:minmax(100px,106px) minmax(0,1fr)}
 }
+
+/* Brand brief (PDF or text) and connected content production in one collaboration form */
+.rh-pdf-brief-section{display:flex;flex-direction:column;gap:10px}
+.rh-pdf-brief-section>h4{margin:0!important}
+.rh-pdf-upload{display:flex;flex-wrap:wrap;align-items:center;gap:9px;background:#192e39;border:1px solid #3c5765;border-radius:11px;padding:10px}
+.rh-pdf-upload-label{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:37px;border:1px solid #7ca2b6;border-radius:9px;background:#294659;color:#e3f4f8;font-size:12px;font-weight:750;padding:8px 14px;cursor:pointer}
+.rh-pdf-upload-label input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.rh-pdf-upload-label:focus-within{outline:2px solid #a6d5e8;outline-offset:2px}
+.rh-pdf-preview{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.rh-pdf-preview>.button{padding:8px 11px!important;border-radius:9px;font-size:11px}
+.rh-pdf-name{font-size:12px;font-weight:650;color:#e7f6f8;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rh-pdf-weight,.rh-pdf-status{color:#a9bec9;font-size:11px}
+.rh-pdf-status{margin:0;flex:1 0 100%;line-height:1.5}
+.rh-pdf-brief-section>.field{margin:0}
+.rh-collab-production{min-width:0}
+.rh-collab-production-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+.rh-collab-production-head h4{font-size:15px!important;margin:0 0 4px!important}
+.rh-collab-production-head p{margin:0;color:#adbfca;font-size:11px;line-height:1.5;max-width:440px}
+.rh-collab-production-head>.button{white-space:normal;font-size:11px;padding:9px 13px}
+.rh-collab-content-list{display:flex;flex-direction:column;gap:10px;min-width:0}
+.rh-collab-content-card{border:1px solid #44616f;background:#142734;border-radius:12px;min-width:0;overflow:visible}
+.rh-collab-content-card>summary{list-style:none;display:flex;gap:9px;align-items:center;min-height:49px;padding:10px 13px;cursor:pointer;user-select:none}
+.rh-collab-content-card>summary::-webkit-details-marker{display:none}
+.rh-collab-content-card>summary:after{content:"⌄";font-size:20px;color:#b8d3df;margin-left:auto;transition:transform .16s}
+.rh-collab-content-card[open]>summary:after{transform:rotate(180deg)}
+.rh-card-video-icon{display:grid;place-items:center;background:#2c4a59;border-radius:7px;color:#c5e2ec;flex:0 0 27px;width:27px;height:27px;font-size:11px}
+.rh-card-video-title{flex:1;min-width:0;font-size:13px;font-weight:750;color:#edf8fa;overflow-wrap:anywhere}
+.rh-card-video-meta{padding:5px 8px;border:1px solid #4e6d7b;background:#263f4b;color:#bed6df;font-size:10px;border-radius:7px}
+.rh-collab-content-body{border-top:1px solid #3e5663;padding:11px;display:flex;flex-direction:column;gap:9px}
+.rh-collab-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.rh-collab-fields .field{min-width:0;font-size:11px;color:#b6ced7}
+.rh-collab-fields .field input,.rh-collab-fields .field select,.rh-collab-fields .field textarea{background:#0f2431;color:#edf6f9;padding:9px 10px;min-width:0;width:100%;max-width:100%;border:1px solid #405d6b;border-radius:9px;font-size:13px}
+.rh-collab-fields .rh-wide{grid-column:1/-1}
+.rh-collab-fields textarea{min-height:50px;resize:none}
+.rh-collab-content-body .rh-builder-section{margin:0!important;padding:10px!important;background:#182d39;border-radius:10px;border-color:#354f5c}
+.rh-collab-content-body .rh-builder-head h4{font-size:12px!important}
+.rh-collab-content-footer{display:flex;justify-content:flex-end;padding-top:2px}
+.rh-collab-content-footer .button{font-size:11px;border-radius:9px;padding:8px 11px}
+.rh-collab-brief-summary{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border-top:1px solid #3b5361;padding-top:11px}
+.rh-collab-brief-summary>.button{font-size:11px;padding:8px 10px;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.rh-collab-brief-summary details{width:100%;font-size:11px;color:#b9cfd8}
+.rh-collab-brief-summary summary{cursor:pointer;display:list-item;color:#d6e9f2;font-weight:700}
+.rh-collab-brief-summary details p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0;max-height:400px;overflow:auto}
+@media(max-width:600px){
+ .rh-pdf-upload{padding:9px;gap:7px}
+ .rh-pdf-upload-label{font-size:11px;padding:9px 11px}
+ .rh-pdf-name{max-width:160px}
+ .rh-collab-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .rh-collab-fields .field{grid-column:1/-1}
+ .rh-collab-content-body{padding:9px}
+ .rh-collab-production-head{align-items:flex-start}
+ .rh-collab-production-head h4{font-size:14px!important}
+ .rh-collab-content-card>summary{padding:9px 10px}
+ .rh-card-video-meta{font-size:9px;padding:5px}
+}
 </style>
 </head>
 <body>
@@ -851,7 +906,7 @@ function brandCard(item){
  const checks=item.deliverables_checklist||[];
  const done=checks.filter(x=>x.checked).length;
  const links=[...(item.final_links||[])].filter(x=>safeWebLink(x.url)).slice(0,3);
- return '<article class="panel rh-collab-card"><div class="rh-project-heading"><div><p class="rh-project-kicker">'+txt(item.industry||"BRAND COLLABORATION")+'</p><h3>'+txt(item.name||"Brand")+'</h3><p class="rh-campaign">'+txt(item.campaign||"Campaign belum dinamai")+'</p></div><span class="rh-platform">'+txt(item.status||"Prospek")+'</span></div><div class="rh-collab-metrics"><div><span>Nilai Deal</span><strong>'+rp(value)+'</strong></div><div><span>Sisa Pembayaran</span><strong>'+rp(remaining)+'</strong></div><div><span>Konten</span><strong>'+related.length+'</strong></div></div><div class="rh-progress-head"><span>Deliverables</span><strong>'+done+' / '+checks.length+'</strong></div><div class="rh-progress"><span style="width:'+(checks.length?Math.round(done/checks.length*100):0)+'%"></span></div><div class="rh-collab-details">'+(Number(item.rate_card)>0?'<span>Rate Card '+rp(item.rate_card)+'</span>':"")+'<span>'+(item.deadline?"Deadline "+fmt(item.deadline):"Deadline belum diisi")+'</span><span>'+txt(item.collaboration_type||"Kolaborasi")+'</span></div><div class="buttons rh-collab-actions">'+btn("+ Produksi Content","new-collab-content","primary",'data-id="'+txt(item.id)+'"')+btn("Edit Collaboration","edit-brand","",'data-id="'+txt(item.id)+'"')+btn("Hapus","delete-brand","danger",'data-id="'+txt(item.id)+'"')+'</div>'+(related.length?'<div class="rh-related"><h4>Konten Collaboration</h4><div class="rh-related-grid">'+related.map(x=>rhProjectCard(x,true)).join("")+'</div></div>':'<p class="rh-collab-empty">Belum ada konten terhubung. Tambah Content untuk mulai membuat script dan shot list.</p>')+(links.length?'<div class="rh-final-links"><h4>Hasil / publikasi</h4>'+links.map(x=>'<a href="'+txt(safeWebLink(x.url))+'" target="_blank" rel="noopener noreferrer">'+txt(x.label||"Buka hasil konten")+'</a>').join("")+'</div>':"")+'</article>';
+ return '<article class="panel rh-collab-card"><div class="rh-project-heading"><div><p class="rh-project-kicker">'+txt(item.industry||"BRAND COLLABORATION")+'</p><h3>'+txt(item.name||"Brand")+'</h3><p class="rh-campaign">'+txt(item.campaign||"Campaign belum dinamai")+'</p></div><span class="rh-platform">'+txt(item.status||"Prospek")+'</span></div><div class="rh-collab-metrics"><div><span>Nilai Deal</span><strong>'+rp(value)+'</strong></div><div><span>Sisa Pembayaran</span><strong>'+rp(remaining)+'</strong></div><div><span>Konten</span><strong>'+related.length+'</strong></div></div><div class="rh-progress-head"><span>Deliverables</span><strong>'+done+' / '+checks.length+'</strong></div><div class="rh-progress"><span style="width:'+(checks.length?Math.round(done/checks.length*100):0)+'%"></span></div><div class="rh-collab-details">'+(Number(item.rate_card)>0?'<span>Rate Card '+rp(item.rate_card)+'</span>':"")+'<span>'+(item.deadline?"Deadline "+fmt(item.deadline):"Deadline belum diisi")+'</span><span>'+txt(item.collaboration_type||"Kolaborasi")+'</span></div><div class="buttons rh-collab-actions">'+btn("+ Produksi Content","new-collab-content","primary",'data-id="'+txt(item.id)+'"')+btn("Edit Collaboration","edit-brand","",'data-id="'+txt(item.id)+'"')+btn("Hapus","delete-brand","danger",'data-id="'+txt(item.id)+'"')+'</div>'+(item.brief_pdf_id||item.brief_text?'<div class="rh-collab-brief-summary">'+(item.brief_pdf_id?btn("PDF Brief: "+(item.brief_pdf_name||"Buka PDF"),"brand-open-pdf","",'data-id="'+txt(item.id)+'"'):"")+(item.brief_text?'<details><summary>Brief Teks</summary><p>'+txt(item.brief_text)+'</p></details>':"")+'</div>':"")+(related.length?'<div class="rh-related"><h4>Konten Collaboration</h4><div class="rh-related-grid">'+related.map(x=>rhProjectCard(x,true)).join("")+'</div></div>':'<p class="rh-collab-empty">Belum ada konten terhubung. Tambah Content untuk mulai membuat script dan shot list.</p>')+(links.length?'<div class="rh-final-links"><h4>Hasil / publikasi</h4>'+links.map(x=>'<a href="'+txt(safeWebLink(x.url))+'" target="_blank" rel="noopener noreferrer">'+txt(x.label||"Buka hasil konten")+'</a>').join("")+'</div>':"")+'</article>';
 }
 function brand(){
  const total=state.brands.reduce((sum,x)=>sum+Math.max(0,Number(x.value)||0),0);
@@ -1041,7 +1096,7 @@ function rhCollectCollabContent(form){
  }).filter(Boolean);
 }
 function rhListCollabContent(brandId){
- const connected=state.ideas.filter(x=>x.brand_id===brandId);
+ const connected=brandId?state.ideas.filter(x=>x.brand_id===brandId):[];
  return connected.length?connected.map((item,i)=>rhCollabContentCard(item,false)).join(""):rhCollabContentCard({},true);
 }
 function rhBriefPdfMeta(form){
