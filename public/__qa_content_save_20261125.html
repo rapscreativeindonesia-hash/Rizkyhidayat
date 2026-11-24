@@ -22,8 +22,10 @@ async function run(){
   const item=(local.ideas||[]).find(x=>x.title===title);
   const count1=(d.querySelectorAll(".rh-project-card")||[]).length;
   const hadModal=d.getElementById("modal-layer")?.classList.contains("open");
-  ensure(fired===1,"Form submit did not fire; HTML validation may block");
-  ensure(item,"Created content not present in browser storage");
+  const diagnostics={submitFired:fired,noValidate:form.noValidate,checkValidity:form.checkValidity(),invalidFields:[...form.elements].filter(e=>e.willValidate&&!e.checkValidity()).map(e=>({name:e.name,type:e.type,value:e.value,reason:e.validationMessage})),localKeys:Object.keys(local),ideaCount:(local.ideas||[]).length,titles:(local.ideas||[]).map(x=>x.title).slice(0,5),cardCount:count1,modalOpen:hadModal,notice:d.getElementById("save-notice")?.textContent,bodyTail:d.body.innerText.slice(-330),contentID:form.dataset.draftContentId};
+  report({stage:"post-submit",...diagnostics});
+  ensure(fired===1,"Submit blocked: "+JSON.stringify(diagnostics));
+  ensure(item,"Created content not present in browser storage: "+JSON.stringify(diagnostics));
   ensure(count1>=1,"Created content not visible in Content list");
   ensure(!hadModal,"Form did not close after save");
   f.onload=null;
