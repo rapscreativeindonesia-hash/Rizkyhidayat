@@ -111,14 +111,14 @@ export default {
     }
     if(!await isAdmin(req,env))return json({error:"authentication_required"},401);
     if(path==="/api/tiktok/status"&&req.method==="GET"){const r=await proxy(env,"/internal/status");return new Response(r.body,{status:r.status,headers:HEADER});}
-    if(path==="/api/tiktok/connect"&&req.method==="GET"){
+    if(path==="/api/tiktok/connect"&&req.method==="POST"){
       if(!env.TIKTOK_CLIENT_KEY||!env.TIKTOK_CLIENT_SECRET)return json({error:"tiktok_app_not_configured"},503);
       const r=await proxy(env,"/internal/create-state",{method:"POST"});const j=await r.json();
       if(!j.state)return json({error:"state_failed"},502);
       const callback=env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href;
       const target=new URL(TIKTOK_AUTH);
       for(const [k,v] of Object.entries({client_key:env.TIKTOK_CLIENT_KEY,scope:SCOPES,response_type:"code",redirect_uri:callback,state:j.state}))target.searchParams.set(k,v);
-      return redirect(target.href);
+      return json({authorize_url:target.href});
     }
     if(path==="/api/tiktok/sync"&&req.method==="POST"){const r=await proxy(env,"/internal/sync",{method:"POST"});return new Response(r.body,{status:r.status,headers:HEADER});}
     if(path==="/api/tiktok/disconnect"&&req.method==="POST"){const r=await proxy(env,"/internal/disconnect",{method:"POST"});return new Response(r.body,{status:r.status,headers:HEADER});}
