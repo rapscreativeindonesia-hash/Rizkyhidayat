@@ -6,7 +6,7 @@ const TIKTOK_VIDEO = "https://open.tiktokapis.com/v2/video/list/";
 const SCOPES = "user.info.basic,user.info.profile,user.info.stats,video.list";
 const HEADER = { "content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff" };
 function json(obj,status=200){return new Response(JSON.stringify(obj),{status,headers:HEADER});}
-function redirect(url){return Response.redirect(url,302);}
+function redirect(url){return new Response(null,{status:302,headers:{"location":url,"cache-control":"no-store"}});}
 function secureCookie(name,value,maxAge){return name+"="+value+"; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age="+maxAge;}
 function b64(bytes){return btoa(String.fromCharCode(...bytes)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
 function nonce(){const a=new Uint8Array(32);crypto.getRandomValues(a);return b64(a);}
