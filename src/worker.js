@@ -13,7 +13,7 @@ function nonce(){const a=new Uint8Array(32);crypto.getRandomValues(a);return b64
 function equal(a,b){if(typeof a!=="string"||typeof b!=="string")return false;let diff=a.length^b.length;const len=Math.max(a.length,b.length);for(let i=0;i<len;i++)diff|=(a.charCodeAt(i)||0)^(b.charCodeAt(i)||0);return diff===0;}
 async function signature(secret,message){const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);return b64(new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(message))));}
 function getCookie(req,name){const match=(req.headers.get("cookie")||"").split("; ").find(x=>x.startsWith(name+"="));return match?match.slice(name.length+1):"";}
-async function isAdmin(req,env){if(!env.DASHBOARD_PASSWORD||env.DASHBOARD_PASSWORD.length<12)return false;const val=getCookie(req,"iky_auth"),[expiry,mac]=val.split(".");if(!expiry||!mac||!Number.isFinite(Number(expiry))||Number(expiry)<Date.now())return false;return equal(mac,await signature(env.DASHBOARD_PASSWORD,expiry));}
+async function isOwner(req,env){if(!env.DASHBOARD_PASSWORD||env.DASHBOARD_PASSWORD.length<12)return false;const parts=getCookie(req,"iky_owner").split(".");if(parts.length!==3)return false;const [expiry,randomPart,mac]=parts;if(!expiry||!randomPart||!mac||!Number.isFinite(Number(expiry))||Number(expiry)<Date.now())return false;return equal(mac,await signature(env.DASHBOARD_PASSWORD,expiry+"."+randomPart));}
 function originAllowed(req){const o=req.headers.get("origin");return !o||o===new URL(req.url).origin;}
 function store(env){return env.TIKTOK_STORE.get(env.TIKTOK_STORE.idFromName("personal-iky"));}
 function proxy(env,path,init){return store(env).fetch("https://internal"+path,init);}
@@ -83,7 +83,7 @@ export default {
     if(req.method==="OPTIONS")return new Response(null,{status:405});
     if(path==="/api/tiktok/callback"&&req.method==="GET"){
       const state=url.searchParams.get("state"),code=url.searchParams.get("code");
-      if(!state)return redirect(errURL(req,"invalid_state"));
+      if(!state||!equal(state,getCookie(req,"iky_oauth")))return redirect(errURL(req,"invalid_oauth_session"));
       const v=await proxy(env,"/internal/consume-state",{method:"POST",body:JSON.stringify({state})});
       const ver=await v.json();if(!ver.ok)return redirect(errURL(req,"state_expired"));
       if(url.searchParams.get("error"))return redirect(errURL(req,"authorization_denied"));
@@ -95,31 +95,34 @@ export default {
         const v=await proxy(env,"/internal/link",{method:"POST",body:JSON.stringify(token)});
         const result=await v.json();
         if(!v.ok||!result.ok)return redirect(errURL(req,result.error||"link_failed"));
-        return redirect(errURL(req,"connected"));
+        // Only an authorized TikTok account with the exact expected username can reach this point.
+        const expiry=String(Date.now()+7*24*60*60*1000),sessionNonce=nonce();
+        const mac=await signature(env.DASHBOARD_PASSWORD,expiry+"."+sessionNonce);
+        const res=redirect(errURL(req,"connected"));
+        res.headers.append("set-cookie",secureCookie("iky_owner",expiry+"."+sessionNonce+"."+mac,7*24*60*60));
+        res.headers.append("set-cookie",secureCookie("iky_oauth","",0));
+        return res;
       }catch(e){console.error("TikTok OAuth callback",String(e.message||e));return redirect(errURL(req,"token_exchange_failed"));}
     }
     if(!originAllowed(req))return json({error:"invalid_origin"},403);
     if(path==="/api/tiktok/config"&&req.method==="GET"){
-      return json({mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),admin_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
+      return json({mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
     }
-    if(path==="/api/login"&&req.method==="POST"){
-      if(!env.DASHBOARD_PASSWORD||env.DASHBOARD_PASSWORD.length<12)return json({error:"admin_password_not_configured"},503);
-      const b=await readBody(req);
-      if(!equal(b.password,env.DASHBOARD_PASSWORD))return json({error:"invalid_password"},401);
-      const expiry=String(Date.now()+30*24*60*60*1000),mac=await signature(env.DASHBOARD_PASSWORD,expiry);
-      const response=json({ok:true});response.headers.append("set-cookie",secureCookie("iky_auth",expiry+"."+mac,30*24*60*60));return response;
-    }
-    if(!await isAdmin(req,env))return json({error:"authentication_required"},401);
-    if(path==="/api/tiktok/status"&&req.method==="GET"){const r=await proxy(env,"/internal/status");return new Response(r.body,{status:r.status,headers:HEADER});}
+    // TikTok OAuth itself authenticates the owner. No separate password prompt.
     if(path==="/api/tiktok/connect"&&req.method==="POST"){
       if(!env.TIKTOK_CLIENT_KEY||!env.TIKTOK_CLIENT_SECRET)return json({error:"tiktok_app_not_configured"},503);
+      if(!env.DASHBOARD_PASSWORD||env.DASHBOARD_PASSWORD.length<12)return json({error:"session_secret_not_configured"},503);
       const r=await proxy(env,"/internal/create-state",{method:"POST"});const j=await r.json();
       if(!j.state)return json({error:"state_failed"},502);
       const callback=env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href;
       const target=new URL(TIKTOK_AUTH);
       for(const [k,v] of Object.entries({client_key:env.TIKTOK_CLIENT_KEY,scope:SCOPES,response_type:"code",redirect_uri:callback,state:j.state}))target.searchParams.set(k,v);
-      return json({authorize_url:target.href});
+      const response=json({authorize_url:target.href});
+      response.headers.append("set-cookie",secureCookie("iky_oauth",j.state,600));
+      return response;
     }
+    if(!await isOwner(req,env))return json({error:"owner_authorization_required"},401);
+    if(path==="/api/tiktok/status"&&req.method==="GET"){const r=await proxy(env,"/internal/status");return new Response(r.body,{status:r.status,headers:HEADER});}
     if(path==="/api/tiktok/sync"&&req.method==="POST"){const r=await proxy(env,"/internal/sync",{method:"POST"});return new Response(r.body,{status:r.status,headers:HEADER});}
     if(path==="/api/tiktok/disconnect"&&req.method==="POST"){const r=await proxy(env,"/internal/disconnect",{method:"POST"});return new Response(r.body,{status:r.status,headers:HEADER});}
     return json({error:"not_found"},404);
