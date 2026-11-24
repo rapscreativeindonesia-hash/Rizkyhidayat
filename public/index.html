@@ -883,9 +883,12 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("submit",function(e){
  const form=e.target;
+ window.__rhSaveStage="event:"+String(form?.id||"unknown");
  if(!["content-form","idea-form","asset-form","brand-form","profile-form"].includes(form.id))return;
  e.preventDefault();
+ window.__rhSaveStage="prevented";
  const fd=new FormData(form),get=k=>String(fd.get(k)||"").trim();
+ window.__rhSaveStage="formdata";
  try{
    const isLink=(s)=>!s||!!safeWebLink(s);
    if(form.id==="content-form"){
@@ -932,8 +935,10 @@ document.addEventListener("submit",function(e){
      for(const field of ["followers","views","likes","videos"])state.profile[field]=Math.max(0,Number(get(field))||0);
      state.profile.updated_at=Date.now();
    }
-   save();clearFormDraft(form);close();render();
+   window.__rhSaveStage="saving";
+   save();window.__rhSaveStage="stored";clearFormDraft(form);close();render();window.__rhSaveStage="rendered";
  }catch(error){
+   window.__rhSaveStage="error";window.__rhSaveError=String(error?.message||error);
    notice("Gagal menyimpan: "+error.message,"warn");
    alert("Data belum berhasil disimpan. Formulir tetap terbuka. "+error.message);
  }
