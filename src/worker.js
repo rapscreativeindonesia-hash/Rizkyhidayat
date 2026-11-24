@@ -255,7 +255,14 @@ export class TikTokStore {
 export default {
   async fetch(req,env,ctx){
     const url=new URL(req.url),path=url.pathname;
-    if(!path.startsWith("/api/"))return env.ASSETS.fetch(req);
+    if(!path.startsWith("/api/")){
+      const asset=await env.ASSETS.fetch(req);
+      if(req.method!=="GET"||!(path==="/"||path.endsWith(".html")))return asset;
+      const headers=new Headers(asset.headers);
+      headers.set("cache-control","no-store, no-cache, must-revalidate");
+      headers.set("pragma","no-cache");
+      return new Response(asset.body,{status:asset.status,headers});
+    }
     if(req.method==="OPTIONS")return new Response(null,{status:405});
     if(path==="/api/tiktok/callback"&&req.method==="GET"){
       const state=url.searchParams.get("state"),code=url.searchParams.get("code");
