@@ -502,8 +502,94 @@ var out='<section class="panel"><div class="monthline"><div class="buttons">'+bt
 ["Sen","Sel","Rab","Kam","Jum","Sab","Min"].forEach(function(w){out+='<div class="dayname">'+w+'</div>';});
 for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?state.ideas.filter(function(x){return x.date===dateStr;}):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.slice(0,3).map(function(x){return '<span class="event">'+txt(x.title)+'</span>';}).join("")+(matches.length>3?'<span class="event">+'+(matches.length-3)+' lainnya</span>':"")+'</div>';}out+='</div></section><div class="notice">Klik tanggal pada kalender untuk membuat ide dengan tanggal tersebut. Tahap produksi tetap dikelola melalui halaman Produksi Content.</div>';return out;}
 var stages=["Ide","Script","Shooting","Editing","Review","Final"];
-function production(){var result='<div class="toolbar"><span class="muted small">Pindahkan status pekerjaan dari kiri ke kanan hingga selesai.</span>'+btn("+ Produksi Baru","new-idea","primary")+'</div><div class="board">';
-stages.forEach(function(st){var list=state.ideas.filter(function(x){return x.stage===st;});result+='<div class="stage"><h4>'+st+' <span class="pill">'+list.length+'</span></h4>'+(list.length?list.map(function(x){var idx=stages.indexOf(st);return '<div class="stage-card"><strong>'+txt(x.title)+'</strong><p>'+txt(x.platform)+' · '+fmt(x.date)+'</p><div class="buttons">'+(idx>0?btn("←","back-stage","","data-id='"+txt(x.id)+"'"):"")+(idx<5?btn("Lanjut →","next-stage","primary","data-id='"+txt(x.id)+"'"):"")+'</div></div>';}).join(""):empty("Tidak ada konten"))+'</div>';});return result+'</div><div class="notice">Satu konten menggunakan satu status aktif. Ide, kalender, dan produksi membaca catatan yang sama sehingga tidak perlu input tiga kali.</div>';}
+
+/* Creator Content Workspace — one project referenced from Content, Collaboration and Calendar. */
+const SCRIPT_TYPES=["Hook","Problem","Edukasi","Value","Benefit","Proof","Transition","CTA","Custom"];
+const CONTENT_TYPES=["UGC","Personal Branding","Review","Event","Education","Entertainment","Travel","Product","Lifestyle","Lainnya"];
+const CONTENT_GOALS=["Awareness","Engagement","Conversion","Followers","Education","Portfolio","Lainnya"];
+const CONTENT_CHECKS=["Konsep & brief siap","Script selesai","Shot list siap","A-roll diambil","B-roll diambil","Editing selesai","Subtitle dan audio selesai","Color grading selesai","Final export siap","Caption dan posting selesai"];
+const RH_BUILDER_KEYS=["script","shots","checklist","references","deliverables_checklist","files","final_links"];
+function safeWebLink(value){try{const u=new URL(String(value||"").trim());return ["http:","https:"].includes(u.protocol)?u.href:"";}catch(e){return "";}}
+function rhTextArea(label,field,value,extra){
+ return '<label class="field '+(extra||"")+'">'+txt(label)+'<textarea name="'+field+'">'+txt(value||"")+'</textarea></label>';
+}
+function rhSelect(label,field,values,current,extra){
+ return '<label class="field '+(extra||"")+'">'+txt(label)+'<select name="'+field+'">'+values.map(x=>'<option value="'+txt(x)+'"'+(x===current?' selected':'')+'>'+txt(x)+'</option>').join("")+'</select></label>';
+}
+function rhBuilderRow(kind,item,scriptRows){
+ const obj=item||{},ident=txt(obj.id||id()),v=k=>txt(obj[k]||""),marked=obj.checked?' checked':'';
+ let inner="";
+ if(kind==="script"){
+   inner='<div class="rh-builder-grid"><label class="field">Bagian<select data-field="type">'+SCRIPT_TYPES.map(x=>'<option value="'+txt(x)+'"'+(obj.type===x?' selected':'')+'>'+txt(x)+'</option>').join("")+'</select></label><label class="field rh-builder-wide">Kalimat script<textarea data-field="text" rows="2" placeholder="Tulis satu kalimat…">'+v("text")+'</textarea></label></div>';
+ }else if(kind==="shots"){
+   const rows=scriptRows||[];
+   const options='<option value="">Tanpa hubungan script</option>'+rows.map((x,i)=>'<option value="'+txt(x.id)+'"'+(obj.scriptId===x.id?' selected':'')+'>Kalimat '+(i+1)+' · '+txt(x.type||"Script")+'</option>').join("");
+   inner='<div class="rh-builder-grid"><label class="field rh-builder-wide">Deskripsi shot<textarea data-field="text" rows="2" placeholder="Contoh: close-up tangan memegang produk">'+v("text")+'</textarea></label><label class="field">Angle / gerakan<input data-field="angle" value="'+v("angle")+'" placeholder="Close-up, pan, tracking…"></label><label class="field">Hubungkan script<select data-field="scriptId">'+options+'</select></label></div><label class="rh-check"><input type="checkbox" data-field="checked"'+marked+'> Shot selesai</label>';
+ }else if(kind==="checklist"||kind==="deliverables_checklist"){
+   inner='<div class="rh-builder-grid"><label class="field rh-builder-wide">Tugas / deliverable<input data-field="text" value="'+v("text")+'" placeholder="Tulis item checklist"></label></div><label class="rh-check"><input type="checkbox" data-field="checked"'+marked+'> Selesai</label>';
+ }else{
+   inner='<div class="rh-builder-grid"><label class="field">Judul / keterangan<input data-field="label" value="'+v("label")+'" placeholder="Nama referensi"></label><label class="field">URL<input type="url" data-field="url" value="'+v("url")+'" placeholder="https://…"></label></div>';
+ }
+ return '<div class="rh-builder-row" data-kind="'+txt(kind)+'" data-row-id="'+ident+'"><div class="rh-row-controls"><span class="rh-row-grip" aria-hidden="true">⋮⋮</span><div class="rh-row-buttons">'+btn("↑","builder-up","rh-icon-btn",'aria-label="Pindah ke atas"')+btn("↓","builder-down","rh-icon-btn",'aria-label="Pindah ke bawah"')+btn("×","builder-remove","rh-icon-btn rh-delete-btn",'aria-label="Hapus baris"')+'</div></div>'+inner+'</div>';
+}
+function rhBuilder(kind,title,rows,empty,scriptRows){
+ const items=Array.isArray(rows)&&rows.length?rows:(empty||[]);
+ return '<section class="rh-builder-section" data-group="'+txt(kind)+'"><div class="rh-builder-head"><div><h4>'+txt(title)+'</h4><p>'+({script:"Satu baris untuk satu kalimat. Atur urutan sesuai alur konten.",shots:"Setiap shot dapat dihubungkan ke kalimat script dan dicentang.",checklist:"Centang pekerjaan yang telah selesai. Tanpa status produksi.",deliverables_checklist:"Checklist kewajiban kerja sama dengan brand.",references:"Simpan lebih dari satu URL referensi.",files:"Simpan link brief atau folder file.",final_links:"Tautan hasil konten yang sudah dikirim atau dipublikasikan."}[kind]||"")+'</p></div>'+btn("+ Tambah","builder-add","rh-mini-btn",'data-kind="'+txt(kind)+'"')+'</div><div class="rh-builder-list" data-kind="'+txt(kind)+'">'+items.map(x=>rhBuilderRow(kind,x,scriptRows)).join("")+'</div></section>';
+}
+function rhCollectRows(form,kind){
+ const container=form.querySelector('.rh-builder-list[data-kind="'+kind+'"]');
+ if(!container)return [];
+ const fields=kind==="script"?["type","text"]:kind==="shots"?["text","angle","scriptId","checked"]:(kind==="checklist"||kind==="deliverables_checklist")?["text","checked"]:["label","url"];
+ return [...container.querySelectorAll(".rh-builder-row")].map(row=>{
+   const item={id:row.dataset.rowId||id()};
+   for(const field of fields){
+     const input=row.querySelector('[data-field="'+field+'"]');
+     item[field]=field==="checked"?!!input?.checked:String(input?.value||"").trim();
+   }
+   return item;
+ }).filter(x=>!!(x.text||x.url||x.label));
+}
+function rhLoadScriptRows(form){
+ return rhCollectRows(form,"script").map(x=>({id:x.id,type:x.type}));
+}
+function rhRefreshShotChoices(form){
+ const src=rhLoadScriptRows(form);
+ form.querySelectorAll('.rh-builder-list[data-kind="shots"] .rh-builder-row select[data-field="scriptId"]').forEach(sel=>{
+   const original=sel.value;
+   sel.innerHTML='<option value="">Tanpa hubungan script</option>'+src.map((x,i)=>'<option value="'+txt(x.id)+'">Kalimat '+(i+1)+' · '+txt(x.type)+'</option>').join("");
+   sel.value=src.some(x=>x.id===original)?original:"";
+ });
+}
+function rhReplaceBuilderRows(form,kind,items){
+ const container=form.querySelector('.rh-builder-list[data-kind="'+kind+'"]');if(!container)return;
+ container.innerHTML=(items||[]).map(item=>rhBuilderRow(kind,item,rhLoadScriptRows(form))).join("");
+ if(kind==="script")rhRefreshShotChoices(form);
+}
+function rhContentCompletion(item){
+ const checks=[...(item.checklist||[]),...(item.shots||[])];
+ return {done:checks.filter(x=>x.checked).length,total:checks.length};
+}
+function rhProjectCard(item,compact){
+ const brand=state.brands.find(x=>x.id===item.brand_id);
+ const progress=rhContentCompletion(item),percent=progress.total?Math.round(progress.done/progress.total*100):0;
+ return '<article class="panel rh-project-card'+(compact?' compact':'')+'"><div class="rh-project-heading"><div><p class="rh-project-kicker">'+txt(brand?brand.name+(brand.campaign?" · "+brand.campaign:""):"Personal Content")+'</p><h3>'+txt(item.title||"Konten tanpa judul")+'</h3></div><span class="rh-platform">'+txt(item.platform||"TikTok")+'</span></div><div class="rh-metadata"><span>'+txt(item.content_type||item.pillar||"Content")+'</span>'+(item.date?'<span>'+fmt(item.date)+'</span>':"")+'</div><div class="rh-progress-head"><span>Checklist produksi</span><strong>'+progress.done+' / '+progress.total+'</strong></div><div class="rh-progress"><span style="width:'+percent+'%"></span></div><div class="rh-project-stats"><span>'+n((item.script||[]).length||(item.hook?1:0))+' kalimat</span><span>'+n((item.shots||[]).length)+' shot</span><span>'+n((item.references||[]).length)+' referensi</span></div><div class="buttons">'+btn("Buka Content","edit-content","primary",'data-id="'+txt(item.id)+'"')+(compact?"":btn("Hapus","delete-idea","danger",'data-id="'+txt(item.id)+'"'))+'</div></article>';
+}
+function production(){
+ const linked=state.ideas.filter(x=>x.brand_id).length;
+ return '<div class="rh-content-page"><div class="rh-page-lead"><div><p class="rh-overline">CONTENT WORKSPACE</p><h3>Produksi Konten</h3><p>Tulis script per kalimat, susun shot list, tambahkan referensi dan centang pekerjaan.</p></div>'+btn("+ Content Baru","new-content","primary")+'</div><div class="rh-content-summary"><span>'+n(state.ideas.length)+' total konten</span><span>'+n(linked)+' terhubung ke Collaboration</span></div><div class="rh-project-grid">'+(state.ideas.length?state.ideas.slice().sort((a,b)=>(b.updated_at||0)-(a.updated_at||0)).map(x=>rhProjectCard(x,false)).join(""):empty("Belum ada konten. Tekan + Content Baru untuk membuat script dan shot list pertama."))+'</div></div>';
+}
+function contentForm(contentId,date,brandId){
+ const item=state.ideas.find(x=>x.id===contentId)||{title:"",pillar:"Education",platform:"TikTok",content_type:"UGC",goal:"Awareness",notes:"",date:date||"",shoot_date:"",brand_id:brandId||"",caption:"",hashtags:""};
+ const brand=state.brands.find(x=>x.id===(brandId||item.brand_id));
+ const script=Array.isArray(item.script)&&item.script.length?item.script:(item.hook?[{id:id(),type:"Hook",text:item.hook}]:[{id:id(),type:"Hook",text:""},{id:id(),type:"Edukasi",text:""},{id:id(),type:"Value",text:""},{id:id(),type:"CTA",text:""}]);
+ const shots=Array.isArray(item.shots)?item.shots:[];
+ const checks=Array.isArray(item.checklist)&&item.checklist.length?item.checklist:CONTENT_CHECKS.map(x=>({id:id(),text:x,checked:false}));
+ const refs=Array.isArray(item.references)?item.references:[];
+ const brandOptions='<option value="">Personal / tanpa brand</option>'+state.brands.map(x=>'<option value="'+txt(x.id)+'"'+(x.id===(brandId||item.brand_id)?" selected":"")+'>'+txt(x.name+(x.campaign?" · "+x.campaign:""))+'</option>').join("");
+ const details='<form id="content-form" class="rh-editor-form"><input type="hidden" name="id" value="'+txt(contentId||"")+'"><div class="rh-form-section"><h4>Informasi Konten</h4><div class="form-grid">'+input("Judul Konten *","title",item.title,"text","required maxlength=160")+rhSelect("Kategori","content_type",CONTENT_TYPES,item.content_type||"UGC")+rhSelect("Platform","platform",["TikTok","Instagram Reels","YouTube Shorts","Facebook","Threads","Multiplatform"],item.platform||"TikTok")+rhSelect("Tujuan","goal",CONTENT_GOALS,item.goal||"Awareness")+input("Tanggal Shooting","shoot_date",item.shoot_date,"date")+input("Tanggal Posting","date",date||item.date,"date")+'<label class="field wide">Collaboration terkait<select name="brand_id">'+brandOptions+'</select></label>'+rhTextArea("Konsep / Catatan","notes",item.notes,"wide")+'</div></div>'+rhBuilder("script","Script per Kalimat",script,[],script)+rhBuilder("shots","Shot List",shots,[{id:id(),text:"",angle:"",checked:false}],script)+rhBuilder("checklist","Checklist Produksi",checks,[],script)+rhBuilder("references","Link Referensi",refs,[{id:id(),label:"",url:""}],script)+'<div class="rh-form-section"><h4>Publikasi & Hasil</h4><div class="form-grid">'+rhTextArea("Caption","caption",item.caption,"wide")+input("Hashtag","hashtags",item.hashtags)+input("Link Folder / File","folder_url",item.folder_url,"url")+input("Link Konten Terpublikasi","published_url",item.published_url,"url")+'</div></div>'+formFooter()+'</form>';
+ modal(contentId?"Edit Content":"Buat Content",details);
+ if(brand&&!contentId)notice("Konten baru terhubung ke "+brand.name,"ok");
+}
 function brandCard(x){return '<section class="panel"><div class="itemtop"><h3>'+txt(x.name)+'</h3>'+chip(x.status)+'</div><p class="muted small">'+txt(x.contact||"Kontak belum diisi")+'</p><div class="tagrow">'+chip("Nilai "+rp(x.value))+chip(x.deadline?fmt(x.deadline):"Belum ada deadline")+'</div><p class="muted small">'+txt(x.deliverables||"Deliverable belum diisi")+'</p><p class="muted small">'+txt(x.notes||"")+'</p><div class="buttons">'+btn("Edit","edit-brand","","data-id='"+txt(x.id)+"'")+btn("Ubah Status","advance-brand","primary","data-id='"+txt(x.id)+"'")+btn("Hapus","delete-brand","danger","data-id='"+txt(x.id)+"'")+'</div></section>';}
 function brand(){var active=state.brands.filter(function(x){return x.status==="Aktif"||x.status==="Berjalan";}),paid=state.brands.filter(function(x){return x.status==="Selesai";});return '<div class="grid cols3">'+metric("Total Brand",n(state.brands.length),"Tercatat")+metric("Aktif / Berjalan",n(active.length),"Kolaborasi")+metric("Selesai",n(paid.length),"Proyek")+'</div><div class="toolbar" style="margin-top:20px"><h3>Daftar Kolaborasi</h3>'+btn("+ Tambah Brand","new-brand","primary")+'</div><div class="grid cols3">'+(state.brands.length?state.brands.map(brandCard).join(""):'<div style="grid-column:1/-1">'+empty("Belum ada brand. Tambahkan prospek, kontak, nilai deal, deliverables, dan tenggat.")+'</div>')+'</div>';}
 function modal(title,body){
