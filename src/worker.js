@@ -146,10 +146,27 @@ export default {
         const res=redirect(errURL(req,"connected"));
         res.headers.append("set-cookie",secureCookie("iky_owner",expiry+"."+sessionNonce+"."+mac,7*24*60*60));
         res.headers.append("set-cookie",secureCookie("iky_oauth","",0));
+        res.headers.append("set-cookie",secureCookie("iky_retry","",0));
         return res;
       }catch(e){
         console.error("TikTok OAuth callback failed",e?.oauthCategory||"internal_error",e?.oauthLogId||"");
         try{await proxy(env,"/internal/record-oauth-error",{method:"POST",body:JSON.stringify({category:e?.oauthCategory||"internal_error"})});}catch(_){}
+        // Authorization codes are one-use and may expire. Retry only once with a fresh code.
+        if(e?.oauthCategory==="invalid_grant"&&getCookie(req,"iky_retry")!=="1"){
+          try{
+            const retryStateResponse=await proxy(env,"/internal/create-state",{method:"POST"});
+            const retryState=await retryStateResponse.json();
+            if(retryState.state){
+              const redirectUri=env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href;
+              const authorization=new URL(TIKTOK_AUTH);
+              for(const [k,v] of Object.entries({client_key:env.TIKTOK_CLIENT_KEY.trim(),scope:SCOPES,response_type:"code",redirect_uri:redirectUri,state:retryState.state}))authorization.searchParams.set(k,v);
+              const retry=redirect(authorization.href);
+              retry.headers.append("set-cookie",secureCookie("iky_oauth",retryState.state,600));
+              retry.headers.append("set-cookie",secureCookie("iky_retry","1",600));
+              return retry;
+            }
+          }catch(retryError){console.error("TikTok fresh authorization attempt failed");}
+        }
         const target=new URL(errURL(req,"token_exchange_failed"));
         if(e?.oauthCategory)target.searchParams.set("oauth_error",e.oauthCategory);
         if(e?.oauthLogId)target.searchParams.set("oauth_log_id",e.oauthLogId);
@@ -158,7 +175,7 @@ export default {
     }
     if(!originAllowed(req))return json({error:"invalid_origin"},403);
     if(path==="/api/tiktok/config"&&req.method==="GET"){
-      return json({oauth_diagnostics:"credential-health-v3",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
+      return json({oauth_diagnostics:"retry-v4",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
     }
     if(path==="/api/tiktok/health"&&req.method==="GET"){
       const [a,b]=await Promise.all([
@@ -180,6 +197,7 @@ export default {
       for(const [k,v] of Object.entries({client_key:env.TIKTOK_CLIENT_KEY.trim(),scope:SCOPES,response_type:"code",redirect_uri:callback,state:j.state}))target.searchParams.set(k,v);
       const response=json({authorize_url:target.href});
       response.headers.append("set-cookie",secureCookie("iky_oauth",j.state,600));
+      response.headers.append("set-cookie",secureCookie("iky_retry","",0));
       return response;
     }
     if(!await isOwner(req,env))return json({error:"owner_authorization_required"},401);
