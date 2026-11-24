@@ -1,7 +1,25 @@
 name = "ikoyyypersonalbrand"
+main = "./src/worker.js"
 compatibility_date = "2026-11-24"
 workers_dev = true
+keep_vars = true
 
 [assets]
 directory = "./public"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[vars]
+TIKTOK_EXPECTED_USERNAME = "ikyhdyat"
+
+[triggers]
+crons = ["0 */6 * * *"]
+
+[[durable_objects.bindings]]
+name = "TIKTOK_STORE"
+class_name = "TikTokStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TikTokStore"]
