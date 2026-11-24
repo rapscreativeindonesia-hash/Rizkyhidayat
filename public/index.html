@@ -100,13 +100,31 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 @media(max-width:790px){.sidebar{padding:12px}.logo{padding:5px 5px 12px}.music-widget{display:block;margin:14px 3px 0;max-width:450px}.music-album{height:62px;margin:6px 0}.music-disc{width:48px;height:48px}.music-caption{display:none}.tt-profile-row{align-items:flex-start;flex-wrap:wrap}.tt-actions{margin:0;width:100%}.tt-actions .button{flex:1}.tt-profile-copy h3{font-size:21px}.tt-quick{grid-template-columns:1fr}}
 @media(max-width:460px){.tt-avatar{height:61px;width:61px;flex-basis:61px;border-radius:17px}.tt-metrics{gap:8px}.tt-metric{padding:10px}.tt-head{margin-bottom:16px}.tt-panel{border-radius:18px;padding:14px}.tt-metric .tt-metric-value{font-size:24px}.tt-metric .tt-metric-label{font-size:10px}.tt-metric .tt-metric-note{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.music-widget.is-playing .music-disc,.music-widget.is-playing .music-equalizer i,.music-album:after{animation:none}}
+
+/* Streamlined RH dashboard: keep sidebar useful on iPad and mobile. */
+.rh-logo img{display:block;width:100%;height:100%;object-fit:contain;max-width:100%;max-height:100%}
+.logo-mark.rh-logo{padding:5px}
+.sidebar{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:#526e7d transparent}
+.sidebar .logo{padding-bottom:18px}
+.sidebar .nav{flex:0 0 auto;gap:5px}
+.sidebar .nav button{padding:10px 12px}
+.sidebar .music-widget{flex-shrink:0;overflow:visible;margin-top:auto}
+.music-widget .music-album{height:64px}
+.music-widget .music-disc{width:54px;height:54px}
+.music-widget .music-controls{margin-top:9px}
+.music-widget .music-vol{margin-top:8px;margin-bottom:3px}
+.music-widget .music-caption{display:none}
+.top.dashboard-top{justify-content:flex-end;margin-bottom:12px}
+.top.dashboard-top >div:first-child{display:none}
+.tt-status{font-weight:800;letter-spacing:.07em;justify-content:center;min-width:80px;padding:7px 15px}
+.tt-profile-copy h3{margin:0}
+@media(max-width:790px){.sidebar{height:auto;overflow:visible}.sidebar .music-widget{max-width:100%;margin-top:12px;overflow:visible}.music-widget .music-album{height:58px}}
 </style>
 </head>
 <body>
 <div class="layout">
 <aside class="sidebar">
-<div class="logo"><div class="logo-mark rh-logo" role="img" aria-label="Monogram RH">RH</div><div class="brand-copy"><h1>Rizky Hidayat</h1><p>Freelance Content Creator</p></div></div>
-<div class="profile"><span class="profile-kicker">CREATOR SPACE</span><strong>Rizky Hidayat</strong><span id="side-handle">@ikyhdyat</span></div>
+<div class="logo"><div class="logo-mark rh-logo" role="img" aria-label="Logo RH asli"><img src="https://rizkyhidayat.com/assets/rh-script.svg" alt="Logo RH" loading="eager"></div><div class="brand-copy"><h1>Rizky Hidayat</h1><p>Freelance Content Creator</p></div></div>
 <nav class="nav" aria-label="Menu utama">
 <button data-page="dashboard" class="active"><span class="nav-icon">⌂</span>Dashboard</button>
 <button data-page="ideas"><span class="nav-icon">✦</span>Ide / Library</button>
@@ -114,13 +132,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 <button data-page="production"><span class="nav-icon">▷</span>Produksi Content</button>
 <button data-page="brand"><span class="nav-icon">◇</span>Brand</button>
 </nav>
-<section class="sidefoot music-widget" id="music-widget" aria-label="Studio Mood Player">
-<div class="music-top"><span class="music-overline">STUDIO RADIO</span><span class="music-equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
-<div class="music-album" aria-hidden="true"><div class="music-disc"><span>RH</span></div><span class="music-shine"></span></div>
+<section class="sidefoot music-widget" id="music-widget" aria-label="Ikoy Music">
+<div class="music-top"><span class="music-overline">IKOY MUSIC</span><span class="music-equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
+<div class="music-album" aria-hidden="true"><div class="music-disc"><span>IK</span></div><span class="music-shine"></span></div>
 <div class="music-meta"><strong id="music-track">Blue Hour</strong><small id="music-subtitle">Original ambient • Mood 01</small></div>
 <div class="music-controls"><button type="button" id="music-next" class="music-secondary" aria-label="Ganti suasana">↻</button><button type="button" id="music-toggle" class="music-play" aria-label="Putar musik" aria-pressed="false">▶</button><span id="music-state" class="music-state">PAUSED</span></div>
 <div class="music-vol"><span>VOL</span><input id="music-volume" type="range" min="0" max="100" value="35" aria-label="Volume musik ambient"></div>
-<p class="music-caption">Visual berubah otomatis setiap 3 detik.</p>
+
 </section>
 </aside>
 <main class="main"><header class="top"><div><h2 id="page-title">Dashboard</h2><p id="page-subtitle">Ringkasan perjalananmu sebagai content creator.</p></div><div class="date" id="now"></div></header><div id="app"></div><footer aria-label="Dokumen hukum" style="display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin:28px 0 0;padding:22px 8px 8px;border-top:1px solid #362b49;color:#b9a9ca;font-size:12px"><span>© 2026 Rizky Hidayat</span><a href="/privacy.html" style="color:#aacbd9">Privacy Policy</a><a href="/terms.html" style="color:#cfb3ff">Terms of Service</a></footer></main>
@@ -180,7 +198,7 @@ function metric(label,value,description){return '<section class="panel"><div cla
 function empty(txt){return '<div class="empty">'+esc(txt)+'</div>';}
 function txt(t){return esc(t);}
 function setpage(p){page=p;render();}
-function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide / Library","Bank ide, referensi, dan aset untuk produksi."],calendar:["Kalender Konten","Rencanakan jadwal konten di satu kalender."],production:["Produksi Content","Kelola proses konten dari ide sampai final."],brand:["Brand","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.getElementById("side-handle").textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
+function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide / Library","Bank ide, referensi, dan aset untuk produksi."],calendar:["Kalender Konten","Rencanakan jadwal konten di satu kalender."],production:["Produksi Content","Kelola proses konten dari ide sampai final."],brand:["Brand","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.querySelector(".top")?.classList.toggle("dashboard-top",page==="dashboard");const sh=document.getElementById("side-handle");if(sh)sh.textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
 function growthChart(history){
 if(!Array.isArray(history)||history.length<2)return '<div class="empty">Grafik pertumbuhan muncul setelah minimal dua sinkronisasi berhasil.</div>';
 const h=history.filter(x=>Number.isFinite(x.followers)).slice(-60);if(h.length<2)return '<div class="empty">Belum ada data pertumbuhan yang cukup.</div>';
@@ -197,33 +215,30 @@ function dashboard(){
  const name=live?.display_name||"Rizky Hidayat";
  const pic=live?.avatar_url?'<img class="tt-avatar" src="'+txt(live.avatar_url)+'" alt="Foto profil TikTok @'+txt(username)+'" referrerpolicy="no-referrer" loading="lazy">':'<div class="tt-avatar tt-avatar-fallback" aria-label="Foto profil belum tersedia">RH</div>';
  const age=live?.synced_at?new Date(live.synced_at).toLocaleString("id-ID"):"Menunggu sinkronisasi";
- const ageMarkup=live?.synced_at?'<span id="sync-age" data-synced-at="'+txt(live.synced_at)+'">Memperbarui status...</span>':"Data belum tersedia";
  const follower=allZero?"—":live?.followers!=null?n(live.followers):"—";
  const likes=allZero?"—":live?.likes!=null?n(live.likes):"—";
  const videos=allZero?"—":live?.video_count!=null?n(live.video_count):"—";
  const views=live?.recent_video_count>0?n(live.recent_views):"—";
  const scopeNames=new Set((tiktokSync?.scope||"").split(",").map(x=>x.trim()).filter(Boolean));
- const videoNote=live?.video_error?"TikTok API: "+txt(live.video_error):!connected?"Hubungkan TikTok":!scopeNames.has("video.list")?"Izin video.list belum tersedia":live?.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":"Tidak ada video dari API";
- const statusText=connected?"LIVE • TEROTORISASI":"BELUM TERHUBUNG";
- const moodNote=isSandbox?"API Sandbox · data uji":"API TikTok";
+ const videoNote=live?.video_error?"Data video belum tersedia":!connected?"Belum terhubung":!scopeNames.has("video.list")?"Data video belum tersedia":live?.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":"Belum ada data video";
+ const statusText=connected?"LIVE":"OFFLINE";
  const button=connected?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary");
  const errorMessages={invalid_oauth_session:"Sesi otorisasi tidak cocok.",state_expired:"Sesi otorisasi kedaluwarsa.",authorization_denied:"Izin akun tidak diberikan.",wrong_account:"Akun TikTok bukan @ikyhdyat.",token_exchange_failed:"Gagal meminta token TikTok. Periksa izin aplikasi.",link_failed:"Gagal menautkan akun.",different_account:"Akun lain sudah tertaut."};
  const params=new URLSearchParams(location.search),oauthErr=params.get("tiktok_status");
  const oauthInfo=oauthErr&&oauthErr!=="connected"?'<div class="tt-disclaimer">'+txt(errorMessages[oauthErr]||"Terjadi kendala otorisasi.")+'</div>':"";
- const warning=allZero?'Koneksi akun berhasil. TikTok Sandbox mengembalikan nilai 0 untuk metrik akun ini; nilai tersebut tidak ditampilkan sebagai statistik live.':isSandbox?'Status LIVE berarti sesi akun terotorisasi. API tetap dalam mode pengujian Sandbox; statistik mungkin berbeda dari akun publik.':"Statistik mengikuti respons API dan terakhir diperbarui sesuai jadwal sinkronisasi.";
  return '<div class="tt-dashboard tt-fade"><section class="tt-panel" aria-label="TikTok Performance Center">'+
- '<div class="tt-head"><span class="tt-eyebrow">RIZKY HIDAYAT / TIKTOK PERFORMANCE</span><div class="tt-status"><span class="tt-led '+(connected?(isSandbox?'testing':''):'offline')+'"></span><strong>'+statusText+'</strong><span>· '+moodNote+'</span></div></div>'+
- '<div class="tt-profile-row">'+pic+'<div class="tt-profile-copy"><h3>'+txt(name)+'</h3><div class="tt-handle">@'+txt(username)+' · TikTok</div><div class="tt-subtext">'+(connected?'Akun telah diotorisasi melalui TikTok Login Kit':'Hubungkan akun untuk menampilkan profil dan statistik')+'</div></div><div class="tt-actions">'+button+(connected?btn("Kelola Koneksi","connect-tiktok",""):'')+'</div></div>'+
+ '<div class="tt-head"><span class="tt-eyebrow">RIZKY HIDAYAT / TIKTOK PERFORMANCE</span><div class="tt-status" aria-label="Status koneksi TikTok"><span class="tt-led '+(connected?'':'offline')+'"></span><strong>'+statusText+'</strong></div></div>'+
+ '<div class="tt-profile-row">'+pic+'<div class="tt-profile-copy"><h3>'+txt(name)+'</h3></div><div class="tt-actions">'+button+(connected?btn("Kelola Koneksi","connect-tiktok",""):'')+'</div></div>'+
  '<div class="tt-metrics">'+
- '<div class="tt-metric"><div class="tt-metric-label">Followers</div><div class="tt-metric-value">'+follower+'</div><div class="tt-metric-note">'+(allZero?'Belum tervalidasi sebagai data live':connected?'Jumlah dari API '+(isSandbox?'Sandbox':'TikTok'):'Menunggu izin akun')+'</div></div>'+
- '<div class="tt-metric"><div class="tt-metric-label">Total Likes</div><div class="tt-metric-value">'+likes+'</div><div class="tt-metric-note">'+(allZero?'Menunggu data Production':'Statistik akun TikTok')+'</div></div>'+
- '<div class="tt-metric"><div class="tt-metric-label">Total Video</div><div class="tt-metric-value">'+videos+'</div><div class="tt-metric-note">'+(allZero?'Belum tersedia sebagai data live':'Video publik akun')+'</div></div>'+
+ '<div class="tt-metric"><div class="tt-metric-label">Followers</div><div class="tt-metric-value">'+follower+'</div><div class="tt-metric-note">'+(allZero?'Belum ada data valid':connected?'Statistik akun':'Belum tersedia')+'</div></div>'+
+ '<div class="tt-metric"><div class="tt-metric-label">Total Likes</div><div class="tt-metric-value">'+likes+'</div><div class="tt-metric-note">'+(allZero?'Belum ada data valid':'Statistik akun TikTok')+'</div></div>'+
+ '<div class="tt-metric"><div class="tt-metric-label">Total Video</div><div class="tt-metric-value">'+videos+'</div><div class="tt-metric-note">'+(allZero?'Belum ada data valid':'Video publik akun')+'</div></div>'+
  '<div class="tt-metric"><div class="tt-metric-label">Views 20 Video</div><div class="tt-metric-value">'+views+'</div><div class="tt-metric-note">'+videoNote+'</div></div>'+
  '</div><div class="tt-lower"><div class="tt-lower-card"><div class="tt-sync-row"><h4>Follower Growth</h4><span class="tt-last-updated">Grafik berdasarkan snapshot API</span></div>'+
- (allZero?empty("Belum tersedia pertumbuhan akun yang tervalidasi. Snapshot Sandbox saat ini mengembalikan 0.") : growthChart(tiktokSync?.history||[]))+
- '</div><div class="tt-lower-card"><h4>Live Connection</h4><p><span class="tt-led '+(connected?'':'offline')+'" style="display:inline-block;margin-right:7px"></span>'+(connected?'Terhubung ke @'+txt(username):'Akun belum dihubungkan')+'</p>'+
- '<p>Terakhir sinkron: <b>'+txt(age)+'</b></p><p>'+ageMarkup+'</p><p>Pembaruan indikator setiap 1 detik; data API sesuai jadwal server.</p><div class="tt-small-actions"><a class="button ghost" href="https://www.tiktok.com/@ikyhdyat" target="_blank" rel="noopener noreferrer">Lihat TikTok</a></div></div></div>'+
- (connected?'<div class="tt-disclaimer">'+warning+'</div>':'')+oauthInfo+'</section>'+
+ (allZero?empty("Data pertumbuhan belum tersedia.") : growthChart(tiktokSync?.history||[]))+
+ '</div><div class="tt-lower-card"><h4>Live Connection</h4><p><span class="tt-led '+(connected?'':'offline')+'" style="display:inline-block;margin-right:7px"></span>'+(connected?'@'+txt(username):'Belum terhubung')+'</p>'+
+ '<p>Terakhir sinkron: <b>'+txt(age)+'</b></p><div class="tt-small-actions"><a class="button ghost" href="https://www.tiktok.com/@ikyhdyat" target="_blank" rel="noopener noreferrer">Lihat TikTok</a></div></div></div>'+
+ oauthInfo+'</section>'+
  '<div class="tt-quick"><section class="panel"><div class="section-head"><h3>Kalender & Jadwal Konten</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+
  (next.length?'<ul class="tt-schedule">'+next.map(x=>'<li><strong>'+txt(x.title)+'</strong>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</li>').join("")+'</ul>':empty("Belum ada konten terjadwal. Tentukan tanggal pada ide konten."))+'</section>'+
  '<section class="panel"><div class="section-head"><h3>Creative Workspace</h3><span class="pill">5 halaman</span></div><p class="muted small">Mulai dari ide, jadwalkan produksi, dan kelola kolaborasi brand dalam satu workspace.</p><div class="tt-small-actions">'+btn("+ Tambah Ide","new-idea","primary")+btn("Produksi","go-production","")+btn("Tambah Brand","new-brand","")+'</div></section></div></div>';
