@@ -359,7 +359,7 @@ function mergeClientWorkspace(local,remote){
      if(!item?.id)continue;const prev=records.get(item.id);
      if(!prev||(Number(item.updated_at)||0)>=(Number(prev.updated_at)||0))records.set(item.id,item);
    }
-   out[group]=[...records.values()].filter(x=>(Number(x.updated_at)||0)>(Number(del[x.id])||0));
+   out[group]=[...records.values()].filter(x=>!Object.prototype.hasOwnProperty.call(del,x.id)||(Number(x.updated_at)||0)>(Number(del[x.id])||0));
    out.deleted[group]=del;
  }
  return out;
