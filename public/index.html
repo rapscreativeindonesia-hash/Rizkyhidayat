@@ -101,7 +101,7 @@ async function connectTikTok(){
  try{
  if(!tiktokConfig)await loadTikTok();
  if(!tiktokConfig?.app_configured){
-  alert("TikTok Developer App belum dikonfigurasi. Pasang TIKTOK_CLIENT_KEY dan TIKTOK_CLIENT_SECRET sebagai Cloudflare Worker secrets. Redirect URI: "+(tiktokConfig?.redirect_uri||"/api/tiktok/callback"));
+  alert("TikTok "+(tiktokConfig?.mode==="sandbox"?"Sandbox":"Developer")+" belum dikonfigurasi. Pasang TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET, dan DASHBOARD_PASSWORD di Cloudflare Worker (sebagai secrets). Tambahkan @ikyhdyat sebagai Target user pada Sandbox, Apply changes, dan daftarkan Redirect URI: "+(tiktokConfig?.redirect_uri||"/api/tiktok/callback"));
   return;
  }
  if(!await ensureTikTokAdmin())return;
@@ -144,11 +144,11 @@ function dashboard(){
 const scheduled=state.ideas.filter(x=>!!x.date),done=state.ideas.filter(x=>x.stage==="Final");
 const next=scheduled.slice().sort((a,b)=>a.date.localeCompare(b.date)).filter(x=>x.date>=today()).slice(0,5);
 const live=tiktokSync&&tiktokSync.connected&&tiktokSync.latest?tiktokSync.latest:null;
-const status=live?'<span class="pill ok">Data asli · TikTok API</span>':tiktokSync?.connected?'<span class="pill warn">Terhubung · menunggu data</span>':'<span class="pill warn">Belum tersinkron</span>';
+const status=live?'<span class="pill ok">Data asli · '+(tiktokConfig?.mode==='sandbox'?'TikTok Sandbox API':'TikTok API')+'</span>':tiktokSync?.connected?'<span class="pill warn">Terhubung · menunggu data</span>':'<span class="pill warn">Belum tersinkron</span>';
 const message=live?'Terakhir sinkron: '+new Date(live.synced_at).toLocaleString("id-ID")+' · Akun: @'+txt(live.username):'Hubungkan akun @ikyhdyat melalui izin resmi TikTok. Data belum tersedia tanpa OAuth.';
 const views=(live&&live.recent_video_count>0)?n(live.recent_views):"—";
 return '<div class="grid cols2"><section class="panel gradient hero"><span class="pill">Personal Creator Workspace</span><h3 style="margin-top:14px">Halo, Iky.</h3><p>Seluruh ide, kalender, produksi, dan kerja sama brand dalam satu tempat.</p><div class="buttons" style="margin-top:20px">'+btn("+ Tambah Ide","new-idea","primary")+btn("Tambah Brand","new-brand","")+'</div></section>'+
-'<section class="panel"><div class="section-head"><h3>Sinkronisasi TikTok</h3>'+status+'</div><p class="muted small">'+message+'</p><div class="buttons">'+(live?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary"))+(live?btn("Kelola Akun","connect-tiktok",""):btn("Cek Koneksi","check-tiktok",""))+'<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@ikyhdyat">Lihat TikTok</a></div>'+(tiktokSync?.lastError?'<p class="small" style="color:#ffb4a7">Catatan sinkron: '+txt(tiktokSync.lastError.message)+'</p>':"")+'</section></div>'+
+'<section class="panel"><div class="section-head"><h3>Sinkronisasi TikTok '+(tiktokConfig?.mode==='sandbox'?'<span class="pill">SANDBOX</span>':'')+'</h3>'+status+'</div><p class="muted small">'+message+'</p><div class="buttons">'+(live?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary"))+(live?btn("Kelola Akun","connect-tiktok",""):btn("Cek Koneksi","check-tiktok",""))+'<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@ikyhdyat">Lihat TikTok</a></div>'+(tiktokSync?.lastError?'<p class="small" style="color:#ffb4a7">Catatan sinkron: '+txt(tiktokSync.lastError.message)+'</p>':"")+'</section></div>'+
 '<div class="grid cols4" style="margin-top:15px">'+
 metric("Followers TikTok",live?n(live.followers):"—",live?"Dari TikTok resmi":"Belum terhubung")+
 metric("Total Likes TikTok",live?.likes!=null?n(live.likes):"—",live?"Dari TikTok resmi":"Belum terhubung")+
