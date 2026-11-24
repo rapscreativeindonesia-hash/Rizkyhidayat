@@ -66,6 +66,58 @@ a.link{color:#cda9ff;word-break:break-all;text-decoration:none}.actions-right{di
 "use strict";
 var KEY="iky-creator-hub-local-v1";
 var initial={profile:{handle:"@ikyhdyat",followers:0,views:0,likes:0,videos:0},ideas:[],assets:[],brands:[]};
+
+var tiktokSync=null,tiktokConfig=null;
+async function loadTikTok(){
+ try{
+ const c=await fetch("/api/tiktok/config",{credentials:"same-origin",cache:"no-store"});
+ if(!c.ok)return;
+ tiktokConfig=await c.json();
+ if(tiktokConfig.admin_configured){
+  const r=await fetch("/api/tiktok/status",{credentials:"same-origin",cache:"no-store"});
+  if(r.ok)tiktokSync=await r.json();
+ }
+ if(page==="dashboard")render();
+ }catch(e){console.warn("TikTok connection not ready",e);}
+}
+async function loginTikTokAdmin(){
+ if(!tiktokConfig)await loadTikTok();
+ if(!tiktokConfig?.admin_configured){alert("Password admin Worker belum dipasang di Cloudflare. Tambahkan secret DASHBOARD_PASSWORD (minimal 12 karakter).");return false;}
+ const password=prompt("Masukkan password admin dashboard (disimpan dalam cookie HttpOnly selama 30 hari):");
+ if(!password)return false;
+ const r=await fetch("/api/login",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify({password})});
+ if(!r.ok){alert("Password salah atau belum dikonfigurasi.");return false;}
+ return true;
+}
+async function ensureTikTokAdmin(){
+ try{
+ const r=await fetch("/api/tiktok/status",{credentials:"same-origin",cache:"no-store"});
+ if(r.ok){tiktokSync=await r.json();return true;}
+ if(r.status===401)return await loginTikTokAdmin();
+ alert("Layanan sinkronisasi tidak dapat diakses.");return false;
+ }catch(e){alert("Cloudflare API belum tersedia. Pastikan Worker terbaru telah dideploy.");return false;}
+}
+async function connectTikTok(){
+ try{
+ if(!tiktokConfig)await loadTikTok();
+ if(!tiktokConfig?.app_configured){
+  alert("TikTok Developer App belum dikonfigurasi. Pasang TIKTOK_CLIENT_KEY dan TIKTOK_CLIENT_SECRET sebagai Cloudflare Worker secrets. Redirect URI: "+(tiktokConfig?.redirect_uri||"/api/tiktok/callback"));
+  return;
+ }
+ if(!await ensureTikTokAdmin())return;
+ window.location.assign("/api/tiktok/connect");
+ }catch(e){alert("Tidak bisa menghubungkan TikTok: "+e.message);}
+}
+async function refreshTikTok(){
+ if(!await ensureTikTokAdmin())return;
+ try{
+  const r=await fetch("/api/tiktok/sync",{method:"POST",credentials:"same-origin"});
+  const j=await r.json();
+  if(!r.ok)throw Error(j.error||"Sinkronisasi gagal");
+  await loadTikTok();alert("Data TikTok berhasil disinkronkan dari API resmi.");
+ }catch(e){alert("Sinkronisasi gagal: "+e.message);}
+}
+
 function load(){try{var s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.ideas)&&Array.isArray(s.brands)&&Array.isArray(s.assets))return s;}catch(e){}return JSON.parse(JSON.stringify(initial));}
 var state=load(),page="dashboard",libTab="ideas",calendarOffset=0;
 function save(){localStorage.setItem(KEY,JSON.stringify(state));}
@@ -81,11 +133,31 @@ function empty(txt){return '<div class="empty">'+esc(txt)+'</div>';}
 function txt(t){return esc(t);}
 function setpage(p){page=p;render();}
 function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide / Library","Bank ide, referensi, dan aset untuk produksi."],calendar:["Kalender Konten","Rencanakan jadwal konten di satu kalender."],production:["Produksi Content","Kelola proses konten dari ide sampai final."],brand:["Brand","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.getElementById("side-handle").textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
-function dashboard(){var p=state.profile,scheduled=state.ideas.filter(function(x){return !!x.date;}),done=state.ideas.filter(function(x){return x.stage==="Final";});var next=scheduled.slice().sort(function(a,b){return a.date.localeCompare(b.date);}).filter(function(x){return x.date>=today();}).slice(0,5);
-return '<div class="grid cols2"><section class="panel gradient hero"><span class="pill">Personal Creator Workspace</span><h3 style="margin-top:14px">Halo, Iky.</h3><p>Seluruh ide, kalender, produksi, dan kerja sama brand dalam satu tempat.</p><div class="buttons" style="margin-top:20px">'+btn("+ Tambah Ide","new-idea","primary")+btn("Tambah Brand","new-brand","")+'</div></section><section class="panel"><div class="section-head"><h3>Ringkasan TikTok</h3><span class="pill warn">Belum sinkron otomatis</span></div><p class="muted small">Akun: '+esc(p.handle)+' · Angka di bawah adalah data yang kamu masukkan manual, bukan statistik langsung dari TikTok.</p><div class="buttons">'+btn("Isi Statistik Manual","edit-profile","")+ '<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@'+encodeURIComponent((p.handle||"").replace(/^@/,""))+'">Buka Profil TikTok</a></div></section></div>'+
-'<div class="grid cols4" style="margin-top:15px">'+metric("Followers",n(p.followers),"Input manual")+metric("Total Views",n(p.views),"Input manual")+metric("Total Likes",n(p.likes),"Input manual")+metric("Total Video",n(p.videos),"Input manual")+'</div>'+
-'<div class="grid cols2" style="margin-top:15px"><section class="panel"><div class="section-head"><h3>Alur Konten</h3>'+btn("Buka Produksi","go-production","")+'</div><div class="grid cols3">'+metric("Total Ide",n(state.ideas.length),"Tersimpan")+metric("Dijadwalkan",n(scheduled.length),"Ada tanggal")+metric("Selesai",n(done.length),"Tahap Final")+'</div><div class="notice">Statistik pertumbuhan historis memerlukan data berkala dari TikTok. Grafik tidak ditampilkan sebelum data asli tersedia.</div></section><section class="panel"><div class="section-head"><h3>Jadwal Terdekat</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+(next.length?next.map(function(x){return '<div class="item"><div class="itemtop"><div><h4>'+txt(x.title)+'</h4><p>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</p></div>'+chip("Terjadwal")+'</div></div>';}).join(""):empty("Belum ada konten terjadwal. Tambahkan tanggal pada ide konten."))+'</section></div>'+
-'<section class="panel" style="margin-top:15px"><div class="section-head"><h3>Aksi Cepat</h3></div><div class="buttons">'+btn("Buat Ide","new-idea","primary")+btn("Jadwalkan Konten","new-idea","")+btn("Mulai Produksi","go-production","")+btn("Tambah Brand","new-brand","")+'</div></section>';}
+function growthChart(history){
+if(!Array.isArray(history)||history.length<2)return '<div class="empty">Grafik pertumbuhan muncul setelah minimal dua sinkronisasi berhasil.</div>';
+const h=history.filter(x=>Number.isFinite(x.followers)).slice(-60);if(h.length<2)return '<div class="empty">Belum ada data pertumbuhan yang cukup.</div>';
+const min=Math.min(...h.map(x=>x.followers)),max=Math.max(...h.map(x=>x.followers)),range=Math.max(1,max-min);
+const pts=h.map((v,i)=>(Math.round((i/(h.length-1))*500))+","+(Math.round(95-((v.followers-min)/range)*85))).join(" ");
+return '<svg viewBox="0 0 520 120" role="img" aria-label="Grafik followers dari statistik TikTok terverifikasi" style="width:100%;max-height:185px;overflow:visible"><path d="M0 110 H520" stroke="#5a486b" stroke-width="1" fill="none"/><polyline points="'+pts+'" fill="none" stroke="#bc75ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="itemtop small muted"><span>Awal '+n(h[0].followers)+' followers</span><span>Terakhir '+n(h[h.length-1].followers)+' followers</span></div>';
+}
+function dashboard(){
+const scheduled=state.ideas.filter(x=>!!x.date),done=state.ideas.filter(x=>x.stage==="Final");
+const next=scheduled.slice().sort((a,b)=>a.date.localeCompare(b.date)).filter(x=>x.date>=today()).slice(0,5);
+const live=tiktokSync&&tiktokSync.connected&&tiktokSync.latest?tiktokSync.latest:null;
+const status=live?'<span class="pill ok">Data asli · TikTok API</span>':tiktokSync?.connected?'<span class="pill warn">Terhubung · menunggu data</span>':'<span class="pill warn">Belum tersinkron</span>';
+const message=live?'Terakhir sinkron: '+new Date(live.synced_at).toLocaleString("id-ID")+' · Akun: @'+txt(live.username):'Hubungkan akun @ikyhdyat melalui izin resmi TikTok. Data belum tersedia tanpa OAuth.';
+const views=(live&&live.recent_video_count>0)?n(live.recent_views):"—";
+return '<div class="grid cols2"><section class="panel gradient hero"><span class="pill">Personal Creator Workspace</span><h3 style="margin-top:14px">Halo, Iky.</h3><p>Seluruh ide, kalender, produksi, dan kerja sama brand dalam satu tempat.</p><div class="buttons" style="margin-top:20px">'+btn("+ Tambah Ide","new-idea","primary")+btn("Tambah Brand","new-brand","")+'</div></section>'+
+'<section class="panel"><div class="section-head"><h3>Sinkronisasi TikTok</h3>'+status+'</div><p class="muted small">'+message+'</p><div class="buttons">'+(live?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary"))+(live?btn("Kelola Akun","connect-tiktok",""):btn("Cek Koneksi","check-tiktok",""))+'<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@ikyhdyat">Lihat TikTok</a></div>'+(tiktokSync?.lastError?'<p class="small" style="color:#ffb4a7">Catatan sinkron: '+txt(tiktokSync.lastError.message)+'</p>':"")+'</section></div>'+
+'<div class="grid cols4" style="margin-top:15px">'+
+metric("Followers TikTok",live?n(live.followers):"—",live?"Dari TikTok resmi":"Belum terhubung")+
+metric("Total Likes TikTok",live?.likes!=null?n(live.likes):"—",live?"Dari TikTok resmi":"Belum terhubung")+
+metric("Total Video",live?.video_count!=null?n(live.video_count):"—","Video publik akun")+
+metric("Views 20 video terbaru",views,live?.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":"Perlu izin video.list")+
+'</div><div class="grid cols2" style="margin-top:15px"><section class="panel"><div class="section-head"><h3>Riwayat Pertumbuhan Followers</h3><span class="muted small">Data riil</span></div>'+growthChart(tiktokSync?.history||[])+(live?'<p class="muted small">Riwayat direkam setiap sinkronisasi. Tidak ada backfill data buatan.</p>':"")+'</section>'+
+'<section class="panel"><div class="section-head"><h3>Jadwal Terdekat</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+(next.length?next.map(x=>'<div class="item"><div class="itemtop"><div><h4>'+txt(x.title)+'</h4><p>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</p></div>'+chip("Terjadwal")+'</div></div>').join(""):empty("Belum ada konten terjadwal. Tambahkan tanggal pada ide konten."))+'</section></div>'+
+'<section class="panel" style="margin-top:15px"><div class="section-head"><h3>Aksi Cepat</h3></div><div class="buttons">'+btn("Buat Ide","new-idea","primary")+btn("Jadwalkan Konten","new-idea","")+btn("Mulai Produksi","go-production","")+btn("Tambah Brand","new-brand","")+'</div></section>';
+}
 function ideaCard(x){return '<section class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.stage)+'</div><p class="muted small">Hook: '+txt(x.hook||"Belum diisi")+'</p><div class="tagrow">'+chip(x.pillar||"Umum")+chip(x.platform||"TikTok")+(x.date?chip(fmt(x.date)):"")+'</div><p class="muted small">'+txt(x.notes||"Belum ada catatan.")+'</p><div class="buttons">'+btn("Edit","edit-idea","","data-id='"+txt(x.id)+"'")+btn("Produksi","move-idea","primary","data-id='"+txt(x.id)+"'") + btn("Hapus","delete-idea","danger","data-id='"+txt(x.id)+"'")+'</div></section>';}
 function assetCard(x){return '<div class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.kind)+'</div><a class="link small" href="'+txt(x.url)+'" target="_blank" rel="noopener noreferrer">'+txt(x.url)+'</a><div class="buttons" style="margin-top:12px">'+btn("Hapus","delete-asset","danger","data-id='"+txt(x.id)+"'")+'</div></div>';}
 function ideas(){return '<div class="toolbar"><div class="buttons">'+btn("Ide Konten","tab-ideas",libTab==="ideas"?"primary":"")+btn("Library Aset","tab-assets",libTab==="assets"?"primary":"")+'</div>'+btn(libTab==="ideas"?"+ Tambah Ide":"+ Tambah Aset",libTab==="ideas"?"new-idea":"new-asset","primary")+'</div>'+
@@ -116,6 +188,9 @@ if(a==="new-asset")assetForm();
 if(a==="new-brand")brandForm();
 if(a==="edit-brand")brandForm(which);
 if(a==="edit-profile")profileForm();
+if(a==="connect-tiktok")connectTikTok();
+if(a==="refresh-tiktok")refreshTikTok();
+if(a==="check-tiktok")loadTikTok();
 if(a==="tab-ideas"){libTab="ideas";render();}
 if(a==="tab-assets"){libTab="assets";render();}
 if(a==="go-calendar")setpage("calendar");
@@ -134,6 +209,7 @@ if(e.target.id==="profile-form"){state.profile.handle=get("handle");["followers"
 save();close();render();});
 document.getElementById("modal-layer").addEventListener("click",function(e){if(e.target===this)close();});document.addEventListener("keydown",function(e){if(e.key==="Escape")close();});
 render();
+loadTikTok();
 })();
 </script>
 </body>
