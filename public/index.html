@@ -202,6 +202,66 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
 @media(max-width:790px){
   .sidebar .logo-mark.rh-logo{width:56px;height:56px;flex-basis:56px}
 }
+
+/* RH brand refinements: uncropped original logo, aligned top and compact TikTok actions */
+.sidebar{padding-top:22px}
+.sidebar .logo{align-items:center;min-width:0;gap:12px}
+.sidebar .logo-mark.rh-logo{
+  width:62px;height:62px;flex:0 0 62px;display:grid;place-items:center;
+  padding:2px!important;overflow:hidden;border-radius:17px;
+  border:1px solid #638093;background:linear-gradient(148deg,#17303e 0%,#13242e 100%);
+  box-shadow:0 6px 18px #050f1533,inset 0 1px 0 #c2dce724;
+}
+.sidebar .rh-logo img{
+  display:block;width:100%;height:100%;max-width:100%;max-height:100%;
+  object-fit:contain;object-position:center;
+  transform:scale(1.10);transform-origin:center center;
+}
+.sidebar .brand-copy{min-width:0;flex:1}
+.sidebar .brand-copy h1{font-size:17px;white-space:nowrap}
+.sidebar .brand-copy p{font-size:10px;line-height:1.35}
+.main{padding-top:25px}
+.tt-head{margin-bottom:20px}
+.tt-profile-row{position:relative;align-items:center}
+.tt-actions{margin-left:auto;position:relative;flex:0 0 auto;width:auto;min-width:0}
+.tt-action-menu{position:relative;z-index:8}
+.tt-action-menu summary{
+  list-style:none;display:grid;place-items:center;user-select:none;
+  width:43px;height:40px;border:1px solid #52717e;border-radius:12px;
+  background:#203340;color:#dbeaf0;cursor:pointer;
+  font:700 27px/1 "Manrope",system-ui,sans-serif;
+  transition:background 150ms ease,border-color 150ms ease;
+}
+.tt-action-menu summary::-webkit-details-marker{display:none}
+.tt-action-menu summary:hover,.tt-action-menu[open] summary{background:#314d5d;border-color:#9fc9d9}
+.tt-action-menu summary:focus-visible{outline:2px solid #b4d6e5;outline-offset:3px}
+.tt-action-popover{
+  position:absolute;right:0;top:calc(100% + 9px);width:214px;
+  max-width:min(214px,calc(100vw - 32px));display:flex;flex-direction:column;
+  gap:5px;padding:8px;border:1px solid #527180;border-radius:14px;
+  background:#162934;box-shadow:0 16px 35px #020b10aa;
+}
+.tt-action-popover button{
+  width:100%;min-width:0;text-align:left;font-size:12px;
+  border:0;border-radius:9px;padding:11px;background:transparent;color:#e0eef3;
+}
+.tt-action-popover button:hover,.tt-action-popover button:focus-visible{background:#294758}
+.tt-sync-row{margin-bottom:12px}
+@media(max-width:790px){
+ .sidebar .logo-mark.rh-logo{width:58px;height:58px;flex-basis:58px}
+ .main{padding-top:19px}
+ .tt-profile-row{align-items:center}
+ .tt-actions{margin-left:auto;width:auto}
+ .tt-actions .tt-action-menu{width:auto}
+}
+@media(max-width:460px){
+ .sidebar .brand-copy h1{font-size:16px}
+ .tt-action-menu summary{width:39px;height:39px}
+ .tt-profile-row{flex-wrap:nowrap;gap:11px}
+ .tt-avatar{flex:0 0 55px;width:55px;height:55px}
+ .tt-profile-copy h3{font-size:21px}
+ .tt-action-popover{right:0;min-width:190px}
+}
 </style>
 </head>
 <body>
@@ -305,19 +365,19 @@ function dashboard(){
  const scopeNames=new Set((tiktokSync?.scope||"").split(",").map(x=>x.trim()).filter(Boolean));
  const videoNote=live?.video_error?"Data video belum tersedia":!connected?"Belum terhubung":!scopeNames.has("video.list")?"Data video belum tersedia":live?.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":"Belum ada data video";
  const statusText=connected?"LIVE":"OFFLINE";
- const button=connected?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary");
+ const actionMenu='<details class="tt-action-menu"><summary aria-label="Menu tindakan TikTok" title="Opsi TikTok"><span aria-hidden="true">···</span></summary><div class="tt-action-popover" role="group" aria-label="Tindakan TikTok">'+(connected?btn("Sinkronkan Sekarang","refresh-tiktok",""):btn("Hubungkan TikTok","connect-tiktok",""))+(connected?btn("Kelola Koneksi","connect-tiktok",""):"")+'</div></details>';
  const errorMessages={invalid_oauth_session:"Sesi otorisasi tidak cocok.",state_expired:"Sesi otorisasi kedaluwarsa.",authorization_denied:"Izin akun tidak diberikan.",wrong_account:"Akun TikTok bukan @ikyhdyat.",token_exchange_failed:"Gagal meminta token TikTok. Periksa izin aplikasi.",link_failed:"Gagal menautkan akun.",different_account:"Akun lain sudah tertaut."};
  const params=new URLSearchParams(location.search),oauthErr=params.get("tiktok_status");
  const oauthInfo=oauthErr&&oauthErr!=="connected"?'<div class="tt-disclaimer">'+txt(errorMessages[oauthErr]||"Terjadi kendala otorisasi.")+'</div>':"";
  return '<div class="tt-dashboard tt-fade"><section class="tt-panel" aria-label="TikTok Performance Center">'+
  '<div class="tt-head"><span class="tt-eyebrow">RIZKY HIDAYAT / TIKTOK PERFORMANCE</span><div class="tt-head-right"><time class="tt-date" datetime="'+today()+'">'+new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"})+'</time><div class="tt-status" aria-label="Status koneksi TikTok"><span class="tt-led '+(connected?'':'offline')+'"></span><strong>'+statusText+'</strong></div></div></div>'+
- '<div class="tt-profile-row">'+pic+'<div class="tt-profile-copy"><h3>'+txt(name)+'</h3></div><div class="tt-actions">'+button+(connected?btn("Kelola Koneksi","connect-tiktok",""):'')+'</div></div>'+
+ '<div class="tt-profile-row">'+pic+'<div class="tt-profile-copy"><h3>'+txt(name)+'</h3></div><div class="tt-actions">'+actionMenu+'</div></div>'+
  '<div class="tt-metrics">'+
  '<div class="tt-metric"><div class="tt-metric-label">Followers</div><div class="tt-metric-value">'+follower+'</div><div class="tt-metric-note">'+(allZero?'Belum ada data valid':connected?'Statistik akun':'Belum tersedia')+'</div></div>'+
  '<div class="tt-metric"><div class="tt-metric-label">Total Likes</div><div class="tt-metric-value">'+likes+'</div><div class="tt-metric-note">'+(allZero?'Belum ada data valid':'Statistik akun TikTok')+'</div></div>'+
  '<div class="tt-metric"><div class="tt-metric-label">Total Video</div><div class="tt-metric-value">'+videos+'</div><div class="tt-metric-note">'+(allZero?'Belum ada data valid':'Video publik akun')+'</div></div>'+
  '<div class="tt-metric"><div class="tt-metric-label">Views 20 Video</div><div class="tt-metric-value">'+views+'</div><div class="tt-metric-note">'+videoNote+'</div></div>'+
- '</div><div class="tt-lower"><div class="tt-lower-card"><div class="tt-sync-row"><h4>Follower Growth</h4><span class="tt-last-updated">Grafik berdasarkan snapshot API</span></div>'+
+ '</div><div class="tt-lower"><div class="tt-lower-card"><div class="tt-sync-row"><h4>Follower Growth</h4></div>'+
  (allZero?empty("Data pertumbuhan belum tersedia.") : growthChart(tiktokSync?.history||[]))+
  '</div><div class="tt-lower-card"><h4>Live Connection</h4><p><span class="tt-led '+(connected?'':'offline')+'" style="display:inline-block;margin-right:7px"></span>'+(connected?'@'+txt(username):'Belum terhubung')+'</p>'+
  '<p>Terakhir sinkron: <b>'+txt(age)+'</b></p><div class="tt-small-actions"><a class="button ghost" href="https://www.tiktok.com/@ikyhdyat" target="_blank" rel="noopener noreferrer">Lihat TikTok</a></div></div></div>'+
@@ -423,6 +483,7 @@ function updateLiveIndicator(){
  el.textContent="Data API diperbarui "+text+" lalu";
 }
 document.addEventListener("click",e=>{
+ if(!e.target.closest(".tt-action-menu"))document.querySelectorAll(".tt-action-menu[open]").forEach(x=>x.open=false);
  if(e.target.closest("#music-toggle")){toggleMusic();return;}
  if(e.target.closest("#music-next")){setMusicMood(musicMood+1);return;}
 });
