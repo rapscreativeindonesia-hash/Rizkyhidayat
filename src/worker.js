@@ -43,7 +43,7 @@ async function recentVideos(token){const fields="id,title,create_time,cover_imag
 const WORKSPACE_FIELDS={
  ideas:["id","title","hook","pillar","platform","stage","notes","date","content_type","goal","shoot_date","brand_id","campaign","script","shots","checklist","references","caption","hashtags","published_url","folder_url","updated_at"],
  assets:["id","title","url","kind","updated_at"],
- brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","rate_card","rate_notes","dp","paid","post_date","brief_must","brief_avoid","references","files","final_links","deliverables_checklist","updated_at"]
+ brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","rate_card","rate_notes","dp","paid","post_date","brief_must","brief_avoid","brief_pdf_id","brief_pdf_name","brief_pdf_size","brief_pdf_cloud","brief_pdf_date","references","files","final_links","deliverables_checklist","updated_at"]
 };
 const WORKSPACE_NESTED={
  script:{id:90,type:40,text:6000},
@@ -201,6 +201,42 @@ export class TikTokStore {
           video_api_status:latest?.video_error?(videoCode?videoCode[1]:"failed"):latest?(latest.recent_video_count===0?"no_videos":"ok"):"not_checked",
           sync_error_present:!!lastError
         });
+      }
+      if(path.startsWith("/internal/collaboration-pdf/")){
+        const pdfId=decodeURIComponent(path.slice("/internal/collaboration-pdf/".length));
+        if(!/^[A-Za-z0-9_-]{8,96}$/.test(pdfId))return json({error:"invalid_file_id"},400);
+        const key="collab-pdf:"+pdfId+":",meta=await s.get(key+"meta"),chunkSize=700000,maxSize=8*1024*1024;
+        if(req.method==="PUT"){
+          const claimed=Number(req.headers.get("content-length")||0);
+          if(claimed>maxSize)return json({error:"pdf_too_large",max_bytes:maxSize},413);
+          const data=new Uint8Array(await req.arrayBuffer());
+          if(data.byteLength>maxSize)return json({error:"pdf_too_large",max_bytes:maxSize},413);
+          if(data.byteLength<8||String.fromCharCode(...data.subarray(0,5))!=="%PDF-")return json({error:"file_not_pdf"},415);
+          const numChunks=Math.ceil(data.byteLength/chunkSize);
+          for(let i=0;i<numChunks;i++){
+            const slice=data.slice(i*chunkSize,(i+1)*chunkSize);
+            await s.put(key+"part:"+i,slice.buffer);
+          }
+          if(meta&&meta.chunks>numChunks)for(let i=numChunks;i<meta.chunks;i++)await s.delete(key+"part:"+i);
+          await s.put(key+"meta",{size:data.byteLength,chunks:numChunks,uploaded_at:Date.now()});
+          return json({ok:true,file_id:pdfId,size:data.byteLength});
+        }
+        if(req.method==="GET"){
+          if(!meta)return json({error:"pdf_not_found"},404);
+          const bytes=new Uint8Array(meta.size);let offset=0;
+          for(let i=0;i<meta.chunks;i++){
+            const raw=await s.get(key+"part:"+i);
+            if(!raw)return json({error:"pdf_incomplete"},503);
+            const part=raw instanceof ArrayBuffer?new Uint8Array(raw):new Uint8Array(raw);
+            bytes.set(part,offset);offset+=part.byteLength;
+          }
+          if(offset!==meta.size)return json({error:"pdf_incomplete"},503);
+          return new Response(bytes,{headers:{"content-type":"application/pdf","content-disposition":"inline","cache-control":"private, no-store","x-content-type-options":"nosniff"}});
+        }
+        if(req.method==="DELETE"){
+          if(meta){for(let i=0;i<meta.chunks;i++)await s.delete(key+"part:"+i);await s.delete(key+"meta");}
+          return json({ok:true});
+        }
       }
       if(path==="/internal/workspace"&&req.method==="GET"){
         const stored=await s.get("workspace");
@@ -379,6 +415,16 @@ export default {
         latest:publicLatest,
         history
       });
+    }
+    if(path.startsWith("/api/collaboration-pdf/")&&["GET","PUT","DELETE"].includes(req.method)){
+      if(!await isOwner(req,env))return json({error:"owner_authorization_required"},401);
+      const pdfId=path.slice("/api/collaboration-pdf/".length);
+      if(!/^[A-Za-z0-9_-]{8,96}$/.test(pdfId))return json({error:"invalid_file_id"},400);
+      const upstream=await proxy(env,"/internal/collaboration-pdf/"+pdfId,{
+        method:req.method,
+        ...(req.method==="PUT"?{headers:{"content-type":"application/pdf"},body:await req.arrayBuffer()}:{})
+      });
+      return new Response(upstream.body,{status:upstream.status,headers:upstream.headers});
     }
     if(path==="/api/workspace"&&["GET","PUT"].includes(req.method)){
       if(!await isOwner(req,env))return json({error:"owner_authorization_required"},401);
