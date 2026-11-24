@@ -16,13 +16,14 @@ async function run(){
   set(form.querySelector('input[name="title"]'),title);
   set(form.querySelector('.rh-builder-list[data-kind="script"] textarea[data-field="text"]'),"Script Hook tersimpan");
   const ref=form.querySelector('.rh-builder-list[data-kind="references"] input[data-field="url"]');ensure(ref,"ref input missing");set(ref,"tautan belum lengkap tanpa https");
+  const debug={errors:[],alerts:[]};w.addEventListener("error",e=>debug.errors.push(String(e.message||e.error||"unknown")));w.addEventListener("unhandledrejection",e=>debug.errors.push("rejection: "+String(e.reason)));w.alert=msg=>debug.alerts.push(String(msg));
   let fired=0;form.addEventListener("submit",()=>fired++);
   const b=form.querySelector('button[type="submit"]');ensure(b,"submit button missing");b.click();await sleep(90);
   const local=JSON.parse(w.localStorage.getItem("iky-creator-hub-local-v1")||"{}");
   const item=(local.ideas||[]).find(x=>x.title===title);
   const count1=(d.querySelectorAll(".rh-project-card")||[]).length;
   const hadModal=d.getElementById("modal-layer")?.classList.contains("open");
-  const diagnostics={submitFired:fired,noValidate:form.noValidate,checkValidity:form.checkValidity(),invalidFields:[...form.elements].filter(e=>e.willValidate&&!e.checkValidity()).map(e=>({name:e.name,type:e.type,value:e.value,reason:e.validationMessage})),localKeys:Object.keys(local),ideaCount:(local.ideas||[]).length,titles:(local.ideas||[]).map(x=>x.title).slice(0,5),cardCount:count1,modalOpen:hadModal,notice:d.getElementById("save-notice")?.textContent,bodyTail:d.body.innerText.slice(-330),contentID:form.dataset.draftContentId};
+  const diagnostics={debug,enteredTitle:form.querySelector('input[name="title"]')?.value,titleFromFormData:new w.FormData(form).get("title"),submitFired:fired,noValidate:form.noValidate,checkValidity:form.checkValidity(),invalidFields:[...form.elements].filter(e=>e.willValidate&&!e.checkValidity()).map(e=>({name:e.name,type:e.type,value:e.value,reason:e.validationMessage})),localKeys:Object.keys(local),ideaCount:(local.ideas||[]).length,titles:(local.ideas||[]).map(x=>x.title).slice(0,5),cardCount:count1,modalOpen:hadModal,notice:d.getElementById("save-notice")?.textContent,bodyTail:d.body.innerText.slice(-330),contentID:form.dataset.draftContentId};
   report({stage:"post-submit",...diagnostics});
   ensure(fired===1,"Submit blocked: "+JSON.stringify(diagnostics));
   ensure(item,"Created content not present in browser storage: "+JSON.stringify(diagnostics));
