@@ -43,7 +43,7 @@ async function recentVideos(token){const fields="id,title,create_time,cover_imag
 const WORKSPACE_FIELDS={
  ideas:["id","title","hook","pillar","platform","stage","notes","date","content_type","goal","shoot_date","brand_id","campaign","script","shots","checklist","references","caption","hashtags","published_url","folder_url","updated_at"],
  assets:["id","title","url","kind","updated_at"],
- brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","rate_card","rate_notes","dp","paid","post_date","brief_must","brief_avoid","brief_pdf_id","brief_pdf_name","brief_pdf_size","brief_pdf_cloud","brief_pdf_date","references","files","final_links","deliverables_checklist","updated_at"]
+ brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","rate_card","rate_notes","dp","paid","post_date","brief_must","brief_avoid","brief_text","brief_pdf_id","brief_pdf_name","brief_pdf_size","brief_pdf_cloud","brief_pdf_date","references","files","final_links","deliverables_checklist","updated_at"]
 };
 const WORKSPACE_NESTED={
  script:{id:90,type:40,text:6000},
@@ -89,7 +89,7 @@ function normalizedWorkspace(input){
        const val=ent[field];
        if(field==="updated_at"){row.updated_at=Number.isFinite(Number(val))?Math.max(0,Number(val)):0;continue;}
        if(WORKSPACE_NESTED[field]){row[field]=workspaceRows(val,field);continue;}
-       if(typeof val==="string")row[field]=val.slice(0,["notes","deliverables","caption","brief_must","brief_avoid"].includes(field)?12000:2000);
+       if(typeof val==="string")row[field]=val.slice(0,["notes","deliverables","caption","brief_must","brief_avoid","brief_text"].includes(field)?12000:2000);
        if(typeof val==="number"&&Number.isFinite(val))row[field]=val;
      }
      out[group].push(row);
