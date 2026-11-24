@@ -1,0 +1,77 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><pre id="qa">Running browser QA</pre><iframe id="sandbox" src="about:blank" style="position:absolute;left:-9999px;top:0;width:390px;height:850px" title="Test only"></iframe><script>
+const frame=document.querySelector("#sandbox"),label=document.querySelector("#qa"),pause=ms=>new Promise(ok=>setTimeout(ok,ms));
+const check=(condition,message)=>{if(!condition)throw Error(message);};
+const stats={};
+const fill=(w,node,value)=>{check(!!node,"Input missing");node.value=value;node.dispatchEvent(new w.Event("input",{bubbles:true}));};
+async function test(){
+ try{
+  const w=frame.contentWindow,d=w.document;
+  await pause(120);
+  d.querySelector('[data-page="brand"]').click();await pause(70);
+  const add=d.querySelector('[data-action="new-brand"]');check(add,"Add Collaboration button missing");add.click();await pause(100);
+  const form=d.querySelector("#brand-form");check(form,"Brand form missing");
+  stats.form={pdfInput:!!form.querySelector('[data-brief-file]'),textBrief:!!form.querySelector('[name="brief_text"]'),productionSection:!!form.querySelector(".rh-collab-production"),inlineCards:form.querySelectorAll(".rh-collab-content-card").length};
+  check(stats.form.pdfInput&&stats.form.textBrief&&stats.form.productionSection,"Brief/production missing");
+  fill(w,form.querySelector('[name="name"]'),"QA brand "+Date.now());
+  fill(w,form.querySelector('[name="campaign"]'),"QA campaign");
+  fill(w,form.querySelector('[name="brief_text"]'),"Teks brief uji: USP produk, logo dan pesan utama. Ini harus bertahan setelah refresh.");
+  const first=form.querySelector(".rh-collab-content-card");check(first,"Default content editor not found");
+  fill(w,first.querySelector('[data-content-field="title"]'),"QA Video 1");
+  fill(w,first.querySelector('[data-content-field="date"]'),"2026-12-03");
+  fill(w,first.querySelector('[data-group="script"] textarea[data-field="text"]'),"Hook: Kenapa produk ini berbeda?");
+  fill(w,first.querySelector('[data-group="shots"] textarea[data-field="text"]'),"Close-up produk pertama");
+  first.querySelector('[data-group="checklist"] input[data-field="checked"]').click();
+  const addVideo=form.querySelector('[data-action="collab-add-content"]');check(addVideo,"Add Content inside brand missing");
+  addVideo.click();await pause(70);
+  const cards=[...form.querySelectorAll(".rh-collab-content-card")];check(cards.length===2,"Second content did not appear");
+  fill(w,cards[1].querySelector('[data-content-field="title"]'),"QA Video 2");
+  fill(w,cards[1].querySelector('[data-content-field="date"]'),"2026-12-04");
+  fill(w,cards[1].querySelector('[data-group="script"] textarea[data-field="text"]'),"Hook kedua untuk video lainnya");
+  const pdfText="%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF";
+  const input=form.querySelector('[data-brief-file]');
+  const pdfFile=new w.File([pdfText],"Brief-UGC-QA.pdf",{type:"application/pdf"});
+  let assigned=false;try{const dt=new w.DataTransfer();dt.items.add(pdfFile);input.files=dt.files;assigned=true;}catch(e){}
+  if(!assigned)Object.defineProperty(input,"files",{configurable:true,value:[pdfFile]});
+  input.dispatchEvent(new w.Event("change",{bubbles:true}));
+  for(let i=0;i<30&&!form.querySelector('[name="brief_pdf_id"]').value;i++)await pause(130);
+  const pdfId=form.querySelector('[name="brief_pdf_id"]').value;
+  stats.pdf={fileID:!!pdfId,fileName:form.querySelector('[name="brief_pdf_name"]').value,localOrCloud:form.querySelector('[name="brief_pdf_cloud"]').value,preview:!!form.querySelector('[data-action="brief-open"]'),status:form.querySelector('[data-brief-status]').textContent};
+  check(!!pdfId,"PDF not saved to local/cloud storage");
+  const brandName=form.querySelector('[name="name"]').value;
+  const save=form.querySelector('button[type="submit"]');check(!save.disabled,"Save still disabled");save.click();await pause(180);
+  const db=JSON.parse(w.localStorage.getItem("iky-creator-hub-local-v1")||"{}");
+  const brand=(db.brands||[]).find(b=>b.name===brandName);
+  const videos=(db.ideas||[]).filter(v=>v.brand_id===brand?.id);
+  stats.saved={brand:!!brand,briefText:brand?.brief_text?.includes("USP produk"),pdfMeta:brand?.brief_pdf_id===pdfId,videoCount:videos.length,script1:videos.some(v=>v.title==="QA Video 1"&&v.script?.[0]?.text.includes("Hook")),script2:videos.some(v=>v.title==="QA Video 2"),checklist:videos.some(v=>v.title==="QA Video 1"&&v.checklist?.[0]?.checked),calendarDates:videos.map(v=>v.date).sort().join(",")};
+  check(stats.saved.brand&&stats.saved.briefText&&stats.saved.pdfMeta&&stats.saved.videoCount===2&&stats.saved.script1&&stats.saved.script2&&stats.saved.checklist,"Collaboration saving failed: "+JSON.stringify(stats.saved));
+  d.querySelector('[data-page="production"]').click();await pause(70);
+  stats.contentCards=[...d.querySelectorAll(".rh-project-card")].filter(e=>e.textContent.includes("QA Video")).length;
+  check(stats.contentCards===2,"Linked projects not in main Content");
+  let loaded=new Promise((ok,fail)=>{frame.onload=ok;setTimeout(()=>fail(Error("reload timed out")),11000);});
+  frame.src="/?inline-qa-reload="+Date.now();await loaded;await pause(150);
+  const d2=frame.contentWindow.document,w2=frame.contentWindow;
+  d2.querySelector('[data-page="brand"]').click();await pause(80);
+  const edit=[...d2.querySelectorAll('[data-action="edit-brand"]')].find(btn=>btn.closest(".rh-collab-card")?.textContent.includes(brandName));
+  check(edit,"Saved brand not found after reload");edit.click();await pause(75);
+  const reopened=d2.querySelector("#brand-form");
+  stats.reloaded={briefText:reopened?.querySelector('[name="brief_text"]')?.value?.includes("USP produk"),pdfName:reopened?.querySelector('[name="brief_pdf_name"]')?.value,inlineContent:reopened?.querySelectorAll(".rh-collab-content-card").length,firstVideo:[...reopened.querySelectorAll(".rh-collab-content-card")].some(x=>x.querySelector('[data-content-field="title"]')?.value==="QA Video 1")};
+  check(stats.reloaded.briefText&&stats.reloaded.inlineContent===2&&stats.reloaded.firstVideo,"Brand and videos did not reload correctly");
+  // Verify PDF exists in IndexedDB after the page reload.
+  const request=w2.indexedDB.open("rh-collaboration-brief-pdf",1);
+  const record=await new Promise((ok,fail)=>{
+    request.onerror=()=>fail(Error("IndexedDB open failed"));
+    request.onsuccess=()=>{
+      const db=request.result;const tx=db.transaction("briefs","readonly");const get=tx.objectStore("briefs").get(pdfId);
+      get.onsuccess=()=>{const value=get.result;db.close();ok(value);};get.onerror=()=>fail(Error("PDF missing in IndexedDB"));
+    };
+  });
+  stats.reloaded.pdfInDevice=record?.blob?.size===pdfFile.size;
+  check(stats.reloaded.pdfInDevice,"PDF bytes not retained");
+  w2.localStorage.removeItem("iky-creator-hub-local-v1");
+  w2.sessionStorage.removeItem("iky-creator-hub-local-v1");
+  label.textContent=JSON.stringify({ok:true,stats});
+ }catch(e){label.textContent=JSON.stringify({ok:false,error:String(e.message||e),stats});}
+}
+frame.addEventListener("load",test,{once:true});
+frame.src="/?inline-production-qa="+Date.now();
+</script></body></html>
