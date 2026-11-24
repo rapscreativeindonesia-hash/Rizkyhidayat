@@ -300,15 +300,25 @@ var KEY="iky-creator-hub-local-v1";
 var initial={profile:{handle:"@ikyhdyat",followers:0,views:0,likes:0,videos:0},ideas:[],assets:[],brands:[]};
 
 var tiktokSync=null,tiktokConfig=null;
+var tiktokFetchInProgress=false;
 async function loadTikTok(){
+ if(tiktokFetchInProgress||document.visibilityState==="hidden")return;
+ tiktokFetchInProgress=true;
  try{
-  const c=await fetch("/api/tiktok/config",{credentials:"same-origin",cache:"no-store"});
-  if(!c.ok)return;
-  tiktokConfig=await c.json();
+  const oldConfigMode=tiktokConfig?.mode,previous=JSON.stringify(tiktokSync);
+  if(!tiktokConfig){
+   const c=await fetch("/api/tiktok/config",{credentials:"same-origin",cache:"no-store"});
+   if(c.ok)tiktokConfig=await c.json();
+  }
   const r=await fetch("/api/tiktok/status",{credentials:"same-origin",cache:"no-store"});
-  tiktokSync=r.ok?await r.json():null;
-  if(page==="dashboard")render();
- }catch(e){console.warn("TikTok connection not ready",e);}
+  if(!r.ok)throw Error("Status TikTok HTTP "+r.status);
+  tiktokSync=await r.json();
+  if(page==="dashboard"&&(previous!==JSON.stringify(tiktokSync)||oldConfigMode!==tiktokConfig?.mode)){
+   if(!document.querySelector(".tt-action-menu[open]"))render();
+  }
+  updateLiveIndicator();
+ }catch(e){console.warn("TikTok status temporarily unavailable:",e.message);}
+ finally{tiktokFetchInProgress=false;}
 }
 async function connectTikTok(){
  try{
@@ -476,7 +486,7 @@ function dashboard(){
  '</div><div class="tt-lower"><div class="tt-lower-card"><div class="tt-sync-row"><h4>Follower Growth</h4></div>'+
  (allZero?empty("Data pertumbuhan belum tersedia.") : growthChart(tiktokSync?.history||[]))+
  '</div><div class="tt-lower-card"><h4>Live Connection</h4><p><span class="tt-led '+(connected?'':'offline')+'" style="display:inline-block;margin-right:7px"></span>'+(connected?'@'+txt(username):'Belum terhubung')+'</p>'+
- '<p>Terakhir sinkron: <b>'+txt(age)+'</b></p><div class="tt-small-actions"><a class="button ghost" href="https://www.tiktok.com/@ikyhdyat" target="_blank" rel="noopener noreferrer">Lihat TikTok</a></div></div></div>'+
+ '<p>Terakhir sinkron: <b>'+txt(age)+'</b> <span id="sync-age" data-synced-at="'+txt(live?.synced_at||"")+'" aria-live="off"></span></p><div class="tt-small-actions"><a class="button ghost" href="https://www.tiktok.com/@ikyhdyat" target="_blank" rel="noopener noreferrer">Lihat TikTok</a></div></div></div>'+
  oauthInfo+'</section>'+
  '<div class="tt-quick"><section class="panel"><div class="section-head"><h3>Kalender & Jadwal Konten</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+
  (next.length?'<ul class="tt-schedule">'+next.map(x=>'<li><strong>'+txt(x.title)+'</strong>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</li>').join("")+'</ul>':empty("Belum ada konten terjadwal. Tentukan tanggal pada ide konten."))+'</section>'+
@@ -628,10 +638,10 @@ async function toggleMusic(){
 }
 function updateLiveIndicator(){
  const el=document.getElementById("sync-age");if(!el)return;
- const at=new Date(el.dataset.syncedAt).getTime();if(!Number.isFinite(at))return;
- const sec=Math.max(0,Math.floor((Date.now()-at)/1000));
- const text=sec<60?sec+" detik":sec<3600?Math.floor(sec/60)+" menit "+sec%60+" detik":Math.floor(sec/3600)+" jam "+Math.floor(sec%3600/60)+" menit";
- el.textContent="Data API diperbarui "+text+" lalu";
+ const at=Date.parse(el.dataset.syncedAt||"");if(!Number.isFinite(at)){el.textContent="";return;}
+ const secs=Math.max(0,Math.floor((Date.now()-at)/1000));
+ const text=secs<60?secs+" detik":secs<3600?Math.floor(secs/60)+" menit "+secs%60+" detik":Math.floor(secs/3600)+" jam "+Math.floor(secs%3600/60)+" menit";
+ el.textContent=" · "+text+" lalu";
 }
 document.addEventListener("click",e=>{
  if(!e.target.closest(".tt-action-menu"))document.querySelectorAll(".tt-action-menu[open]").forEach(x=>x.open=false);
@@ -644,9 +654,13 @@ document.getElementById("music-volume")?.addEventListener("input",e=>{
 setMusicMood(0);
 setInterval(()=>{setMusicMood(musicMood+1);},3000);
 setInterval(updateLiveIndicator,1000);
+// This checks the Cloudflare snapshot every 10 s; TikTok API refresh is handled by server cron every minute.
 setInterval(()=>{
- if(page==="dashboard"&&document.visibilityState==="visible"&&tiktokSync?.connected)loadTikTok();
-},60000);
+ if(page==="dashboard"&&document.visibilityState==="visible")loadTikTok();
+},10000);
+document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="visible"&&page==="dashboard")loadTikTok();
+});
 
 render();
 loadTikTok();
