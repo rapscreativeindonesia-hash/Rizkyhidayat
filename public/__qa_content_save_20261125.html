@@ -5,7 +5,7 @@ const ensure=(v,msg)=>{if(!v)throw Error(msg)};
 async function run(){
  const f=document.getElementById("dash");let reload=false;
  try{
-  await new Promise((ok,bad)=>{f.onload=ok;f.onerror=bad;setTimeout(()=>bad(Error("iframe-load-timeout")),13000)});
+  await sleep(220);
   const w=f.contentWindow,d=w.document;
   ensure(d.querySelector('[data-page="production"]'),"navigation missing");
   d.querySelector('[data-page="production"]').click();await sleep(180);
@@ -38,5 +38,5 @@ async function run(){
   f.contentWindow.localStorage.removeItem("iky-creator-hub-local-v1");
  }catch(e){report({ok:false,error:String(e?.message||e)});}
 }
-window.addEventListener("load",run);
+document.getElementById("dash").addEventListener("load",run,{once:true});
 </script></body></html>
