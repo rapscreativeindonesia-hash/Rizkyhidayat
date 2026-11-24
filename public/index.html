@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b141c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;650;700;750;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>Rizky Hidayat — Freelance Content Creator</title>
 <style>
 :root{--bg:#090811;--surface:#171321;--surface2:#1d172b;--line:#362b49;--text:#f4efff;--muted:#a99bb9;--purple:#aa69ff;--purple2:#6936bf;--good:#78e6b1;--danger:#ff839b;--radius:18px;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
@@ -114,11 +117,71 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .music-widget .music-controls{margin-top:9px}
 .music-widget .music-vol{margin-top:8px;margin-bottom:3px}
 .music-widget .music-caption{display:none}
-.top.dashboard-top{justify-content:flex-end;margin-bottom:12px}
+.top.dashboard-top{display:none}
 .top.dashboard-top >div:first-child{display:none}
 .tt-status{font-weight:800;letter-spacing:.07em;justify-content:center;min-width:80px;padding:7px 15px}
 .tt-profile-copy h3{margin:0}
 @media(max-width:790px){.sidebar{height:auto;overflow:visible}.sidebar .music-widget{max-width:100%;margin-top:12px;overflow:visible}.music-widget .music-album{height:58px}}
+
+/* Dashboard typography, in-card date & fully visible music player — Nov 24 revision */
+:root{font-family:"Manrope","Avenir Next",ui-sans-serif,system-ui,sans-serif}
+body,button,input,select,textarea{font-family:"Manrope","Avenir Next",ui-sans-serif,system-ui,sans-serif}
+h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:"Outfit","Manrope",system-ui,sans-serif}
+.logo h1{font-size:18px;font-weight:700;letter-spacing:-.35px;line-height:1.12}
+.logo p{letter-spacing:.01em;font-size:10.5px;line-height:1.5}
+.nav button{font-size:13.25px;font-weight:550;letter-spacing:-.13px}
+.nav button.active{font-weight:750}
+.tt-head{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:17px}
+.tt-head-right{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;min-width:0}
+.tt-date{font-family:"Manrope",system-ui,sans-serif;font-size:11px;font-weight:700;letter-spacing:.01em;white-space:nowrap;color:#e0e9ec;background:#263947a8;border:1px solid #455f6c;border-radius:999px;padding:8px 13px;text-transform:capitalize}
+.tt-eyebrow{font-family:"Manrope",system-ui,sans-serif;letter-spacing:.14em;line-height:1.4;color:#c1d0d9}
+.tt-profile-copy h3{font-size:27px;font-weight:700;letter-spacing:-.65px}
+.tt-metric-label{letter-spacing:.01em}.tt-metric .tt-metric-value{font-family:"Outfit",system-ui,sans-serif;letter-spacing:-.6px}
+.tt-lower-card h4{font-family:"Outfit",system-ui,sans-serif;font-size:16px;font-weight:600}
+.tt-status{padding:8px 14px;min-width:75px;font-size:11px}
+.top.dashboard-top{display:none!important}
+.sidebar{padding-top:20px;padding-bottom:14px}
+.sidebar .logo{padding-bottom:15px}
+.sidebar .nav{gap:3px}
+.sidebar .nav button{padding:10px 12px}
+.sidebar .music-widget{margin-top:18px!important;flex:0 0 auto;overflow:visible!important;align-self:stretch;padding:13px;max-width:100%;min-width:0}
+.music-widget .music-album{height:62px;margin:9px 0 7px}
+.music-widget .music-controls{margin-top:10px}
+.music-widget .music-vol{margin-top:11px;margin-bottom:6px}
+.music-widget .music-meta{min-width:0}
+.music-meta strong,.music-meta small{overflow-wrap:anywhere}
+.music-widget #music-track{font-weight:650;letter-spacing:.01em}
+.music-overline{font-weight:800;letter-spacing:.22em}
+.music-controls>*{flex-shrink:0}
+.music-vol input{min-width:0;width:100%;flex:1}
+.tt-dashboard,.tt-panel,.tt-profile-row,.tt-metrics,.tt-lower,.tt-quick{min-width:0;max-width:100%}
+.tt-profile-copy{overflow-wrap:anywhere}
+@media(max-width:1040px){
+  .tt-head{align-items:flex-start}
+  .tt-head-right{margin-left:auto}
+  .tt-eyebrow{max-width:100%;font-size:9.5px}
+  .sidebar .music-widget{margin-top:16px!important}
+}
+@media(max-width:790px){
+  .sidebar{height:auto;overflow:visible}
+  .sidebar .music-widget{max-width:100%;margin:16px 0 0!important}
+  .music-widget .music-album{height:64px}
+  .tt-head-right{margin-left:0;justify-content:flex-start}
+}
+@media(max-width:500px){
+  .tt-head{flex-direction:column;align-items:flex-start;gap:10px}
+  .tt-head-right{width:100%;justify-content:space-between}
+  .tt-date{font-size:10px;padding:7px 11px}
+  .tt-profile-copy h3{font-size:22px}
+}
+@media(max-height:690px) and (min-width:791px){
+  .sidebar{padding-top:12px;padding-bottom:12px}
+  .sidebar .logo{padding-bottom:8px}
+  .sidebar .nav button{padding:8px 10px}
+  .sidebar .music-widget{margin-top:10px!important}
+  .music-widget .music-album{height:49px}
+  .music-widget .music-disc{width:42px;height:42px}
+}
 </style>
 </head>
 <body>
@@ -227,7 +290,7 @@ function dashboard(){
  const params=new URLSearchParams(location.search),oauthErr=params.get("tiktok_status");
  const oauthInfo=oauthErr&&oauthErr!=="connected"?'<div class="tt-disclaimer">'+txt(errorMessages[oauthErr]||"Terjadi kendala otorisasi.")+'</div>':"";
  return '<div class="tt-dashboard tt-fade"><section class="tt-panel" aria-label="TikTok Performance Center">'+
- '<div class="tt-head"><span class="tt-eyebrow">RIZKY HIDAYAT / TIKTOK PERFORMANCE</span><div class="tt-status" aria-label="Status koneksi TikTok"><span class="tt-led '+(connected?'':'offline')+'"></span><strong>'+statusText+'</strong></div></div>'+
+ '<div class="tt-head"><span class="tt-eyebrow">RIZKY HIDAYAT / TIKTOK PERFORMANCE</span><div class="tt-head-right"><time class="tt-date" datetime="'+today()+'">'+new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"})+'</time><div class="tt-status" aria-label="Status koneksi TikTok"><span class="tt-led '+(connected?'':'offline')+'"></span><strong>'+statusText+'</strong></div></div></div>'+
  '<div class="tt-profile-row">'+pic+'<div class="tt-profile-copy"><h3>'+txt(name)+'</h3></div><div class="tt-actions">'+button+(connected?btn("Kelola Koneksi","connect-tiktok",""):'')+'</div></div>'+
  '<div class="tt-metrics">'+
  '<div class="tt-metric"><div class="tt-metric-label">Followers</div><div class="tt-metric-value">'+follower+'</div><div class="tt-metric-note">'+(allZero?'Belum ada data valid':connected?'Statistik akun':'Belum tersedia')+'</div></div>'+
