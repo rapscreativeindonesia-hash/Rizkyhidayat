@@ -437,6 +437,10 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
 .rh-editor-form .rh-builder-row.rh-compact-row .rh-inline-main{align-self:flex-start}
 .rh-editor-form .rh-builder-row.rh-compact-row .rh-inline-check{min-height:37px;align-items:center}
 .rh-editor-form .rh-builder-row.rh-compact-row .rh-item-options>summary{height:37px}
+
+/* Minimal icon-only close button for Content and Collaboration modal */
+.modal-head .rh-modal-close{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;min-width:36px;min-height:36px;padding:0;border-radius:10px;font-size:24px;line-height:1;font-weight:400}
+.modal-head .rh-modal-close:focus-visible{outline:2px solid #a8d3e4;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -461,7 +465,7 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
 </aside>
 <main class="main"><header class="top"><div><h2 id="page-title">Dashboard</h2><p id="page-subtitle">Ringkasan perjalananmu sebagai content creator.</p></div><div class="date" id="now"></div></header><div id="app"></div><footer aria-label="Dokumen hukum" style="display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin:28px 0 0;padding:22px 8px 8px;border-top:1px solid #362b49;color:#b9a9ca;font-size:12px"><span>© 2026 Rizky Hidayat</span><a href="/privacy.html" style="color:#aacbd9">Privacy Policy</a><a href="/terms.html" style="color:#cfb3ff">Terms of Service</a></footer></main>
 </div>
-<div class="modal-layer" id="modal-layer" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><h3 id="modal-title"></h3><button type="button" class="button ghost" data-action="close">Tutup ✕</button></div><div id="modal-content"></div></div></div>
+<div class="modal-layer" id="modal-layer" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><h3 id="modal-title"></h3><button type="button" class="button ghost rh-modal-close" data-action="close" aria-label="Tutup" title="Tutup">×</button></div><div id="modal-content"></div></div></div>
 <script>
 (function(){
 "use strict";
