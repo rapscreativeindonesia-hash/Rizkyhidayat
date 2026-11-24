@@ -321,7 +321,7 @@ async function refreshTikTok(){
  try{
   const r=await fetch("/api/tiktok/sync",{method:"POST",credentials:"same-origin"});
   const j=await r.json();
-  if(r.status===401){alert("Sesi TikTok berakhir. Klik Hubungkan TikTok untuk masuk kembali melalui TikTok.");return;}
+  if(r.status===401){alert("Akun TikTok masih terhubung. Untuk sinkron manual dari perangkat ini, buka menu tiga titik dan aktifkan kontrol TikTok. Sinkronisasi otomatis server tetap berjalan.");return;}
   if(!r.ok)throw Error(j.error||"Sinkronisasi gagal");
   await loadTikTok();alert("Data TikTok berhasil disinkronkan dari API resmi.");
  }catch(e){alert("Sinkronisasi gagal: "+e.message);}
@@ -364,8 +364,9 @@ function dashboard(){
  const views=live?.recent_video_count>0?n(live.recent_views):"—";
  const scopeNames=new Set((tiktokSync?.scope||"").split(",").map(x=>x.trim()).filter(Boolean));
  const videoNote=live?.video_error?"Data video belum tersedia":!connected?"Belum terhubung":!scopeNames.has("video.list")?"Data video belum tersedia":live?.recent_video_count?"Dari "+n(live.recent_video_count)+" video terbaru":"Belum ada data video";
- const statusText=connected?"LIVE":"OFFLINE";
- const actionMenu='<details class="tt-action-menu"><summary aria-label="Menu tindakan TikTok" title="Opsi TikTok"><span aria-hidden="true">···</span></summary><div class="tt-action-popover" role="group" aria-label="Tindakan TikTok">'+(connected?btn("Sinkronkan Sekarang","refresh-tiktok",""):btn("Hubungkan TikTok","connect-tiktok",""))+(connected?btn("Kelola Koneksi","connect-tiktok",""):"")+'</div></details>';
+ const statusText=connected?"LIVE":"OFFLINE"; // status TikTok server, not the browser session
+ const canSync=!!tiktokSync?.owner_session;
+ const actionMenu='<details class="tt-action-menu"><summary aria-label="Menu tindakan TikTok" title="Opsi TikTok"><span aria-hidden="true">···</span></summary><div class="tt-action-popover" role="group" aria-label="Tindakan TikTok">'+(connected?(canSync?btn("Sinkronkan Sekarang","refresh-tiktok","")+btn("Kelola Koneksi","connect-tiktok",""):btn("Aktifkan kontrol di perangkat ini","connect-tiktok","")):btn("Hubungkan TikTok","connect-tiktok",""))+'</div></details>';
  const errorMessages={invalid_oauth_session:"Sesi otorisasi tidak cocok.",state_expired:"Sesi otorisasi kedaluwarsa.",authorization_denied:"Izin akun tidak diberikan.",wrong_account:"Akun TikTok bukan @ikyhdyat.",token_exchange_failed:"Gagal meminta token TikTok. Periksa izin aplikasi.",link_failed:"Gagal menautkan akun.",different_account:"Akun lain sudah tertaut."};
  const params=new URLSearchParams(location.search),oauthErr=params.get("tiktok_status");
  const oauthInfo=oauthErr&&oauthErr!=="connected"?'<div class="tt-disclaimer">'+txt(errorMessages[oauthErr]||"Terjadi kendala otorisasi.")+'</div>':"";
