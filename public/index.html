@@ -70,49 +70,32 @@ var initial={profile:{handle:"@ikyhdyat",followers:0,views:0,likes:0,videos:0},i
 var tiktokSync=null,tiktokConfig=null;
 async function loadTikTok(){
  try{
- const c=await fetch("/api/tiktok/config",{credentials:"same-origin",cache:"no-store"});
- if(!c.ok)return;
- tiktokConfig=await c.json();
- if(tiktokConfig.admin_configured){
+  const c=await fetch("/api/tiktok/config",{credentials:"same-origin",cache:"no-store"});
+  if(!c.ok)return;
+  tiktokConfig=await c.json();
   const r=await fetch("/api/tiktok/status",{credentials:"same-origin",cache:"no-store"});
-  if(r.ok)tiktokSync=await r.json();
- }
- if(page==="dashboard")render();
+  tiktokSync=r.ok?await r.json():null;
+  if(page==="dashboard")render();
  }catch(e){console.warn("TikTok connection not ready",e);}
-}
-async function loginTikTokAdmin(){
- if(!tiktokConfig)await loadTikTok();
- if(!tiktokConfig?.admin_configured){alert("Password admin Worker belum dipasang di Cloudflare. Tambahkan secret DASHBOARD_PASSWORD (minimal 12 karakter).");return false;}
- const password=prompt("Masukkan password admin dashboard (disimpan dalam cookie HttpOnly selama 30 hari):");
- if(!password)return false;
- const r=await fetch("/api/login",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify({password})});
- if(!r.ok){alert("Password salah atau belum dikonfigurasi.");return false;}
- return true;
-}
-async function ensureTikTokAdmin(){
- try{
- const r=await fetch("/api/tiktok/status",{credentials:"same-origin",cache:"no-store"});
- if(r.ok){tiktokSync=await r.json();return true;}
- if(r.status===401)return await loginTikTokAdmin();
- alert("Layanan sinkronisasi tidak dapat diakses.");return false;
- }catch(e){alert("Cloudflare API belum tersedia. Pastikan Worker terbaru telah dideploy.");return false;}
 }
 async function connectTikTok(){
  try{
- if(!tiktokConfig)await loadTikTok();
- if(!tiktokConfig?.app_configured){
-  alert("TikTok "+(tiktokConfig?.mode==="sandbox"?"Sandbox":"Developer")+" belum dikonfigurasi. Pasang TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET, dan DASHBOARD_PASSWORD di Cloudflare Worker (sebagai secrets). Tambahkan @ikyhdyat sebagai Target user pada Sandbox, Apply changes, dan daftarkan Redirect URI: "+(tiktokConfig?.redirect_uri||"/api/tiktok/callback"));
-  return;
- }
- if(!await ensureTikTokAdmin())return;
- const r=await fetch("/api/tiktok/connect",{method:"POST",credentials:"same-origin"}); const j=await r.json(); if(!r.ok||!j.authorize_url)throw Error(j.error||"Koneksi gagal"); window.location.assign(j.authorize_url);
+  if(!tiktokConfig)await loadTikTok();
+  if(!tiktokConfig?.app_configured||!tiktokConfig?.session_configured){
+   alert("Koneksi TikTok belum siap. Periksa Client Key, Client Secret, serta secret sesi dashboard di Cloudflare.");
+   return;
+  }
+  const r=await fetch("/api/tiktok/connect",{method:"POST",credentials:"same-origin"});
+  const j=await r.json();
+  if(!r.ok||!j.authorize_url)throw Error(j.error||"Koneksi gagal");
+  window.location.assign(j.authorize_url);
  }catch(e){alert("Tidak bisa menghubungkan TikTok: "+e.message);}
 }
 async function refreshTikTok(){
- if(!await ensureTikTokAdmin())return;
  try{
   const r=await fetch("/api/tiktok/sync",{method:"POST",credentials:"same-origin"});
   const j=await r.json();
+  if(r.status===401){alert("Sesi TikTok berakhir. Klik Hubungkan TikTok untuk masuk kembali melalui TikTok.");return;}
   if(!r.ok)throw Error(j.error||"Sinkronisasi gagal");
   await loadTikTok();alert("Data TikTok berhasil disinkronkan dari API resmi.");
  }catch(e){alert("Sinkronisasi gagal: "+e.message);}
@@ -147,8 +130,12 @@ const live=tiktokSync&&tiktokSync.connected&&tiktokSync.latest?tiktokSync.latest
 const status=live?'<span class="pill ok">Data asli · '+(tiktokConfig?.mode==='sandbox'?'TikTok Sandbox API':'TikTok API')+'</span>':tiktokSync?.connected?'<span class="pill warn">Terhubung · menunggu data</span>':'<span class="pill warn">Belum tersinkron</span>';
 const message=live?'Terakhir sinkron: '+new Date(live.synced_at).toLocaleString("id-ID")+' · Akun: @'+txt(live.username):'Hubungkan akun @ikyhdyat melalui izin resmi TikTok. Data belum tersedia tanpa OAuth.';
 const views=(live&&live.recent_video_count>0)?n(live.recent_views):"—";
+const oauthResult=new URLSearchParams(window.location.search).get("tiktok_status");
+const oauthMessages={invalid_oauth_session:"Sesi otorisasi tidak cocok. Klik Hubungkan TikTok lagi.",state_expired:"Sesi otorisasi sudah kedaluwarsa. Klik Hubungkan TikTok lagi.",authorization_denied:"Izin TikTok tidak diberikan.",wrong_account:"Akun TikTok tidak cocok. Gunakan @ikyhdyat.",different_account:"Akun lain sudah terhubung.",link_failed:"Gagal menyambungkan akun TikTok.",token_exchange_failed:"TikTok menolak pertukaran kode otorisasi. Periksa Sandbox dan Redirect URI.",missing_tiktok_keys:"Kredensial TikTok belum dipasang.",no_code:"TikTok tidak mengirim kode otorisasi."};
+const oauthNotice=oauthResult&&oauthResult!=="connected"?'<p class="small" style="color:#ffb4a7">'+txt(oauthMessages[oauthResult]||"Otorisasi TikTok gagal. Periksa konfigurasi Sandbox.")+'</p>':"";
+
 return '<div class="grid cols2"><section class="panel gradient hero"><span class="pill">Personal Creator Workspace</span><h3 style="margin-top:14px">Halo, Iky.</h3><p>Seluruh ide, kalender, produksi, dan kerja sama brand dalam satu tempat.</p><div class="buttons" style="margin-top:20px">'+btn("+ Tambah Ide","new-idea","primary")+btn("Tambah Brand","new-brand","")+'</div></section>'+
-'<section class="panel"><div class="section-head"><h3>Sinkronisasi TikTok '+(tiktokConfig?.mode==='sandbox'?'<span class="pill">SANDBOX</span>':'')+'</h3>'+status+'</div><p class="muted small">'+message+'</p><div class="buttons">'+(live?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary"))+(live?btn("Kelola Akun","connect-tiktok",""):btn("Cek Koneksi","check-tiktok",""))+'<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@ikyhdyat">Lihat TikTok</a></div>'+(tiktokSync?.lastError?'<p class="small" style="color:#ffb4a7">Catatan sinkron: '+txt(tiktokSync.lastError.message)+'</p>':"")+'</section></div>'+
+'<section class="panel"><div class="section-head"><h3>Sinkronisasi TikTok '+(tiktokConfig?.mode==='sandbox'?'<span class="pill">SANDBOX</span>':'')+'</h3>'+status+'</div><p class="muted small">'+message+'</p><div class="buttons">'+(live?btn("Sinkronkan Sekarang","refresh-tiktok","primary"):btn("Hubungkan TikTok","connect-tiktok","primary"))+(live?btn("Kelola Akun","connect-tiktok",""):btn("Cek Koneksi","check-tiktok",""))+'<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@ikyhdyat">Lihat TikTok</a></div>'+(tiktokSync?.lastError?'<p class="small" style="color:#ffb4a7">Catatan sinkron: '+txt(tiktokSync.lastError.message)+'</p>':"")+oauthNotice+'</section></div>'+
 '<div class="grid cols4" style="margin-top:15px">'+
 metric("Followers TikTok",live?n(live.followers):"—",live?"Dari TikTok resmi":"Belum terhubung")+
 metric("Total Likes TikTok",live?.likes!=null?n(live.likes):"—",live?"Dari TikTok resmi":"Belum terhubung")+
