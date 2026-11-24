@@ -434,7 +434,7 @@ async function refreshTikTok(){
  }catch(e){alert("Sinkronisasi gagal: "+e.message);}
 }
 
-function load(){try{var s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.ideas)&&Array.isArray(s.brands)&&Array.isArray(s.assets))return s;}catch(e){}return JSON.parse(JSON.stringify(initial));}
+function load(){for(const storage of [localStorage,sessionStorage]){try{const s=JSON.parse(storage.getItem(KEY));if(s&&Array.isArray(s.ideas)&&Array.isArray(s.brands)&&Array.isArray(s.assets))return s;}catch(e){}}return JSON.parse(JSON.stringify(initial));}
 var state=load(),page="dashboard",libTab="ideas",calendarOffset=0;
 var cloudAccess="checking",cloudSaveTimer=null,cloudBusy=false,cloudLastSaved=null;
 function ensureDeleted(doc){
@@ -460,16 +460,20 @@ function mergeClientWorkspace(local,remote){
  }
  return out;
 }
+var rhStorageTier="persistent";
 function writeLocal(){
- try{
-   const value=JSON.stringify(state);
-   localStorage.setItem(KEY,value);
-   if(localStorage.getItem(KEY)!==value)throw new Error("Verifikasi data tidak cocok");
-   return true;
- }catch(error){
-   console.error("Penyimpanan perangkat gagal",error);
-   return false;
+ let value;
+ try{value=JSON.stringify(state);}catch(error){console.error("Serialisasi konten gagal",error);return false;}
+ for(const storage of [localStorage,sessionStorage]){
+   try{
+     storage.setItem(KEY,value);
+     if(storage.getItem(KEY)!==value)throw Error("Verifikasi gagal");
+     rhStorageTier=storage===localStorage?"persistent":"session";
+     return true;
+   }catch(error){console.warn("Storage tier failed",error);}
  }
+ rhStorageTier="unavailable";
+ return false;
 }
 function notice(message,kind){
  let el=document.getElementById("save-notice");
@@ -481,7 +485,7 @@ function save(){
  ensureDeleted(state);
  if(!writeLocal())throw new Error("Browser menolak menyimpan data. Konten masih ada di formulir; salin dulu sebelum menutupnya.");
  if(cloudAccess==="ok"||cloudAccess==="saving")scheduleCloudSave();
- else notice("Konten tersimpan di perangkat ini.","ok");
+ else notice(rhStorageTier==="session"?"Konten tersimpan sementara pada tab ini. Jangan tutup browser sebelum menyalin data.":"Konten tersimpan di perangkat ini.",rhStorageTier==="session"?"warn":"ok");
 }
 function scheduleCloudSave(){
  if(cloudAccess!=="ok"&&cloudAccess!=="saving")return;
