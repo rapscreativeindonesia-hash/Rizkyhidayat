@@ -15,7 +15,7 @@ TIKTOK_EXPECTED_USERNAME = "ikyhdyat"
 TIKTOK_MODE = "sandbox"
 
 [triggers]
-crons = ["0 */6 * * *"]
+crons = ["* * * * *"]
 
 [[durable_objects.bindings]]
 name = "TIKTOK_STORE"
