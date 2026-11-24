@@ -262,6 +262,17 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
  .tt-profile-copy h3{font-size:21px}
  .tt-action-popover{right:0;min-width:190px}
 }
+
+/* Reliable workspace save feedback and restored draft UI */
+.storage-pill{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #526d7b;background:#203341;border-radius:14px;padding:11px 15px;color:#cce2eb;font:600 12px/1.5 "Manrope",sans-serif;margin-bottom:16px}
+.storage-pill.ok{border-color:#406e63;color:#bce6d4}
+.storage-pill.local{border-color:#8b6b52;background:#362d28;color:#f0d4b9}
+.storage-pill button{border:1px solid #c5a98a;background:transparent;border-radius:9px;color:#f0d4b9;padding:7px 10px;font:inherit;cursor:pointer}
+.storage-pill button:hover{background:#5c4438}
+#save-notice{position:fixed;bottom:24px;right:24px;z-index:10000;width:min(420px,calc(100vw - 32px));padding:15px 19px;border:1px solid #64a38e;border-radius:12px;background:#193b35;color:#e4f7ee;box-shadow:0 12px 40px #0007;font:600 13px/1.55 "Manrope",sans-serif;opacity:0;visibility:hidden;transform:translateY(10px);transition:.15s ease;pointer-events:none}
+#save-notice.visible{opacity:1;visibility:visible;transform:translateY(0)}
+#save-notice[data-kind="warn"]{background:#47352a;border-color:#c39c72;color:#fff0dd}
+.restored-draft{padding:10px 13px;background:#3d3526;border:1px solid #9e8759;border-radius:10px;color:#f5dba7;font-size:12px;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -329,7 +340,101 @@ async function refreshTikTok(){
 
 function load(){try{var s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.ideas)&&Array.isArray(s.brands)&&Array.isArray(s.assets))return s;}catch(e){}return JSON.parse(JSON.stringify(initial));}
 var state=load(),page="dashboard",libTab="ideas",calendarOffset=0;
-function save(){localStorage.setItem(KEY,JSON.stringify(state));}
+var cloudAccess="checking",cloudSaveTimer=null,cloudBusy=false,cloudLastSaved=null;
+function ensureDeleted(doc){
+ if(!doc.deleted||typeof doc.deleted!=="object")doc.deleted={};
+ for(const k of ["ideas","assets","brands"])if(!doc.deleted[k]||typeof doc.deleted[k]!=="object")doc.deleted[k]={};
+ return doc;
+}
+ensureDeleted(state);
+function mergeClientWorkspace(local,remote){
+ const src=ensureDeleted(local),other=ensureDeleted(remote||JSON.parse(JSON.stringify(initial)));
+ const out={profile:(Number(other.profile?.updated_at)||0)>(Number(src.profile?.updated_at)||0)?other.profile:src.profile,ideas:[],assets:[],brands:[],deleted:{ideas:{},assets:{},brands:{}}};
+ for(const group of ["ideas","assets","brands"]){
+   const del={...(src.deleted[group]||{})};
+   for(const [key,when] of Object.entries(other.deleted[group]||{}))del[key]=Math.max(Number(del[key])||0,Number(when)||0);
+   const records=new Map();
+   for(const item of other[group]||[])if(item?.id)records.set(item.id,item);
+   for(const item of src[group]||[]){
+     if(!item?.id)continue;const prev=records.get(item.id);
+     if(!prev||(Number(item.updated_at)||0)>=(Number(prev.updated_at)||0))records.set(item.id,item);
+   }
+   out[group]=[...records.values()].filter(x=>(Number(x.updated_at)||0)>(Number(del[x.id])||0));
+   out.deleted[group]=del;
+ }
+ return out;
+}
+function writeLocal(){
+ try{
+   const value=JSON.stringify(state);
+   localStorage.setItem(KEY,value);
+   if(localStorage.getItem(KEY)!==value)throw new Error("Verifikasi data tidak cocok");
+   return true;
+ }catch(error){
+   console.error("Penyimpanan perangkat gagal",error);
+   return false;
+ }
+}
+function notice(message,kind){
+ let el=document.getElementById("save-notice");
+ if(!el){el=document.createElement("div");el.id="save-notice";el.setAttribute("role","status");el.setAttribute("aria-live","polite");document.body.appendChild(el);}
+ el.textContent=message;el.dataset.kind=kind||"ok";el.classList.add("visible");
+ clearTimeout(notice._timer);notice._timer=setTimeout(()=>el.classList.remove("visible"),7000);
+}
+function storageBanner(){
+ if(cloudAccess==="ok")return '<div class="storage-pill ok">☁ Tersinkron dengan Cloudflare'+(cloudLastSaved?" · "+new Date(cloudLastSaved).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}):"")+'</div>';
+ if(cloudAccess==="checking")return '<div class="storage-pill">Memeriksa penyimpanan Cloudflare…</div>';
+ if(cloudAccess==="saving")return '<div class="storage-pill">Menyimpan ke Cloudflare…</div>';
+ return '<div class="storage-pill local">Data perangkat ini saja. <button type="button" data-action="connect-tiktok">Aktifkan sinkronisasi cloud</button></div>';
+}
+function save(){
+ ensureDeleted(state);
+ if(!writeLocal())throw new Error("Browser menolak menyimpan data. Konten masih ada di formulir; salin dulu sebelum menutupnya.");
+ if(cloudAccess==="ok"||cloudAccess==="saving")scheduleCloudSave();
+ else notice("Tersimpan di browser ini. Aktifkan sinkronisasi cloud untuk akses dari perangkat lain.","warn");
+}
+function scheduleCloudSave(){
+ if(cloudAccess!=="ok"&&cloudAccess!=="saving")return;
+ clearTimeout(cloudSaveTimer);
+ cloudSaveTimer=setTimeout(()=>{syncCloudWorkspace().catch(e=>console.error("Cloud sync failed",e));},450);
+}
+async function loadCloudWorkspace(){
+ try{
+   const r=await fetch("/api/workspace",{credentials:"same-origin",cache:"no-store"});
+   if(r.status===401){cloudAccess="local";if(page!=="dashboard")render();return;}
+   if(!r.ok)throw new Error("Cloudflare "+r.status);
+   const j=await r.json();
+   if(!j.ok)throw new Error(j.error||"Cloudflare gagal membaca workspace");
+   cloudAccess="ok";cloudLastSaved=j.saved_at||null;
+   state=mergeClientWorkspace(state,j.workspace);
+   if(!writeLocal())notice("Data cloud terbaca, tetapi browser tidak bisa menyimpan salinan lokal.","warn");
+   if(page!=="dashboard")render();
+   scheduleCloudSave(); // Migrate legacy local records to the server, preserving existing cloud records.
+ }catch(e){
+   cloudAccess="local";console.warn("Workspace cloud unavailable:",e);
+   if(page!=="dashboard")render();
+ }
+}
+async function syncCloudWorkspace(){
+ if(cloudBusy){scheduleCloudSave();return;}
+ if(cloudAccess!=="ok"&&cloudAccess!=="saving")return;
+ cloudBusy=true;cloudAccess="saving";
+ try{
+   const r=await fetch("/api/workspace",{method:"PUT",headers:{"content-type":"application/json"},credentials:"same-origin",body:JSON.stringify({workspace:state})});
+   if(r.status===401){cloudAccess="local";notice("Data tersimpan lokal. Sesi cloud belum aktif di perangkat ini.","warn");return;}
+   const j=await r.json();
+   if(!r.ok||!j.ok)throw new Error(j.error||"Server gagal menyimpan");
+   state=mergeClientWorkspace(state,j.workspace); // Do not discard local changes made during the request.
+   writeLocal();cloudLastSaved=j.saved_at;cloudAccess="ok";
+   notice("Konten berhasil tersimpan di Cloudflare.","ok");
+ }catch(e){
+   cloudAccess="local";notice("Simpan cloud gagal. Salinan tetap ada di perangkat ini: "+e.message,"warn");
+ }finally{
+   cloudBusy=false;
+   if(page!=="dashboard"&&!document.getElementById("modal-layer")?.classList.contains("open"))render();
+ }
+}
+
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function n(v){return new Intl.NumberFormat("id-ID").format(Number(v)||0);}
 function rp(v){return "Rp "+n(v);}
@@ -341,7 +446,7 @@ function metric(label,value,description){return '<section class="panel"><div cla
 function empty(txt){return '<div class="empty">'+esc(txt)+'</div>';}
 function txt(t){return esc(t);}
 function setpage(p){page=p;render();}
-function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide / Library","Bank ide, referensi, dan aset untuk produksi."],calendar:["Kalender Konten","Rencanakan jadwal konten di satu kalender."],production:["Produksi Content","Kelola proses konten dari ide sampai final."],brand:["Brand","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.querySelector(".top")?.classList.toggle("dashboard-top",page==="dashboard");const sh=document.getElementById("side-handle");if(sh)sh.textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
+function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide / Library","Bank ide, referensi, dan aset untuk produksi."],calendar:["Kalender Konten","Rencanakan jadwal konten di satu kalender."],production:["Produksi Content","Kelola proses konten dari ide sampai final."],brand:["Brand","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.querySelector(".top")?.classList.toggle("dashboard-top",page==="dashboard");const sh=document.getElementById("side-handle");if(sh)sh.textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=(page==="dashboard"?"":storageBanner())+({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
 function growthChart(history){
 if(!Array.isArray(history)||history.length<2)return '<div class="empty">Grafik pertumbuhan muncul setelah minimal dua sinkronisasi berhasil.</div>';
 const h=history.filter(x=>Number.isFinite(x.followers)).slice(-60);if(h.length<2)return '<div class="empty">Belum ada data pertumbuhan yang cukup.</div>';
@@ -401,7 +506,53 @@ function production(){var result='<div class="toolbar"><span class="muted small"
 stages.forEach(function(st){var list=state.ideas.filter(function(x){return x.stage===st;});result+='<div class="stage"><h4>'+st+' <span class="pill">'+list.length+'</span></h4>'+(list.length?list.map(function(x){var idx=stages.indexOf(st);return '<div class="stage-card"><strong>'+txt(x.title)+'</strong><p>'+txt(x.platform)+' · '+fmt(x.date)+'</p><div class="buttons">'+(idx>0?btn("←","back-stage","","data-id='"+txt(x.id)+"'"):"")+(idx<5?btn("Lanjut →","next-stage","primary","data-id='"+txt(x.id)+"'"):"")+'</div></div>';}).join(""):empty("Tidak ada konten"))+'</div>';});return result+'</div><div class="notice">Satu konten menggunakan satu status aktif. Ide, kalender, dan produksi membaca catatan yang sama sehingga tidak perlu input tiga kali.</div>';}
 function brandCard(x){return '<section class="panel"><div class="itemtop"><h3>'+txt(x.name)+'</h3>'+chip(x.status)+'</div><p class="muted small">'+txt(x.contact||"Kontak belum diisi")+'</p><div class="tagrow">'+chip("Nilai "+rp(x.value))+chip(x.deadline?fmt(x.deadline):"Belum ada deadline")+'</div><p class="muted small">'+txt(x.deliverables||"Deliverable belum diisi")+'</p><p class="muted small">'+txt(x.notes||"")+'</p><div class="buttons">'+btn("Edit","edit-brand","","data-id='"+txt(x.id)+"'")+btn("Ubah Status","advance-brand","primary","data-id='"+txt(x.id)+"'")+btn("Hapus","delete-brand","danger","data-id='"+txt(x.id)+"'")+'</div></section>';}
 function brand(){var active=state.brands.filter(function(x){return x.status==="Aktif"||x.status==="Berjalan";}),paid=state.brands.filter(function(x){return x.status==="Selesai";});return '<div class="grid cols3">'+metric("Total Brand",n(state.brands.length),"Tercatat")+metric("Aktif / Berjalan",n(active.length),"Kolaborasi")+metric("Selesai",n(paid.length),"Proyek")+'</div><div class="toolbar" style="margin-top:20px"><h3>Daftar Kolaborasi</h3>'+btn("+ Tambah Brand","new-brand","primary")+'</div><div class="grid cols3">'+(state.brands.length?state.brands.map(brandCard).join(""):'<div style="grid-column:1/-1">'+empty("Belum ada brand. Tambahkan prospek, kontak, nilai deal, deliverables, dan tenggat.")+'</div>')+'</div>';}
-function modal(title,body){document.getElementById("modal-title").textContent=title;document.getElementById("modal-content").innerHTML=body;document.getElementById("modal-layer").classList.add("open");document.getElementById("modal-layer").setAttribute("aria-hidden","false");}
+function modal(title,body){
+ document.getElementById("modal-title").textContent=title;
+ document.getElementById("modal-content").innerHTML=body;
+ document.getElementById("modal-layer").classList.add("open");
+ document.getElementById("modal-layer").setAttribute("aria-hidden","false");
+ const form=document.getElementById("modal-content").querySelector("form");
+ if(form)restoreFormDraft(form);
+}
+
+/* Drafts protect text against accidental navigation or lost browser state. */
+const DRAFT_PREFIX="rh-creator-draft-v1:";
+function draftKey(form){return DRAFT_PREFIX+form.id+":"+(form.elements.namedItem("id")?.value||"new");}
+function saveDraft(form){
+ if(!form||!["idea-form","asset-form","brand-form","profile-form"].includes(form.id))return;
+ const values=Object.fromEntries(new FormData(form).entries());
+ try{localStorage.setItem(draftKey(form),JSON.stringify({values,updated_at:Date.now()}));}
+ catch(e){try{sessionStorage.setItem(draftKey(form),JSON.stringify({values,updated_at:Date.now()}));}catch(_){}}
+}
+function restoreFormDraft(form){
+ let draft=null;
+ try{draft=localStorage.getItem(draftKey(form))||sessionStorage.getItem(draftKey(form));}catch(e){}
+ if(!draft)return;
+ try{
+  const parsed=JSON.parse(draft);
+  for(const [key,value] of Object.entries(parsed.values||{})){
+   if(key==="id")continue;
+   const field=form.elements.namedItem(key);
+   if(field&&"value" in field)field.value=String(value);
+  }
+  const marker=document.createElement("div");marker.className="restored-draft";
+  marker.textContent="Draf tulisan sebelumnya dipulihkan otomatis.";
+  form.prepend(marker);
+ }catch(e){}
+}
+function clearFormDraft(form){
+ for(const storage of [localStorage,sessionStorage]){
+  try{storage.removeItem(draftKey(form));}catch(e){}
+ }
+}
+document.addEventListener("input",e=>{
+ const form=e.target.closest("form");
+ if(form)saveDraft(form);
+});
+document.addEventListener("change",e=>{
+ const form=e.target.closest("form");
+ if(form)saveDraft(form);
+});
 function close(){document.getElementById("modal-layer").classList.remove("open");document.getElementById("modal-layer").setAttribute("aria-hidden","true");}
 function formFooter(){return '<div class="form-actions"><button type="button" class="button ghost" data-action="close">Batal</button><button type="submit" class="button primary">Simpan</button></div>';}
 function input(label,name,value,type,extra){return '<label class="field">'+label+'<input name="'+name+'" type="'+(type||"text")+'" value="'+txt(value||"")+'" '+(extra||"")+'></label>';}
@@ -500,6 +651,7 @@ setInterval(()=>{
 
 render();
 loadTikTok();
+loadCloudWorkspace();
 })();
 </script>
 </body>
