@@ -88,7 +88,7 @@ function mergeWorkspace(base,incoming){
      const prev=rows.get(row.id);
      if(!prev||(Number(row.updated_at)||0)>(Number(prev.updated_at)||0))rows.set(row.id,row);
    }
-   merged[group]=[...rows.values()].filter(r=>(Number(r.updated_at)||0)>(Number(deletions[r.id])||0)).slice(0,3000);
+   merged[group]=[...rows.values()].filter(r=>!Object.prototype.hasOwnProperty.call(deletions,r.id)||(Number(r.updated_at)||0)>(Number(deletions[r.id])||0)).slice(0,3000);
    merged.deleted[group]=deletions;
  }
  return merged;
