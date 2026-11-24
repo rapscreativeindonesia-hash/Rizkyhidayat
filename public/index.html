@@ -527,6 +527,96 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
  .rh-collab-content-card>summary{padding:9px 10px}
  .rh-card-video-meta{font-size:9px;padding:5px}
 }
+
+/* Stationary iPhone editor: header/footer pinned; background cannot drift. */
+body.rh-modal-locked{position:fixed!important;width:100%!important;left:0;right:0;overflow:hidden!important}
+#modal-layer.open{
+ display:flex;
+ position:fixed!important;
+ top:var(--rh-viewport-offset,0px)!important;
+ bottom:auto!important;
+ left:0;right:0;
+ width:100%;
+ height:var(--rh-viewport-height,100dvh)!important;
+ padding:10px 12px!important;
+ overflow:hidden!important;
+ align-items:center;
+ justify-content:center;
+ overscroll-behavior:contain;
+ touch-action:none;
+ z-index:1000;
+}
+#modal-layer .modal{
+ display:flex;
+ flex-direction:column;
+ overflow:hidden!important;
+ min-height:0;
+ max-height:calc(var(--rh-viewport-height,100dvh) - 20px);
+}
+#modal-layer .modal:has(.rh-editor-form){
+ width:min(100%,840px)!important;
+ height:calc(var(--rh-viewport-height,100dvh) - 20px)!important;
+ max-height:calc(var(--rh-viewport-height,100dvh) - 20px)!important;
+ padding:12px!important;
+}
+#modal-layer .modal-head{
+ flex:0 0 auto;
+ position:relative;
+ margin:0!important;
+ padding:0 2px 10px;
+ border-bottom:1px solid #3b5461;
+ z-index:3;
+}
+#modal-layer #modal-content{
+ flex:1 1 auto;
+ display:flex;
+ flex-direction:column;
+ min-height:0;
+ overflow:hidden!important;
+}
+#modal-layer #modal-content .rh-editor-form{
+ flex:1 1 auto;
+ min-height:0;
+ max-height:100%;
+ display:flex;
+ flex-direction:column;
+ overflow:hidden!important;
+}
+#modal-layer .rh-editor-form>.rh-form-scrollbody{
+ flex:1 1 auto;
+ min-height:0;
+ padding:12px 4px 14px;
+ overflow-y:auto;
+ overflow-x:hidden;
+ -webkit-overflow-scrolling:touch;
+ overscroll-behavior-y:contain;
+ touch-action:pan-y;
+ scrollbar-gutter:stable;
+}
+#modal-layer .rh-editor-form>.form-actions{
+ position:relative!important;
+ bottom:auto!important;
+ flex:0 0 auto;
+ z-index:12;
+ display:flex;
+ justify-content:flex-end;
+ gap:8px;
+ margin:0!important;
+ padding:10px 2px 3px!important;
+ background:#132630!important;
+ border-top:1px solid #496675;
+}
+#modal-layer #modal-content form:not(.rh-editor-form){flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
+@media(max-width:600px){
+ #modal-layer.open{padding:7px!important}
+ #modal-layer .modal:has(.rh-editor-form){
+  height:calc(var(--rh-viewport-height,100dvh) - 14px)!important;
+  max-height:calc(var(--rh-viewport-height,100dvh) - 14px)!important;
+  padding:10px!important;
+ }
+ #modal-layer .rh-editor-form>.rh-form-scrollbody{padding:9px 2px 12px;scrollbar-gutter:auto}
+ #modal-layer .rh-editor-form>.form-actions{padding:9px 0 2px!important}
+}
 </style>
 </head>
 <body>
@@ -932,19 +1022,54 @@ function rhFitTextareas(root){
  else root.querySelectorAll?.("textarea").forEach(rhFitTextarea);
 }
 
+/* Keep the modal fixed over the iPhone viewport; only its form body scrolls. */
+let rhModalPreviousScrollY=0;
+function rhLockPage(){
+ if(document.body.classList.contains("rh-modal-locked"))return;
+ rhModalPreviousScrollY=window.scrollY||document.documentElement.scrollTop||0;
+ document.body.style.top="-"+rhModalPreviousScrollY+"px";
+ document.body.classList.add("rh-modal-locked");
+}
+function rhUnlockPage(){
+ if(!document.body.classList.contains("rh-modal-locked"))return;
+ document.body.classList.remove("rh-modal-locked");
+ document.body.style.top="";
+ window.scrollTo(0,rhModalPreviousScrollY);
+}
+function rhUpdateModalViewport(){
+ const layer=document.getElementById("modal-layer");
+ if(!layer?.classList.contains("open"))return;
+ const vp=window.visualViewport;
+ layer.style.setProperty("--rh-viewport-height",Math.round(vp?.height||window.innerHeight)+"px");
+ layer.style.setProperty("--rh-viewport-offset",Math.round(vp?.offsetTop||0)+"px");
+}
+if(window.visualViewport){
+ window.visualViewport.addEventListener("resize",rhUpdateModalViewport);
+ window.visualViewport.addEventListener("scroll",rhUpdateModalViewport);
+}
+window.addEventListener("orientationchange",rhUpdateModalViewport);
 function modal(title,body){
+ const layer=document.getElementById("modal-layer"),content=document.getElementById("modal-content");
  document.getElementById("modal-title").textContent=title;
- document.getElementById("modal-content").innerHTML=body;
- document.getElementById("modal-layer").classList.add("open");
- document.getElementById("modal-layer").setAttribute("aria-hidden","false");
- const form=document.getElementById("modal-content").querySelector("form");
+ content.innerHTML=body;
+ rhLockPage();
+ layer.classList.add("open");
+ layer.setAttribute("aria-hidden","false");
+ const form=content.querySelector("form");
  if(form){
-   // Safari can silently suppress submit when an optional URL/email field is incomplete.
-   // Preserve all drafts, but perform required-field checks in our submit handler.
+   // Keep every existing field inside the form for FormData and autosave.
    form.noValidate=true;
    restoreFormDraft(form);
-   requestAnimationFrame(()=>rhFitTextareas(form));
+   if(form.classList.contains("rh-editor-form")){
+     const scrollArea=document.createElement("div");
+     scrollArea.className="rh-form-scrollbody";
+     const footer=form.querySelector(":scope > .form-actions");
+     for(const node of [...form.childNodes])if(node!==footer)scrollArea.appendChild(node);
+     form.insertBefore(scrollArea,footer||null);
+   }
  }
+ rhUpdateModalViewport();
+ requestAnimationFrame(()=>{rhUpdateModalViewport();if(form)rhFitTextareas(form);});
 }
 
 /* Drafts protect text against accidental navigation or lost browser state. */
@@ -1045,7 +1170,7 @@ if(document.fonts?.ready)document.fonts.ready.then(()=>{
  if(open)rhFitTextareas(open);
 });
 window.addEventListener("pagehide",()=>{const form=document.querySelector("#content-form");if(form){saveDraft(form);saveWorkingContent(form);}});
-function close(){document.getElementById("modal-layer").classList.remove("open");document.getElementById("modal-layer").setAttribute("aria-hidden","true");}
+function close(){const layer=document.getElementById("modal-layer");if(!layer.classList.contains("open"))return;layer.classList.remove("open");layer.setAttribute("aria-hidden","true");layer.style.removeProperty("--rh-viewport-height");layer.style.removeProperty("--rh-viewport-offset");rhUnlockPage();}
 function formFooter(){return '<div class="form-actions"><button type="button" class="button ghost" data-action="close">Batal</button><button type="submit" class="button primary">Simpan</button></div>';}
 function input(label,name,value,type,extra){return '<label class="field">'+label+'<input name="'+name+'" type="'+(type||"text")+'" value="'+txt(value||"")+'" '+(extra||"")+'></label>';}
 function select(label,name,options,selected){return '<label class="field">'+label+'<select name="'+name+'">'+options.map(function(s){return '<option value="'+txt(s)+'" '+(s===selected?"selected":"")+'>'+txt(s)+'</option>';}).join("")+'</select></label>';}
