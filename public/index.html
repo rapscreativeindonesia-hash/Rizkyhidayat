@@ -760,40 +760,118 @@ function brandForm(editId){
 }
 function profileForm(){var x=state.profile;modal("Statistik Manual TikTok",'<form id="profile-form"><div class="form-grid">'+input("Username TikTok","handle",x.handle,"text","required")+input("Followers","followers",x.followers,"number","min=0")+input("Total Views","views",x.views,"number","min=0")+input("Total Likes","likes",x.likes,"number","min=0")+input("Total Video","videos",x.videos,"number","min=0")+'</div><div class="notice">Input ini manual, tidak menghubungkan akun TikTok melalui OAuth. Integrasi API resmi belum tersedia pada versi ini.</div>'+formFooter()+'</form>');}
 function id(){return String(Date.now())+String(Math.floor(Math.random()*100000));}
-document.addEventListener("click",function(e){var nav=e.target.closest("[data-page]");if(nav){setpage(nav.dataset.page);return;}var el=e.target.closest("[data-action]");if(!el)return;var a=el.dataset.action,which=el.dataset.id;if(a==="close")close();
-if(a==="new-idea")ideaForm(null,el.dataset.date||"");
-if(a==="edit-idea")ideaForm(which);
-if(a==="new-asset")assetForm();
-if(a==="new-brand")brandForm();
-if(a==="edit-brand")brandForm(which);
-if(a==="edit-profile")profileForm();
-if(a==="connect-tiktok")connectTikTok();
-if(a==="refresh-tiktok")refreshTikTok();
-if(a==="check-tiktok")loadTikTok();
-if(a==="tab-ideas"){libTab="ideas";render();}
-if(a==="tab-assets"){libTab="assets";render();}
-if(a==="go-calendar")setpage("calendar");
-if(a==="go-production")setpage("production");
-if(a==="prev-month"){calendarOffset--;render();}
-if(a==="next-month"){calendarOffset++;render();}
-if(a==="date-click")ideaForm(null,el.dataset.date);
-if(["next-stage","back-stage","move-idea"].includes(a)){var x=state.ideas.find(function(v){return v.id===which;});if(x){var j=stages.indexOf(x.stage);x.stage=stages[Math.max(0,Math.min(5,j+(a==="back-stage"?-1:1)))];x.updated_at=Date.now();try{save();render();}catch(err){alert(err.message);}}}
-if(a==="advance-brand"){var b=state.brands.find(function(v){return v.id===which;});if(b){var steps=["Prospek","Negosiasi","Aktif","Berjalan","Selesai"];b.status=steps[Math.min(4,steps.indexOf(b.status)+1)];b.updated_at=Date.now();try{save();render();}catch(err){alert(err.message);}}}
-if(["delete-idea","delete-asset","delete-brand"].includes(a)){if(confirm("Hapus data ini?")){var prop=a.split("-")[1];prop=prop==="idea"?"ideas":prop==="asset"?"assets":"brands";ensureDeleted(state);state.deleted[prop][which]=Date.now();state[prop]=state[prop].filter(function(v){return v.id!==which;});try{save();render();}catch(err){alert(err.message);}}}
+
+document.addEventListener("click",function(e){
+ const nav=e.target.closest("[data-page]");if(nav){setpage(nav.dataset.page);return;}
+ const el=e.target.closest("[data-action]");if(!el)return;
+ const a=el.dataset.action,which=el.dataset.id;
+ if(a.startsWith("builder-")){
+   const form=el.closest("form");
+   if(!form)return;
+   const row=el.closest(".rh-builder-row");
+   const list=row?.parentElement||el.closest(".rh-builder-section")?.querySelector(".rh-builder-list");
+   const kind=list?.dataset.kind;
+   if(!list||!kind)return;
+   if(a==="builder-add"){
+     const seed=kind==="script"?{id:id(),type:"Edukasi",text:""}:
+       kind==="shots"?{id:id(),text:"",angle:"",scriptId:"",checked:false}:
+       ["checklist","deliverables_checklist"].includes(kind)?{id:id(),text:"",checked:false}:{id:id(),label:"",url:""};
+     list.insertAdjacentHTML("beforeend",rhBuilderRow(kind,seed,rhLoadScriptRows(form)));
+     list.lastElementChild?.querySelector("textarea,input[data-field='text'],input[data-field='label']")?.focus();
+   }
+   if(a==="builder-remove"&&row)row.remove();
+   if(a==="builder-up"&&row?.previousElementSibling)list.insertBefore(row,row.previousElementSibling);
+   if(a==="builder-down"&&row?.nextElementSibling)list.insertBefore(row.nextElementSibling,row);
+   if(kind==="script")rhRefreshShotChoices(form);
+   saveDraft(form);
+   return;
+ }
+ if(a==="close"){close();return;}
+ if(a==="new-content"){contentForm(null,el.dataset.date||"",el.dataset.brandId||"");return;}
+ if(a==="edit-content"){contentForm(which);return;}
+ if(a==="new-collab-content"){contentForm(null,"",which);return;}
+ if(a==="new-idea"){ideaForm(null,el.dataset.date||"");return;}
+ if(a==="edit-idea"){ideaForm(which);return;}
+ if(a==="new-asset"){assetForm();return;}
+ if(a==="new-brand"){brandForm();return;}
+ if(a==="edit-brand"){brandForm(which);return;}
+ if(a==="edit-profile"){profileForm();return;}
+ if(a==="connect-tiktok"){connectTikTok();return;}
+ if(a==="refresh-tiktok"){refreshTikTok();return;}
+ if(a==="check-tiktok"){loadTikTok();return;}
+ if(a==="tab-ideas"){libTab="ideas";render();return;}
+ if(a==="tab-assets"){libTab="assets";render();return;}
+ if(a==="go-calendar"){setpage("calendar");return;}
+ if(a==="go-production"){setpage("production");return;}
+ if(a==="prev-month"){calendarOffset--;render();return;}
+ if(a==="next-month"){calendarOffset++;render();return;}
+ if(a==="date-click"){contentForm(null,el.dataset.date);return;}
+ if(["delete-idea","delete-asset","delete-brand"].includes(a)){
+   if(!confirm("Hapus data ini?"))return;
+   const prop=a==="delete-idea"?"ideas":a==="delete-asset"?"assets":"brands";
+   ensureDeleted(state);
+   state.deleted[prop][which]=Date.now();
+   state[prop]=state[prop].filter(x=>x.id!==which);
+   if(prop==="brands"){
+     // Preserve associated content when its parent Collaboration is deleted.
+     for(const content of state.ideas)if(content.brand_id===which){content.brand_id="";content.updated_at=Date.now();}
+   }
+   try{save();render();}catch(error){alert(error.message);}
+ }
 });
-document.addEventListener("submit",function(e){if(!["idea-form","asset-form","brand-form","profile-form"].includes(e.target.id))return;e.preventDefault();var f=new FormData(e.target),get=function(k){return String(f.get(k)||"").trim();};if(e.target.id==="idea-form"){var a=state.ideas.find(function(x){return x.id===get("id");});if(!a){a={id:id()};state.ideas.push(a);}["title","hook","pillar","platform","stage","notes","date"].forEach(function(k){a[k]=get(k);});a.updated_at=Date.now();}
-if(e.target.id==="asset-form"){var u=get("url");if(!/^https?:\/\/\S+$/i.test(u))return alert("Masukkan link http/https yang valid.");state.assets.push({id:id(),title:get("title"),url:u,kind:get("kind"),updated_at:Date.now()});}
-if(e.target.id==="brand-form"){var b=state.brands.find(function(x){return x.id===get("id");});if(!b){b={id:id()};state.brands.push(b);}["name","contact","deadline","status","deliverables","notes"].forEach(function(k){b[k]=get(k);});b.value=Number(get("value"))||0;b.updated_at=Date.now();}
-if(e.target.id==="profile-form"){state.profile.handle=get("handle");["followers","views","likes","videos"].forEach(function(k){state.profile[k]=Math.max(0,Number(get(k))||0);});state.profile.updated_at=Date.now();}
-try{
- save();
- clearFormDraft(e.target);
- close();
- render();
-}catch(err){
- notice("Gagal menyimpan: "+err.message,"warn");
- alert("Gagal menyimpan data. Formulir tetap terbuka. "+err.message);
-}
+document.addEventListener("submit",function(e){
+ const form=e.target;
+ if(!["content-form","idea-form","asset-form","brand-form","profile-form"].includes(form.id))return;
+ e.preventDefault();
+ const fd=new FormData(form),get=k=>String(fd.get(k)||"").trim();
+ try{
+   const isLink=(s)=>!s||!!safeWebLink(s);
+   if(form.id==="content-form"){
+     const script=rhCollectRows(form,"script"),shots=rhCollectRows(form,"shots"),checks=rhCollectRows(form,"checklist"),refs=rhCollectRows(form,"references");
+     if(refs.some(x=>!safeWebLink(x.url))||!isLink(get("folder_url"))||!isLink(get("published_url")))throw new Error("Periksa link referensi, folder, atau publikasi. Gunakan URL https:// lengkap.");
+     const brandId=get("brand_id");
+     if(brandId&&!state.brands.some(b=>b.id===brandId))throw new Error("Collaboration terkait tidak ditemukan.");
+     let content=state.ideas.find(x=>x.id===get("id"));
+     if(!content){content={id:id(),stage:"Ide"};state.ideas.push(content);}
+     for(const field of ["title","platform","content_type","goal","date","shoot_date","brand_id","notes","caption","hashtags","folder_url","published_url"])content[field]=get(field);
+     content.script=script;content.shots=shots;content.checklist=checks;content.references=refs;
+     content.hook=script.find(x=>x.type==="Hook")?.text||"";
+     content.pillar=content.content_type||content.pillar||"UGC";
+     content.campaign=state.brands.find(x=>x.id===brandId)?.campaign||"";
+     content.updated_at=Date.now();
+   }else if(form.id==="idea-form"){
+     let content=state.ideas.find(x=>x.id===get("id"));
+     if(!content){content={id:id(),stage:"Ide"};state.ideas.push(content);}
+     for(const field of ["title","hook","pillar","platform","notes","date"])content[field]=get(field);
+     // Updating an idea must not erase an existing multi-sentence script.
+     if(Array.isArray(content.script)&&content.script.length&&content.hook){
+       const hook=content.script.find(x=>x.type==="Hook");
+       if(hook)hook.text=content.hook;
+     }
+     content.updated_at=Date.now();
+   }else if(form.id==="asset-form"){
+     const url=get("url");
+     if(!safeWebLink(url))throw new Error("Masukkan link http/https yang valid.");
+     state.assets.push({id:id(),title:get("title"),url,kind:get("kind"),updated_at:Date.now()});
+   }else if(form.id==="brand-form"){
+     const refs=rhCollectRows(form,"references"),files=rhCollectRows(form,"files"),finalLinks=rhCollectRows(form,"final_links");
+     if([...refs,...files,...finalLinks].some(x=>!safeWebLink(x.url))||!isLink(get("website")))throw new Error("Gunakan link https:// yang valid untuk referensi, website, file dan hasil konten.");
+     let b=state.brands.find(x=>x.id===get("id"));
+     if(!b){b={id:id()};state.brands.push(b);}
+     for(const field of ["name","industry","contact","phone","email","website","social","campaign","goal","collaboration_type","status","deadline","post_date","deliverables","notes","brief_must","brief_avoid","compensation_type","barter"])b[field]=get(field);
+     for(const field of ["value","dp","paid"])b[field]=Math.max(0,Number(get(field))||0);
+     b.deliverables_checklist=rhCollectRows(form,"deliverables_checklist");
+     b.references=refs;b.files=files;b.final_links=finalLinks;b.updated_at=Date.now();
+   }else if(form.id==="profile-form"){
+     state.profile.handle=get("handle");
+     for(const field of ["followers","views","likes","videos"])state.profile[field]=Math.max(0,Number(get(field))||0);
+     state.profile.updated_at=Date.now();
+   }
+   save();clearFormDraft(form);close();render();
+ }catch(error){
+   notice("Gagal menyimpan: "+error.message,"warn");
+   alert("Data belum berhasil disimpan. Formulir tetap terbuka. "+error.message);
+ }
 });
 document.getElementById("modal-layer").addEventListener("click",function(e){if(e.target===this)close();});document.addEventListener("keydown",function(e){if(e.key==="Escape")close();});
 
