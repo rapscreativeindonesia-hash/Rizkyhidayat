@@ -355,6 +355,9 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
  .modal-layer{padding:9px}.rh-editor-form>.form-actions{bottom:-15px}
  .rh-related-grid{grid-template-columns:1fr}
 }
+
+.rh-calendar-event{border:0;text-align:left;width:100%;font-family:inherit;cursor:pointer;line-height:1.35;overflow:hidden;text-overflow:ellipsis;color:#dceaf0}
+.rh-calendar-event:hover,.rh-calendar-event:focus-visible{background:#365769;outline:1px solid #88b1c3}
 </style>
 </head>
 <body>
@@ -576,7 +579,7 @@ function dashboard(){
  '<p>Terakhir sinkron: <b>'+txt(age)+'</b> <span id="sync-age" data-synced-at="'+txt(live?.synced_at||"")+'" aria-live="off"></span></p><div class="tt-small-actions"><a class="button ghost" href="https://www.tiktok.com/@ikyhdyat" target="_blank" rel="noopener noreferrer">Lihat TikTok</a></div></div></div>'+
  oauthInfo+'</section>'+
  '<div class="tt-quick"><section class="panel"><div class="section-head"><h3>Kalender & Jadwal Konten</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+
- (next.length?'<ul class="tt-schedule">'+next.map(x=>'<li><strong>'+txt(x.title)+'</strong>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</li>').join("")+'</ul>':empty("Belum ada konten terjadwal. Tentukan tanggal pada ide konten."))+'</section>'+
+ (next.length?'<ul class="tt-schedule">'+next.map(x=>'<li><strong>'+txt(x.title)+'</strong>'+fmt(x.date)+' · '+txt(x.platform)+'</li>').join("")+'</ul>':empty("Belum ada konten terjadwal. Tentukan tanggal pada ide konten."))+'</section>'+
  '<section class="panel"><div class="section-head"><h3>Creative Workspace</h3><span class="pill">5 halaman</span></div><p class="muted small">Mulai dari ide, jadwalkan produksi, dan kelola kolaborasi brand dalam satu workspace.</p><div class="tt-small-actions">'+btn("+ Tambah Ide","new-idea","primary")+btn("Produksi","go-production","")+btn("Collaboration","new-brand","")+'</div></section></div></div>';
 }
 
@@ -587,7 +590,7 @@ function ideas(){return '<div class="toolbar"><div class="buttons">'+btn("Ide Ko
 function calendar(){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()+calendarOffset);var y=d.getFullYear(),m=d.getMonth(),start=(d.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),cells=Math.ceil((start+days)/7)*7;
 var out='<section class="panel"><div class="monthline"><div class="buttons">'+btn("‹","prev-month")+ '<h3 style="padding:9px 8px">'+d.toLocaleDateString("id-ID",{month:"long",year:"numeric"})+'</h3>'+btn("›","next-month")+'</div>'+btn("+ Tambah Konten","new-content","primary")+'</div><div class="calendar">';
 ["Sen","Sel","Rab","Kam","Jum","Sab","Min"].forEach(function(w){out+='<div class="dayname">'+w+'</div>';});
-for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?state.ideas.filter(function(x){return x.date===dateStr;}):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.slice(0,3).map(function(x){return '<span class="event">'+txt(x.title)+'</span>';}).join("")+(matches.length>3?'<span class="event">+'+(matches.length-3)+' lainnya</span>':"")+'</div>';}out+='</div></section><div class="notice">Klik tanggal untuk membuat konten. Script, shot list, dan checklist dapat dikelola di halaman Content.</div>';return out;}
+for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?state.ideas.filter(function(x){return x.date===dateStr;}):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.slice(0,3).map(function(x){return '<button type="button" class="event rh-calendar-event" data-action="edit-content" data-id="'+txt(x.id)+'">'+txt(x.title)+'</button>';}).join("")+(matches.length>3?'<span class="event">+'+(matches.length-3)+' lainnya</span>':"")+'</div>';}out+='</div></section><div class="notice">Klik tanggal untuk membuat konten. Script, shot list, dan checklist dapat dikelola di halaman Content.</div>';return out;}
 var stages=["Ide","Script","Shooting","Editing","Review","Final"];
 
 /* Creator Content Workspace — one project referenced from Content, Collaboration and Calendar. */
@@ -673,7 +676,7 @@ function contentForm(contentId,date,brandId){
  const checks=Array.isArray(item.checklist)&&item.checklist.length?item.checklist:CONTENT_CHECKS.map(x=>({id:id(),text:x,checked:false}));
  const refs=Array.isArray(item.references)?item.references:[];
  const brandOptions='<option value="">Personal / tanpa brand</option>'+state.brands.map(x=>'<option value="'+txt(x.id)+'"'+(x.id===(brandId||item.brand_id)?" selected":"")+'>'+txt(x.name+(x.campaign?" · "+x.campaign:""))+'</option>').join("");
- const details='<form id="content-form" class="rh-editor-form"><input type="hidden" name="id" value="'+txt(contentId||"")+'"><div class="rh-form-section"><h4>Informasi Konten</h4><div class="form-grid">'+input("Judul Konten *","title",item.title,"text","required maxlength=160")+rhSelect("Kategori","content_type",CONTENT_TYPES,item.content_type||"UGC")+rhSelect("Platform","platform",["TikTok","Instagram Reels","YouTube Shorts","Facebook","Threads","Multiplatform"],item.platform||"TikTok")+rhSelect("Tujuan","goal",CONTENT_GOALS,item.goal||"Awareness")+input("Tanggal Shooting","shoot_date",item.shoot_date,"date")+input("Tanggal Posting","date",date||item.date,"date")+'<label class="field wide">Collaboration terkait<select name="brand_id">'+brandOptions+'</select></label>'+rhTextArea("Konsep / Catatan","notes",item.notes,"wide")+'</div></div>'+rhBuilder("script","Script per Kalimat",script,[],script)+rhBuilder("shots","Shot List",shots,[{id:id(),text:"",angle:"",checked:false}],script)+rhBuilder("checklist","Checklist Produksi",checks,[],script)+rhBuilder("references","Link Referensi",refs,[{id:id(),label:"",url:""}],script)+'<div class="rh-form-section"><h4>Publikasi & Hasil</h4><div class="form-grid">'+rhTextArea("Caption","caption",item.caption,"wide")+input("Hashtag","hashtags",item.hashtags)+input("Link Folder / File","folder_url",item.folder_url,"url")+input("Link Konten Terpublikasi","published_url",item.published_url,"url")+'</div></div>'+formFooter()+'</form>';
+ const details='<form id="content-form" class="rh-editor-form"><input type="hidden" name="id" value="'+txt(contentId||"")+'"><div class="rh-form-section"><h4>Informasi Konten</h4><div class="form-grid">'+input("Judul Konten *","title",item.title,"text","required maxlength=160")+rhSelect("Kategori","content_type",CONTENT_TYPES,item.content_type||"UGC")+rhSelect("Platform","platform",["TikTok","Instagram","Instagram Reels","YouTube","YouTube Shorts","Facebook","Threads","Multiplatform"],item.platform||"TikTok")+rhSelect("Tujuan","goal",CONTENT_GOALS,item.goal||"Awareness")+input("Tanggal Shooting","shoot_date",item.shoot_date,"date")+input("Tanggal Posting","date",date||item.date,"date")+'<label class="field wide">Collaboration terkait<select name="brand_id">'+brandOptions+'</select></label>'+rhTextArea("Konsep / Catatan","notes",item.notes,"wide")+'</div></div>'+rhBuilder("script","Script per Kalimat",script,[],script)+rhBuilder("shots","Shot List",shots,[{id:id(),text:"",angle:"",checked:false}],script)+rhBuilder("checklist","Checklist Produksi",checks,[],script)+rhBuilder("references","Link Referensi",refs,[{id:id(),label:"",url:""}],script)+'<div class="rh-form-section"><h4>Publikasi & Hasil</h4><div class="form-grid">'+rhTextArea("Caption","caption",item.caption,"wide")+input("Hashtag","hashtags",item.hashtags)+input("Link Folder / File","folder_url",item.folder_url,"url")+input("Link Konten Terpublikasi","published_url",item.published_url,"url")+'</div></div>'+formFooter()+'</form>';
  modal(contentId?"Edit Content":"Buat Content",details);
  if(brand&&!contentId)notice("Konten baru terhubung ke "+brand.name,"ok");
 }
@@ -739,7 +742,10 @@ function clearFormDraft(form){
 }
 document.addEventListener("input",e=>{
  const form=e.target.closest("form");
- if(form)saveDraft(form);
+ if(form){
+   if(form.id==="content-form"&&e.target.closest('.rh-builder-list[data-kind="script"]'))rhRefreshShotChoices(form);
+   saveDraft(form);
+ }
 });
 document.addEventListener("change",e=>{
  const form=e.target.closest("form");
