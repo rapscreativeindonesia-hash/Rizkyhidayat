@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#100c1b">
+<title>Iky Creator Hub — Workspace</title>
+<style>
+:root{--bg:#090811;--surface:#171321;--surface2:#1d172b;--line:#362b49;--text:#f4efff;--muted:#a99bb9;--purple:#aa69ff;--purple2:#6936bf;--good:#78e6b1;--danger:#ff839b;--radius:18px;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}
+body{background:radial-gradient(circle at 88% 0%,#291644 0,transparent 34%),#090811}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #c59bff;outline-offset:2px}
+a{color:inherit} .layout{display:grid;grid-template-columns:245px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;border-right:1px solid var(--line);padding:25px 17px;display:flex;flex-direction:column;background:linear-gradient(180deg,#151021,#0a0911)}
+.logo{display:flex;gap:11px;align-items:center;padding:5px 10px 29px}.logo-mark{font-weight:900;color:#bb77ff;font-size:27px;letter-spacing:-8px;transform:skew(-15deg);padding-right:8px}.logo h1{font-size:17px;margin:0;letter-spacing:-.6px}.logo p{font-size:11px;color:var(--muted);margin:3px 0 0}
+.profile{background:#20172e;border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:21px}.profile strong{display:block}.profile span{font-size:12px;color:var(--muted)}
+.nav{display:flex;flex-direction:column;gap:7px}.nav button{background:transparent;border:1px solid transparent;color:#d8d0e4;display:flex;align-items:center;text-align:left;gap:12px;border-radius:12px;padding:13px;font-size:14px}.nav button.active{background:linear-gradient(95deg,#7731c4,#a44af3);border-color:#aa6aff;color:white;font-weight:700;box-shadow:0 5px 20px #5728a866}.nav-icon{width:25px;font-size:18px;text-align:center}
+.sidefoot{margin-top:auto;padding:16px;background:linear-gradient(135deg,#312044,#171121);border:1px solid var(--line);border-radius:16px}.sidefoot b{display:block;font-size:13px}.sidefoot small{display:block;color:var(--muted);margin-top:7px;line-height:1.5}
+.main{padding:28px clamp(16px,3vw,46px);min-width:0;max-width:1600px;width:100%;margin:auto}
+.top{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:26px}.top h2{font-size:28px;margin:0 0 5px;letter-spacing:-.9px}.top p{margin:0;color:var(--muted);font-size:13px}.date{border:1px solid var(--line);padding:10px 15px;border-radius:12px;background:var(--surface);color:var(--muted);font-size:13px}
+.grid{display:grid;gap:15px}.cols2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}.cols4{grid-template-columns:repeat(4,minmax(0,1fr))}.cols3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.panel{background:linear-gradient(135deg,#1a1527,#120f1c);border:1px solid var(--line);border-radius:var(--radius);padding:20px;min-width:0;box-shadow:0 14px 42px #0002}
+.panel h3{font-size:16px;margin:0 0 12px}.panel p{line-height:1.6}.muted{color:var(--muted)}.small{font-size:12px}.kpi{font-size:30px;letter-spacing:-1px;font-weight:800;margin:9px 0}.kpi-label{font-size:13px;color:#c6bdd0}
+.gradient{background:radial-gradient(circle at 75% 25%,#7133af75,transparent 50%),linear-gradient(120deg,#26113e,#141020);border-color:#694399}
+.hero h3{font-size:27px;margin:0 0 8px}.hero p{margin:0;color:#ddd0ee}.pill{display:inline-flex;align-items:center;border-radius:99px;padding:5px 10px;background:#322443;border:1px solid #67428c;color:#dcc4ff;font-size:11px;white-space:nowrap}
+.pill.ok{background:#17392e;border-color:#28664e;color:var(--good)}.pill.warn{background:#352421;border-color:#78554c;color:#ffbe8d}
+.button{border:1px solid #67438f;background:#221832;color:#ebddfc;border-radius:11px;padding:10px 14px;font-weight:600;font-size:13px}
+.button.primary{background:linear-gradient(120deg,#8843e0,#ae5bff);color:white;border-color:#b47eff}.button.ghost{background:transparent}.button.danger{color:var(--danger);border-color:#7d3b50}.buttons{display:flex;flex-wrap:wrap;gap:9px}.section-head{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:0 0 14px}.section-head h3{margin:0}.metricline{margin-top:12px;height:6px;border-radius:10px;background:#352b45;overflow:hidden}.metricline span{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#7b46d4,#ce8cff)}
+.empty{padding:26px;border:1px dashed #564568;border-radius:13px;color:var(--muted);text-align:center;font-size:13px;line-height:1.6}.item{padding:13px 0;border-top:1px solid #362944}.item:first-child{border-top:0}.itemtop{display:flex;align-items:center;justify-content:space-between;gap:12px}.item h4{margin:0 0 6px;font-size:14px}.item p{margin:5px 0;color:var(--muted);font-size:12px}.tagrow{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}
+.toolbar{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+.toolbar select,.toolbar input{max-width:210px}.field{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:650;color:#d7cae5}
+input,select,textarea{border:1px solid #55446a;background:#110e1a;color:#fff;border-radius:10px;padding:11px 12px;width:100%;min-width:0}textarea{resize:vertical;min-height:85px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.form-grid .wide{grid-column:1/-1}
+.form-actions{margin-top:20px;display:flex;gap:10px;justify-content:flex-end}
+.monthline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.monthline h3{margin:0}
+.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:16px}
+.dayname{text-align:center;font-size:11px;color:var(--muted);padding:8px 0}.day{border:1px solid #392c4a;border-radius:10px;min-height:100px;background:#130f1d;padding:9px;cursor:pointer;min-width:0}.day:hover{border-color:#a261f2}.day.out{opacity:.35}.day.today{border-color:#b575fb;box-shadow:inset 0 0 0 1px #a263d4}.daynum{font-size:12px;font-weight:750}.event{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;padding:5px 6px;border-radius:5px;background:#503075;color:#f5eaff;margin-top:6px}
+.board{display:grid;grid-template-columns:repeat(4,minmax(175px,1fr));gap:12px;overflow:auto;padding-bottom:3px}.stage{border:1px solid #433052;border-radius:13px;background:#130f1f;padding:12px;min-height:210px}.stage h4{margin:0 0 13px;font-size:13px}.stage-card{background:#271a37;border:1px solid #65418b;border-radius:11px;padding:13px;margin-bottom:9px}.stage-card strong{font-size:12px}.stage-card p{font-size:11px;margin:7px 0;color:var(--muted)}.stage-card .buttons{margin-top:10px}
+.modal-layer{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:20px;z-index:30;overflow:auto}.modal-layer.open{display:flex}.modal{width:100%;max-width:630px;max-height:90vh;overflow:auto;background:#1c1529;border:1px solid #704b96;border-radius:20px;padding:24px;box-shadow:0 25px 80px #000a}.modal h3{font-size:21px;margin:0}.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:21px}
+.notice{font-size:12px;color:#b9a9ca;line-height:1.55;padding:12px;border-radius:10px;border:1px solid #4f3b65;background:#23192e;margin-top:14px}
+a.link{color:#cda9ff;word-break:break-all;text-decoration:none}.actions-right{display:flex;align-items:center;gap:8px}
+@media(max-width:1180px){.cols4{grid-template-columns:repeat(2,minmax(0,1fr))}.cols2{grid-template-columns:1fr}.cols3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:790px){.layout{display:block}.sidebar{height:auto;position:static;padding:12px;border-bottom:1px solid var(--line)}.logo{padding:0 6px 10px}.profile,.sidefoot{display:none}.nav{flex-direction:row;overflow:auto;scrollbar-width:none}.nav button{min-width:max-content;padding:10px}.nav-icon{display:none}.main{padding:22px 13px}.top{align-items:flex-start}.top h2{font-size:23px}.date{font-size:11px}.cols3{grid-template-columns:1fr}.day{min-height:69px;padding:5px}.calendar{gap:2px}.event{font-size:8px;padding:4px 3px}.daynum{font-size:10px}.panel{padding:15px}.form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:1}}
+@media(max-width:430px){.cols4{grid-template-columns:1fr 1fr}.kpi{font-size:22px}.top p{font-size:11px}.date{display:none}.day{min-height:60px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<div class="logo"><div class="logo-mark">//</div><div><h1>Iky Creator Hub</h1><p>Content • Growth • Workspace</p></div></div>
+<div class="profile"><strong>Iky / Rizky Hidayat</strong><span id="side-handle">@ikyhdyat</span></div>
+<nav class="nav" aria-label="Menu utama">
+<button data-page="dashboard" class="active"><span class="nav-icon">⌂</span>Dashboard</button>
+<button data-page="ideas"><span class="nav-icon">✦</span>Ide / Library</button>
+<button data-page="calendar"><span class="nav-icon">▦</span>Kalender Konten</button>
+<button data-page="production"><span class="nav-icon">▷</span>Produksi Content</button>
+<button data-page="brand"><span class="nav-icon">◇</span>Brand</button>
+</nav>
+<div class="sidefoot"><b>Workspace Pribadi</b><small>Data tersimpan di browser perangkat ini. Jangan menganggap statistik sebagai sinkron TikTok sebelum API resmi terhubung.</small></div>
+</aside>
+<main class="main"><header class="top"><div><h2 id="page-title">Dashboard</h2><p id="page-subtitle">Ringkasan perjalananmu sebagai content creator.</p></div><div class="date" id="now"></div></header><div id="app"></div></main>
+</div>
+<div class="modal-layer" id="modal-layer" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><h3 id="modal-title"></h3><button type="button" class="button ghost" data-action="close">Tutup ✕</button></div><div id="modal-content"></div></div></div>
+<script>
+(function(){
+"use strict";
+var KEY="iky-creator-hub-local-v1";
+var initial={profile:{handle:"@ikyhdyat",followers:0,views:0,likes:0,videos:0},ideas:[],assets:[],brands:[]};
+function load(){try{var s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.ideas)&&Array.isArray(s.brands)&&Array.isArray(s.assets))return s;}catch(e){}return JSON.parse(JSON.stringify(initial));}
+var state=load(),page="dashboard",libTab="ideas",calendarOffset=0;
+function save(){localStorage.setItem(KEY,JSON.stringify(state));}
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function n(v){return new Intl.NumberFormat("id-ID").format(Number(v)||0);}
+function rp(v){return "Rp "+n(v);}
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function fmt(d){if(!d)return "Belum dijadwalkan";return new Date(d+"T12:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"});}
+function chip(s){return '<span class="pill">'+esc(s)+'</span>';}
+function btn(label,act,variant,extra){return '<button type="button" class="button '+(variant||"")+'" data-action="'+act+'" '+(extra||"")+'>'+label+'</button>';}
+function metric(label,value,description){return '<section class="panel"><div class="kpi-label">'+label+'</div><div class="kpi">'+value+'</div><span class="muted small">'+description+'</span></section>';}
+function empty(txt){return '<div class="empty">'+esc(txt)+'</div>';}
+function txt(t){return esc(t);}
+function setpage(p){page=p;render();}
+function render(){document.querySelectorAll("[data-page]").forEach(function(x){x.classList.toggle("active",x.dataset.page===page);});var titles={dashboard:["Dashboard","Ringkasan pertumbuhan akun dan progres pekerjaanmu."],ideas:["Ide / Library","Bank ide, referensi, dan aset untuk produksi."],calendar:["Kalender Konten","Rencanakan jadwal konten di satu kalender."],production:["Produksi Content","Kelola proses konten dari ide sampai final."],brand:["Brand","Pantau prospek dan kolaborasi dengan brand."]};document.getElementById("page-title").textContent=titles[page][0];document.getElementById("page-subtitle").textContent=titles[page][1];document.getElementById("side-handle").textContent=state.profile.handle||"@ikyhdyat";document.getElementById("now").textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"short",year:"numeric"});document.getElementById("app").innerHTML=({dashboard:dashboard,ideas:ideas,calendar:calendar,production:production,brand:brand}[page])();}
+function dashboard(){var p=state.profile,scheduled=state.ideas.filter(function(x){return !!x.date;}),done=state.ideas.filter(function(x){return x.stage==="Final";});var next=scheduled.slice().sort(function(a,b){return a.date.localeCompare(b.date);}).filter(function(x){return x.date>=today();}).slice(0,5);
+return '<div class="grid cols2"><section class="panel gradient hero"><span class="pill">Personal Creator Workspace</span><h3 style="margin-top:14px">Halo, Iky.</h3><p>Seluruh ide, kalender, produksi, dan kerja sama brand dalam satu tempat.</p><div class="buttons" style="margin-top:20px">'+btn("+ Tambah Ide","new-idea","primary")+btn("Tambah Brand","new-brand","")+'</div></section><section class="panel"><div class="section-head"><h3>Ringkasan TikTok</h3><span class="pill warn">Belum sinkron otomatis</span></div><p class="muted small">Akun: '+esc(p.handle)+' · Angka di bawah adalah data yang kamu masukkan manual, bukan statistik langsung dari TikTok.</p><div class="buttons">'+btn("Isi Statistik Manual","edit-profile","")+ '<a class="button ghost" target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@'+encodeURIComponent((p.handle||"").replace(/^@/,""))+'">Buka Profil TikTok</a></div></section></div>'+
+'<div class="grid cols4" style="margin-top:15px">'+metric("Followers",n(p.followers),"Input manual")+metric("Total Views",n(p.views),"Input manual")+metric("Total Likes",n(p.likes),"Input manual")+metric("Total Video",n(p.videos),"Input manual")+'</div>'+
+'<div class="grid cols2" style="margin-top:15px"><section class="panel"><div class="section-head"><h3>Alur Konten</h3>'+btn("Buka Produksi","go-production","")+'</div><div class="grid cols3">'+metric("Total Ide",n(state.ideas.length),"Tersimpan")+metric("Dijadwalkan",n(scheduled.length),"Ada tanggal")+metric("Selesai",n(done.length),"Tahap Final")+'</div><div class="notice">Statistik pertumbuhan historis memerlukan data berkala dari TikTok. Grafik tidak ditampilkan sebelum data asli tersedia.</div></section><section class="panel"><div class="section-head"><h3>Jadwal Terdekat</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+(next.length?next.map(function(x){return '<div class="item"><div class="itemtop"><div><h4>'+txt(x.title)+'</h4><p>'+fmt(x.date)+' · '+txt(x.platform)+' · '+txt(x.stage)+'</p></div>'+chip("Terjadwal")+'</div></div>';}).join(""):empty("Belum ada konten terjadwal. Tambahkan tanggal pada ide konten."))+'</section></div>'+
+'<section class="panel" style="margin-top:15px"><div class="section-head"><h3>Aksi Cepat</h3></div><div class="buttons">'+btn("Buat Ide","new-idea","primary")+btn("Jadwalkan Konten","new-idea","")+btn("Mulai Produksi","go-production","")+btn("Tambah Brand","new-brand","")+'</div></section>';}
+function ideaCard(x){return '<section class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.stage)+'</div><p class="muted small">Hook: '+txt(x.hook||"Belum diisi")+'</p><div class="tagrow">'+chip(x.pillar||"Umum")+chip(x.platform||"TikTok")+(x.date?chip(fmt(x.date)):"")+'</div><p class="muted small">'+txt(x.notes||"Belum ada catatan.")+'</p><div class="buttons">'+btn("Edit","edit-idea","","data-id='"+txt(x.id)+"'")+btn("Produksi","move-idea","primary","data-id='"+txt(x.id)+"'") + btn("Hapus","delete-idea","danger","data-id='"+txt(x.id)+"'")+'</div></section>';}
+function assetCard(x){return '<div class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.kind)+'</div><a class="link small" href="'+txt(x.url)+'" target="_blank" rel="noopener noreferrer">'+txt(x.url)+'</a><div class="buttons" style="margin-top:12px">'+btn("Hapus","delete-asset","danger","data-id='"+txt(x.id)+"'")+'</div></div>';}
+function ideas(){return '<div class="toolbar"><div class="buttons">'+btn("Ide Konten","tab-ideas",libTab==="ideas"?"primary":"")+btn("Library Aset","tab-assets",libTab==="assets"?"primary":"")+'</div>'+btn(libTab==="ideas"?"+ Tambah Ide":"+ Tambah Aset",libTab==="ideas"?"new-idea":"new-asset","primary")+'</div>'+
+(libTab==="ideas"?'<div class="grid cols3">'+(state.ideas.length?state.ideas.map(ideaCard).join(""):'<div style="grid-column:1/-1">'+empty("Belum ada ide. Klik Tambah Ide untuk membuat ide pertama, melengkapi hook, dan menjadwalkannya.")+'</div>')+'</div>':'<div class="grid cols3">'+(state.assets.length?state.assets.map(assetCard).join(""):'<div style="grid-column:1/-1">'+empty("Library masih kosong. Simpan link referensi, folder footage, atau file produksi agar mudah ditemukan.")+'</div>')+'</div>');}
+function calendar(){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()+calendarOffset);var y=d.getFullYear(),m=d.getMonth(),start=(d.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),cells=Math.ceil((start+days)/7)*7;
+var out='<section class="panel"><div class="monthline"><div class="buttons">'+btn("‹","prev-month")+ '<h3 style="padding:9px 8px">'+d.toLocaleDateString("id-ID",{month:"long",year:"numeric"})+'</h3>'+btn("›","next-month")+'</div>'+btn("+ Tambah Konten","new-idea","primary")+'</div><div class="calendar">';
+["Sen","Sel","Rab","Kam","Jum","Sab","Min"].forEach(function(w){out+='<div class="dayname">'+w+'</div>';});
+for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?state.ideas.filter(function(x){return x.date===dateStr;}):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.slice(0,3).map(function(x){return '<span class="event">'+txt(x.title)+'</span>';}).join("")+(matches.length>3?'<span class="event">+'+(matches.length-3)+' lainnya</span>':"")+'</div>';}out+='</div></section><div class="notice">Klik tanggal pada kalender untuk membuat ide dengan tanggal tersebut. Tahap produksi tetap dikelola melalui halaman Produksi Content.</div>';return out;}
+var stages=["Ide","Script","Shooting","Editing","Review","Final"];
+function production(){var result='<div class="toolbar"><span class="muted small">Pindahkan status pekerjaan dari kiri ke kanan hingga selesai.</span>'+btn("+ Produksi Baru","new-idea","primary")+'</div><div class="board">';
+stages.forEach(function(st){var list=state.ideas.filter(function(x){return x.stage===st;});result+='<div class="stage"><h4>'+st+' <span class="pill">'+list.length+'</span></h4>'+(list.length?list.map(function(x){var idx=stages.indexOf(st);return '<div class="stage-card"><strong>'+txt(x.title)+'</strong><p>'+txt(x.platform)+' · '+fmt(x.date)+'</p><div class="buttons">'+(idx>0?btn("←","back-stage","","data-id='"+txt(x.id)+"'"):"")+(idx<5?btn("Lanjut →","next-stage","primary","data-id='"+txt(x.id)+"'"):"")+'</div></div>';}).join(""):empty("Tidak ada konten"))+'</div>';});return result+'</div><div class="notice">Satu konten menggunakan satu status aktif. Ide, kalender, dan produksi membaca catatan yang sama sehingga tidak perlu input tiga kali.</div>';}
+function brandCard(x){return '<section class="panel"><div class="itemtop"><h3>'+txt(x.name)+'</h3>'+chip(x.status)+'</div><p class="muted small">'+txt(x.contact||"Kontak belum diisi")+'</p><div class="tagrow">'+chip("Nilai "+rp(x.value))+chip(x.deadline?fmt(x.deadline):"Belum ada deadline")+'</div><p class="muted small">'+txt(x.deliverables||"Deliverable belum diisi")+'</p><p class="muted small">'+txt(x.notes||"")+'</p><div class="buttons">'+btn("Edit","edit-brand","","data-id='"+txt(x.id)+"'")+btn("Ubah Status","advance-brand","primary","data-id='"+txt(x.id)+"'")+btn("Hapus","delete-brand","danger","data-id='"+txt(x.id)+"'")+'</div></section>';}
+function brand(){var active=state.brands.filter(function(x){return x.status==="Aktif"||x.status==="Berjalan";}),paid=state.brands.filter(function(x){return x.status==="Selesai";});return '<div class="grid cols3">'+metric("Total Brand",n(state.brands.length),"Tercatat")+metric("Aktif / Berjalan",n(active.length),"Kolaborasi")+metric("Selesai",n(paid.length),"Proyek")+'</div><div class="toolbar" style="margin-top:20px"><h3>Daftar Kolaborasi</h3>'+btn("+ Tambah Brand","new-brand","primary")+'</div><div class="grid cols3">'+(state.brands.length?state.brands.map(brandCard).join(""):'<div style="grid-column:1/-1">'+empty("Belum ada brand. Tambahkan prospek, kontak, nilai deal, deliverables, dan tenggat.")+'</div>')+'</div>';}
+function modal(title,body){document.getElementById("modal-title").textContent=title;document.getElementById("modal-content").innerHTML=body;document.getElementById("modal-layer").classList.add("open");document.getElementById("modal-layer").setAttribute("aria-hidden","false");}
+function close(){document.getElementById("modal-layer").classList.remove("open");document.getElementById("modal-layer").setAttribute("aria-hidden","true");}
+function formFooter(){return '<div class="form-actions"><button type="button" class="button ghost" data-action="close">Batal</button><button type="submit" class="button primary">Simpan</button></div>';}
+function input(label,name,value,type,extra){return '<label class="field">'+label+'<input name="'+name+'" type="'+(type||"text")+'" value="'+txt(value||"")+'" '+(extra||"")+'></label>';}
+function select(label,name,options,selected){return '<label class="field">'+label+'<select name="'+name+'">'+options.map(function(s){return '<option value="'+txt(s)+'" '+(s===selected?"selected":"")+'>'+txt(s)+'</option>';}).join("")+'</select></label>';}
+function ideaForm(id,date){var x=state.ideas.find(function(a){return a.id===id;})||{title:"",hook:"",pillar:"Education",platform:"TikTok",stage:"Ide",notes:"",date:date||""};modal(id?"Edit Ide":"Tambah Ide Konten",'<form id="idea-form"><input type="hidden" name="id" value="'+txt(id||"")+'"><div class="form-grid">'+input("Judul Konten *","title",x.title,"text","required maxlength=160")+input("Hook / Opening","hook",x.hook)+select("Pilar Konten","pillar",["Education","Entertainment","Lifestyle","UGC","Travel","Product","Lainnya"],x.pillar)+select("Platform","platform",["TikTok","Instagram","YouTube","Threads","Facebook","Multiplatform"],x.platform)+select("Status Produksi","stage",stages,x.stage)+input("Tanggal Posting","date",x.date,"date")+'<label class="field wide">Konsep / Catatan<textarea name="notes">'+txt(x.notes)+'</textarea></label></div>'+formFooter()+'</form>');}
+function assetForm(){modal("Tambah Tautan Aset",'<form id="asset-form"><div class="form-grid">'+input("Nama Aset *","title","","text","required")+input("Link HTTPS *","url","","url","required pattern=https?://.+")+select("Jenis","kind",["Referensi","Footage","Folder","Dokumen","Audio","Foto"],"Referensi")+'</div>'+formFooter()+'</form>');}
+function brandForm(id){var x=state.brands.find(function(a){return a.id===id;})||{name:"",contact:"",value:"",deadline:"",status:"Prospek",deliverables:"",notes:""};modal(id?"Edit Brand":"Tambah Brand",'<form id="brand-form"><input type="hidden" name="id" value="'+txt(id||"")+'"><div class="form-grid">'+input("Nama Brand *","name",x.name,"text","required")+input("Kontak / PIC","contact",x.contact)+input("Nilai Deal (Rp)","value",x.value,"number","min=0")+input("Deadline","deadline",x.deadline,"date")+select("Status","status",["Prospek","Negosiasi","Aktif","Berjalan","Selesai"],x.status)+'<label class="field wide">Deliverables<textarea name="deliverables">'+txt(x.deliverables)+'</textarea></label><label class="field wide">Catatan / Brief<textarea name="notes">'+txt(x.notes)+'</textarea></label></div>'+formFooter()+'</form>');}
+function profileForm(){var x=state.profile;modal("Statistik Manual TikTok",'<form id="profile-form"><div class="form-grid">'+input("Username TikTok","handle",x.handle,"text","required")+input("Followers","followers",x.followers,"number","min=0")+input("Total Views","views",x.views,"number","min=0")+input("Total Likes","likes",x.likes,"number","min=0")+input("Total Video","videos",x.videos,"number","min=0")+'</div><div class="notice">Input ini manual, tidak menghubungkan akun TikTok melalui OAuth. Integrasi API resmi belum tersedia pada versi ini.</div>'+formFooter()+'</form>');}
+function id(){return String(Date.now())+String(Math.floor(Math.random()*100000));}
+document.addEventListener("click",function(e){var nav=e.target.closest("[data-page]");if(nav){setpage(nav.dataset.page);return;}var el=e.target.closest("[data-action]");if(!el)return;var a=el.dataset.action,which=el.dataset.id;if(a==="close")close();
+if(a==="new-idea")ideaForm(null,el.dataset.date||"");
+if(a==="edit-idea")ideaForm(which);
+if(a==="new-asset")assetForm();
+if(a==="new-brand")brandForm();
+if(a==="edit-brand")brandForm(which);
+if(a==="edit-profile")profileForm();
+if(a==="tab-ideas"){libTab="ideas";render();}
+if(a==="tab-assets"){libTab="assets";render();}
+if(a==="go-calendar")setpage("calendar");
+if(a==="go-production")setpage("production");
+if(a==="prev-month"){calendarOffset--;render();}
+if(a==="next-month"){calendarOffset++;render();}
+if(a==="date-click")ideaForm(null,el.dataset.date);
+if(["next-stage","back-stage","move-idea"].includes(a)){var x=state.ideas.find(function(v){return v.id===which;});if(x){var j=stages.indexOf(x.stage);x.stage=stages[Math.max(0,Math.min(5,j+(a==="back-stage"?-1:1)))];save();render();}}
+if(a==="advance-brand"){var b=state.brands.find(function(v){return v.id===which;});if(b){var steps=["Prospek","Negosiasi","Aktif","Berjalan","Selesai"];b.status=steps[Math.min(4,steps.indexOf(b.status)+1)];save();render();}}
+if(["delete-idea","delete-asset","delete-brand"].includes(a)){if(confirm("Hapus data ini?")){var prop=a.split("-")[1];prop=prop==="idea"?"ideas":prop==="asset"?"assets":"brands";state[prop]=state[prop].filter(function(v){return v.id!==which;});save();render();}}
+});
+document.addEventListener("submit",function(e){if(!["idea-form","asset-form","brand-form","profile-form"].includes(e.target.id))return;e.preventDefault();var f=new FormData(e.target),get=function(k){return String(f.get(k)||"").trim();};if(e.target.id==="idea-form"){var a=state.ideas.find(function(x){return x.id===get("id");});if(!a){a={id:id()};state.ideas.push(a);}["title","hook","pillar","platform","stage","notes","date"].forEach(function(k){a[k]=get(k);});}
+if(e.target.id==="asset-form"){var u=get("url");if(!/^https?:\/\/\S+$/i.test(u))return alert("Masukkan link http/https yang valid.");state.assets.push({id:id(),title:get("title"),url:u,kind:get("kind")});}
+if(e.target.id==="brand-form"){var b=state.brands.find(function(x){return x.id===get("id");});if(!b){b={id:id()};state.brands.push(b);}["name","contact","deadline","status","deliverables","notes"].forEach(function(k){b[k]=get(k);});b.value=Number(get("value"))||0;}
+if(e.target.id==="profile-form"){state.profile.handle=get("handle");["followers","views","likes","videos"].forEach(function(k){state.profile[k]=Math.max(0,Number(get(k))||0);});}
+save();close();render();});
+document.getElementById("modal-layer").addEventListener("click",function(e){if(e.target===this)close();});document.addEventListener("keydown",function(e){if(e.key==="Escape")close();});
+render();
+})();
+</script>
+</body>
+</html>
