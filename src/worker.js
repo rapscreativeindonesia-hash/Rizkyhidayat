@@ -90,6 +90,20 @@ export class TikTokStore {
         await s.put("last-oauth-error",{category,at:new Date().toISOString()});
         return json({ok:true});
       }
+      if(path==="/internal/sync-diagnostics"&&req.method==="GET"){
+        const acct=await s.get("account"),latest=await s.get("latest"),lastError=await s.get("last-error");
+        const scopes=new Set((acct?.scope||"").split(",").map(x=>x.trim()).filter(Boolean));
+        const videoCode=String(latest?.video_error||"").match(/^TikTok video list: ([a-z0-9_]+)/i);
+        return json({
+          connected:!!acct,
+          stats_scope_granted:scopes.has("user.info.stats"),
+          video_scope_granted:scopes.has("video.list"),
+          snapshot_available:!!latest,
+          all_metrics_zero:!!latest&&latest.followers===0&&latest.likes===0&&latest.video_count===0,
+          video_api_status:latest?.video_error?(videoCode?videoCode[1]:"failed"):latest?(latest.recent_video_count===0?"no_videos":"ok"):"not_checked",
+          sync_error_present:!!lastError
+        });
+      }
       if(path==="/internal/status"){
         const acct=await s.get("account"),latest=await s.get("latest"),history=await s.get("history")||[],lastError=await s.get("last-error");
         return json({connected:!!acct,scope:acct?.scope||"",latest:latest||null,history,lastError:lastError||null,account:"@"+(this.env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
@@ -175,16 +189,18 @@ export default {
     }
     if(!originAllowed(req))return json({error:"invalid_origin"},403);
     if(path==="/api/tiktok/config"&&req.method==="GET"){
-      return json({oauth_diagnostics:"mutable-redirect-v5",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
+      return json({oauth_diagnostics:"sandbox-metrics-v6",mode:env.TIKTOK_MODE==="production"?"production":"sandbox",app_configured:!!(env.TIKTOK_CLIENT_KEY&&env.TIKTOK_CLIENT_SECRET),session_configured:!!(env.DASHBOARD_PASSWORD&&env.DASHBOARD_PASSWORD.length>=12),redirect_uri:env.TIKTOK_REDIRECT_URI||new URL("/api/tiktok/callback",url.origin).href,expected_account:"@"+(env.TIKTOK_EXPECTED_USERNAME||"ikyhdyat").replace(/^@/,"")});
     }
     if(path==="/api/tiktok/health"&&req.method==="GET"){
-      const [a,b]=await Promise.all([
+      const [a,b,c]=await Promise.all([
         proxy(env,"/internal/credentials-check"),
-        proxy(env,"/internal/last-oauth-error")
+        proxy(env,"/internal/last-oauth-error"),
+        proxy(env,"/internal/sync-diagnostics")
       ]);
       const credentials=await a.json();
       const last_oauth_error=await b.json();
-      return json({credentials,last_oauth_error,mode:env.TIKTOK_MODE==="production"?"production":"sandbox"});
+      const sync_diagnostics=await c.json();
+      return json({credentials,last_oauth_error,sync_diagnostics,mode:env.TIKTOK_MODE==="production"?"production":"sandbox"});
     }
     // TikTok OAuth itself authenticates the owner. No separate password prompt.
     if(path==="/api/tiktok/connect"&&req.method==="POST"){
