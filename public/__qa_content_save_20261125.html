@@ -43,5 +43,5 @@ async function run(){
   f.contentWindow.localStorage.removeItem("iky-creator-hub-local-v1");
  }catch(e){report({ok:false,error:String(e?.message||e)});}
 }
-const iframe=document.getElementById("dash");iframe.src="/?qa-save-isolated=20261125";iframe.addEventListener("load",run,{once:true});
+const iframe=document.getElementById("dash");iframe.src="/?qa-save-isolated="+Date.now();iframe.addEventListener("load",run,{once:true});
 </script></body></html>
