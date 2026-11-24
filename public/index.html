@@ -359,6 +359,77 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
 .rh-calendar-event{border:0;text-align:left;width:100%;font-family:inherit;cursor:pointer;line-height:1.35;overflow:hidden;text-overflow:ellipsis;color:#dceaf0}
 .rh-calendar-event:hover,.rh-calendar-event:focus-visible{background:#365769;outline:1px solid #88b1c3}
 .rh-draft-alert{padding:14px 17px;border:1px solid #6b92a5;background:#213944;border-radius:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}.rh-draft-alert strong{font-size:13px;color:#e9f6f7}.rh-draft-alert p{color:#bed2da;font-size:12px;margin:5px 0 0}
+
+/* Compact Creator Workspace: reduce wasted vertical space while preserving all controls */
+.modal:has(.rh-editor-form){padding:14px!important;max-width:840px}
+.modal:has(.rh-editor-form) .modal-head{margin-bottom:10px}
+.modal:has(.rh-editor-form) .modal-head h3{font-size:18px}
+.rh-editor-form{display:block}
+.rh-editor-form .rh-form-section,.rh-editor-form .rh-builder-section{margin-bottom:10px;padding:12px;border-radius:12px}
+.rh-editor-form .rh-form-section h4,.rh-editor-form .rh-builder-section h4{font-size:13px;margin:0 0 9px;line-height:1.3}
+.rh-editor-form .form-grid{gap:9px 10px}
+.rh-editor-form .field{font-size:11px;gap:4px}
+.rh-editor-form .field input,.rh-editor-form .field select,.rh-editor-form .field textarea{border-radius:9px;padding:8px 10px;font-size:13px;min-height:38px}
+.rh-editor-form .field textarea{min-height:64px}
+.rh-editor-form .rh-builder-head{margin-bottom:8px;align-items:center;gap:10px}
+.rh-editor-form .rh-builder-head h4{font-size:13px;margin:0}
+.rh-editor-form .rh-builder-head p{font-size:10px;margin:3px 0 0}
+.rh-editor-form .rh-builder-head .button{border-radius:9px;padding:7px 10px;font-size:11px;min-width:auto}
+.rh-editor-form .rh-builder-list{gap:5px}
+.rh-editor-form .rh-builder-row.rh-compact-row{display:flex;align-items:center;gap:7px;min-width:0;min-height:46px;margin:0;padding:5px 6px 5px 9px;background:#1c303b;border:1px solid #35515f;border-radius:10px}
+.rh-inline-main{min-width:0;flex:1}
+.rh-inline-main input,.rh-inline-main select,.rh-inline-main textarea{box-sizing:border-box;width:100%;min-width:0;max-width:100%;background:#112431;border:1px solid #405e6b;border-radius:8px;color:#f3f8fa;font:500 12px/1.4 "Manrope",system-ui,sans-serif;padding:8px 10px;min-height:36px;margin:0}
+.rh-inline-main textarea{height:37px;min-height:37px;max-height:170px;resize:vertical;display:block}
+.rh-inline-main input::placeholder,.rh-inline-main textarea::placeholder{color:#8fa5b2}
+.rh-inline-main select:focus,.rh-inline-main input:focus,.rh-inline-main textarea:focus{outline:1px solid #9ac3d6;border-color:#9ac3d6}
+.rh-inline-script{display:grid;grid-template-columns:minmax(83px,115px) minmax(0,1fr);gap:6px;align-items:start}
+.rh-inline-script select{padding:7px 5px;min-height:37px;font-size:11px}
+.rh-inline-check{display:flex;gap:8px;align-items:center;min-width:0}
+.rh-inline-check input[data-field="text"]{flex:1;min-width:0}
+.rh-inline-check textarea{flex:1;min-width:0}
+.rh-compact-checkbox{display:flex;align-items:center;justify-content:center;position:relative;flex:0 0 25px;width:25px;height:36px;cursor:pointer}
+.rh-compact-checkbox input{position:absolute;inset:0;z-index:1;margin:auto!important;opacity:0;cursor:pointer}
+.rh-compact-checkbox span{display:block;width:21px;height:21px;border-radius:6px;border:1.5px solid #8caaba;background:#10202b;transition:background .15s ease,border-color .15s ease}
+.rh-compact-checkbox input:checked+span{background:#9ac5d9;border-color:#acd5e4}
+.rh-compact-checkbox input:checked+span:after{content:"✓";display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#0e2531;font-size:16px;font-weight:850}
+.rh-compact-checkbox input:focus-visible+span{outline:2px solid white;outline-offset:2px}
+.rh-inline-link{display:grid;grid-template-columns:minmax(74px,35%) minmax(0,1fr);gap:6px}
+.rh-inline-link input{font-size:11px;padding-left:8px;padding-right:7px}
+.rh-item-options{position:relative;flex:0 0 33px;align-self:center;z-index:2}
+.rh-item-options[open]{z-index:15}
+.rh-item-options>summary{display:grid;place-items:center;list-style:none;cursor:pointer;width:33px;height:36px;border-radius:8px;color:#d7e8ee;background:#28414f;border:1px solid #426273;font-size:22px;font-weight:700;line-height:1;user-select:none}
+.rh-item-options>summary::-webkit-details-marker{display:none}
+.rh-item-options>summary:focus-visible{outline:2px solid #a7d1e3;outline-offset:2px}
+.rh-item-options-popover{position:absolute;z-index:100;right:0;top:calc(100% + 5px);width:126px;display:flex;flex-direction:column;gap:2px;padding:5px;background:#1e3642;border:1px solid #587484;border-radius:11px;box-shadow:0 8px 22px #08121cd9}
+.rh-item-options-popover .button{display:block;width:100%;min-width:0;text-align:left;background:transparent;border:0;border-radius:6px;color:#ebf5f7;font-size:11px;padding:8px 9px}
+.rh-item-options-popover .button:hover,.rh-item-options-popover .button:focus-visible{background:#304f60}
+.rh-item-options-popover .rh-delete-btn{color:#ffc3c3}
+.rh-shot-extra{margin:4px 0 0 33px}
+.rh-shot-extra summary{display:inline-flex;align-items:center;gap:5px;cursor:pointer;list-style:none;color:#a4c2d1;font-size:10px;line-height:1.5}
+.rh-shot-extra summary::-webkit-details-marker{display:none}
+.rh-shot-extra summary:before{content:"＋";font-size:12px}
+.rh-shot-extra[open] summary:before{content:"－"}
+.rh-shot-extra-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+.rh-shot-extra-grid input,.rh-shot-extra-grid select{font-size:11px;min-height:34px}
+.rh-editor-form>.form-actions{position:sticky;bottom:0;z-index:10;margin-top:8px;padding:9px 3px;gap:7px;background:linear-gradient(0deg,#162732 84%,#162732ef);border-top:1px solid #3d5663}
+.rh-editor-form>.form-actions .button{padding:9px 15px;border-radius:10px;font-size:12px;min-height:40px}
+.rh-editor-form .rh-helper{padding:8px 10px;margin:9px 0;font-size:11px;line-height:1.4}
+@media(max-width:600px){
+ .modal:has(.rh-editor-form){padding:11px!important;width:100%;max-height:calc(100dvh - 18px)}
+ .modal:has(.rh-editor-form) .modal-head{margin-bottom:8px}
+ .rh-editor-form .rh-form-section,.rh-editor-form .rh-builder-section{padding:10px;margin-bottom:8px}
+ .rh-editor-form .form-grid{gap:8px}
+ .rh-inline-script{grid-template-columns:minmax(78px,94px) minmax(0,1fr);gap:5px}
+ .rh-inline-script select{font-size:10px}
+ .rh-inline-link{grid-template-columns:minmax(70px,37%) minmax(0,1fr);gap:5px}
+ .rh-shot-extra-grid{grid-template-columns:1fr}
+ .rh-editor-form .rh-builder-row.rh-compact-row{padding:5px 5px 5px 7px}
+ .rh-editor-form .rh-builder-head .button{padding:7px 9px}
+ .rh-editor-form>.form-actions{bottom:0}
+}
+@media(min-width:601px){
+ .rh-editor-form .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
@@ -612,24 +683,26 @@ function rhSelect(label,field,values,current,extra){
  return '<label class="field '+(extra||"")+'">'+txt(label)+'<select name="'+field+'">'+values.map(x=>'<option value="'+txt(x)+'"'+(x===current?' selected':'')+'>'+txt(x)+'</option>').join("")+'</select></label>';
 }
 function rhBuilderRow(kind,item,scriptRows){
- const obj=item||{},ident=txt(obj.id||id()),v=k=>txt(obj[k]||""),marked=obj.checked?' checked':'';
- let inner="";
+ const obj=item||{},ident=txt(obj.id||id()),v=k=>txt(obj[k]||""),marked=obj.checked?" checked":"";
+ const controls='<details class="rh-item-options"><summary aria-label="Atur urutan atau hapus" title="Opsi item">⋯</summary><div class="rh-item-options-popover">'+btn("↑ Naik","builder-up","",'aria-label="Pindah ke atas"')+btn("↓ Turun","builder-down","",'aria-label="Pindah ke bawah"')+btn("Hapus","builder-remove","rh-delete-btn",'aria-label="Hapus item"')+'</div></details>';
+ let content="";
  if(kind==="script"){
-   inner='<div class="rh-builder-grid"><label class="field">Bagian<select data-field="type">'+SCRIPT_TYPES.map(x=>'<option value="'+txt(x)+'"'+(obj.type===x?' selected':'')+'>'+txt(x)+'</option>').join("")+'</select></label><label class="field rh-builder-wide">Kalimat script<textarea data-field="text" rows="2" placeholder="Tulis satu kalimat…">'+v("text")+'</textarea></label></div>';
+   content='<div class="rh-inline-main rh-inline-script"><select data-field="type" aria-label="Bagian script">'+SCRIPT_TYPES.map(x=>'<option value="'+txt(x)+'"'+(obj.type===x?' selected':'')+'>'+txt(x)+'</option>').join("")+'</select><textarea data-field="text" rows="1" aria-label="Kalimat script" placeholder="Tulis kalimat…">'+v("text")+'</textarea></div>';
  }else if(kind==="shots"){
    const rows=scriptRows||[];
-   const options='<option value="">Tanpa hubungan script</option>'+rows.map((x,i)=>'<option value="'+txt(x.id)+'"'+(obj.scriptId===x.id?' selected':'')+'>Kalimat '+(i+1)+' · '+txt(x.type||"Script")+'</option>').join("");
-   inner='<div class="rh-builder-grid"><label class="field rh-builder-wide">Deskripsi shot<textarea data-field="text" rows="2" placeholder="Contoh: close-up tangan memegang produk">'+v("text")+'</textarea></label><label class="field">Angle / gerakan<input data-field="angle" value="'+v("angle")+'" placeholder="Close-up, pan, tracking…"></label><label class="field">Hubungkan script<select data-field="scriptId">'+options+'</select></label></div><label class="rh-check"><input type="checkbox" data-field="checked"'+marked+'> Shot selesai</label>';
+   const options='<option value="">Pilih kalimat</option>'+rows.map((x,i)=>'<option value="'+txt(x.id)+'"'+(obj.scriptId===x.id?' selected':'')+'>Kalimat '+(i+1)+' · '+txt(x.type||"Script")+'</option>').join("");
+   content='<div class="rh-inline-main"><div class="rh-inline-check"><label class="rh-compact-checkbox" title="Tandai shot selesai"><input type="checkbox" data-field="checked" aria-label="Shot selesai"'+marked+'><span aria-hidden="true"></span></label><textarea data-field="text" rows="1" aria-label="Deskripsi shot" placeholder="Deskripsi shot…">'+v("text")+'</textarea></div><details class="rh-shot-extra"'+(obj.angle||obj.scriptId?' open':'')+'><summary>Detail shot</summary><div class="rh-shot-extra-grid"><input data-field="angle" aria-label="Angle atau gerakan kamera" value="'+v("angle")+'" placeholder="Angle / gerakan kamera"><select data-field="scriptId" aria-label="Hubungkan ke kalimat script">'+options+'</select></div></details></div>';
  }else if(kind==="checklist"||kind==="deliverables_checklist"){
-   inner='<div class="rh-builder-grid"><label class="field rh-builder-wide">Tugas / deliverable<input data-field="text" value="'+v("text")+'" placeholder="Tulis item checklist"></label></div><label class="rh-check"><input type="checkbox" data-field="checked"'+marked+'> Selesai</label>';
+   content='<div class="rh-inline-main rh-inline-check"><label class="rh-compact-checkbox" title="Tandai selesai"><input type="checkbox" data-field="checked" aria-label="Tugas selesai"'+marked+'><span aria-hidden="true"></span></label><input data-field="text" aria-label="Nama tugas atau deliverable" value="'+v("text")+'" placeholder="Tulis tugas…"></div>';
  }else{
-   inner='<div class="rh-builder-grid"><label class="field">Judul / keterangan<input data-field="label" value="'+v("label")+'" placeholder="Nama referensi"></label><label class="field">URL<input type="text" inputmode="url" data-field="url" value="'+v("url")+'" placeholder="https://…"></label></div>';
+   content='<div class="rh-inline-main rh-inline-link"><input data-field="label" aria-label="Nama referensi atau file" value="'+v("label")+'" placeholder="Nama referensi"><input type="text" inputmode="url" data-field="url" aria-label="Link referensi atau file" value="'+v("url")+'" placeholder="Link / URL"></div>';
  }
- return '<div class="rh-builder-row" data-kind="'+txt(kind)+'" data-row-id="'+ident+'"><div class="rh-row-controls"><span class="rh-row-grip" aria-hidden="true">⋮⋮</span><div class="rh-row-buttons">'+btn("↑","builder-up","rh-icon-btn",'aria-label="Pindah ke atas"')+btn("↓","builder-down","rh-icon-btn",'aria-label="Pindah ke bawah"')+btn("×","builder-remove","rh-icon-btn rh-delete-btn",'aria-label="Hapus baris"')+'</div></div>'+inner+'</div>';
+ return '<div class="rh-builder-row rh-compact-row rh-kind-'+txt(kind)+'" data-kind="'+txt(kind)+'" data-row-id="'+ident+'">'+content+controls+'</div>';
 }
 function rhBuilder(kind,title,rows,empty,scriptRows){
  const items=Array.isArray(rows)&&rows.length?rows:(empty||[]);
- return '<section class="rh-builder-section" data-group="'+txt(kind)+'"><div class="rh-builder-head"><div><h4>'+txt(title)+'</h4><p>'+({script:"Satu baris untuk satu kalimat. Atur urutan sesuai alur konten.",shots:"Setiap shot dapat dihubungkan ke kalimat script dan dicentang.",checklist:"Centang pekerjaan yang telah selesai. Tanpa status produksi.",deliverables_checklist:"Checklist kewajiban kerja sama dengan brand.",references:"Simpan lebih dari satu URL referensi.",files:"Simpan link brief atau folder file.",final_links:"Tautan hasil konten yang sudah dikirim atau dipublikasikan."}[kind]||"")+'</p></div>'+btn("+ Tambah","builder-add","rh-mini-btn",'data-kind="'+txt(kind)+'"')+'</div><div class="rh-builder-list" data-kind="'+txt(kind)+'">'+items.map(x=>rhBuilderRow(kind,x,scriptRows)).join("")+'</div></section>';
+ const descriptions={script:"Satu baris satu kalimat",shots:"Centang shot yang selesai",checklist:"",deliverables_checklist:"",references:"",files:"",final_links:""};
+ return '<section class="rh-builder-section rh-compact-section" data-group="'+txt(kind)+'"><div class="rh-builder-head"><div><h4>'+txt(title)+'</h4>'+(descriptions[kind]?'<p>'+descriptions[kind]+'</p>':'')+'</div>'+btn("+ Tambah","builder-add","rh-mini-btn",'data-kind="'+txt(kind)+'"')+'</div><div class="rh-builder-list" data-kind="'+txt(kind)+'">'+items.map(x=>rhBuilderRow(kind,x,scriptRows)).join("")+'</div></section>';
 }
 function rhCollectRows(form,kind){
  const container=form.querySelector('.rh-builder-list[data-kind="'+kind+'"]');
