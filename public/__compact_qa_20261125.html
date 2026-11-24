@@ -1,0 +1,57 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><pre id="result">Starting…</pre><iframe id="appFrame" src="about:blank" style="position:absolute;left:-9000px;top:0;width:390px;height:845px" title="isolated QA"></iframe><script>
+const out=document.getElementById("result");
+const frame=document.getElementById("appFrame");
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const assert=(x,msg)=>{if(!x)throw Error(msg)};
+let logs={};
+async function run(){
+ const w=frame.contentWindow,d=w.document;
+ try{
+  await sleep(250);
+  d.querySelector('[data-page="production"]').click();await sleep(90);
+  d.querySelector('[data-action="new-content"]').click();await sleep(100);
+  const form=d.getElementById("content-form");assert(form,"Content form did not open");
+  const rows=[...form.querySelectorAll('[data-group="checklist"] .rh-compact-row')];
+  assert(rows.length>=8,"Default checklist missing");
+  const height=rows[0].getBoundingClientRect().height;
+  const check=rows[0].querySelector('input[data-field="checked"]');
+  const text=rows[0].querySelector('input[data-field="text"]');
+  const rect=check.getBoundingClientRect(),rect2=text.getBoundingClientRect();
+  logs.content={checklistCount:rows.length,checklistRowHeight:Math.round(height),checkboxSameLine:Math.abs(rect.top-rect2.top)<17,optionsMenu:!!rows[0].querySelector(".rh-item-options"),scriptRows:form.querySelectorAll('[data-group="script"] .rh-compact-row').length,shotExtraCollapsed:!form.querySelector(".rh-shot-extra")?.open};
+  assert(height<=85,"Checklist wastes vertical space: "+height);
+  assert(logs.content.checkboxSameLine,"Checkbox is not inline with task");
+  const title="QA COMPACT TEST "+Date.now();
+  const t=form.querySelector('input[name="title"]');t.value=title;t.dispatchEvent(new w.Event("input",{bubbles:true}));
+  const scr=form.querySelector('[data-group="script"] textarea[data-field="text"]');scr.value="Hook untuk QA";scr.dispatchEvent(new w.Event("input",{bubbles:true}));
+  check.click();await sleep(550);
+  const save=form.querySelector('button[type="submit"]');save.click();await sleep(140);
+  const db=JSON.parse(w.localStorage.getItem("iky-creator-hub-local-v1")||"{}");
+  const created=(db.ideas||[]).find(x=>x.title===title);
+  assert(created,"Content not saved");
+  logs.content.persisted=true;
+  logs.content.checkedPersisted=created.checklist?.[0]?.checked===true;
+  assert(logs.content.checkedPersisted,"Checkbox not saved");
+  assert(!d.getElementById("modal-layer").classList.contains("open"),"Content modal did not close");
+  d.querySelector('[data-page="brand"]').click();await sleep(70);
+  d.querySelector('[data-action="new-brand"]').click();await sleep(80);
+  const bf=d.getElementById("brand-form");assert(bf,"Collaboration editor did not open");
+  const dr=bf.querySelector('[data-group="deliverables_checklist"] .rh-compact-row');assert(dr,"Collaboration deliverable row missing");
+  logs.collaboration={rowHeight:Math.round(dr.getBoundingClientRect().height),checkboxSameLine:Math.abs(dr.querySelector('input[data-field="checked"]').getBoundingClientRect().top-dr.querySelector('input[data-field="text"]').getBoundingClientRect().top)<17,optionsMenu:!!dr.querySelector(".rh-item-options"),linksCompact:!!bf.querySelector('[data-group="references"] .rh-inline-link'),otherLinksCompact:!!bf.querySelector('[data-group="final_links"] .rh-inline-link')};
+  assert(logs.collaboration.rowHeight<=85,"Collaboration checklist is too tall");
+  assert(logs.collaboration.checkboxSameLine,"Collaboration checkbox not inline");
+  bf.querySelector('[data-action="close"]').click();await sleep(90);
+  const found=d.querySelector('[data-page="production"]');found.click();await sleep(70);
+  let qaCard=[...d.querySelectorAll(".rh-project-card")].find(el=>el.textContent.includes(title));
+  logs.content.cardVisible=!!qaCard;
+  assert(qaCard,"Saved content not shown in Content listing");
+  const button=qaCard.querySelector('[data-action="delete-idea"]');
+  assert(button,"QA cleanup button missing");
+  w.confirm=()=>true;button.click();await sleep(100);
+  const db2=JSON.parse(w.localStorage.getItem("iky-creator-hub-local-v1")||"{}");
+  logs.cleanup=!db2.ideas?.some(x=>x.title===title);
+  assert(logs.cleanup,"QA Content record could not be cleaned");
+  out.textContent=JSON.stringify({ok:true,...logs});
+ }catch(error){out.textContent=JSON.stringify({ok:false,error:String(error),...logs});}
+}
+frame.addEventListener("load",run,{once:true});frame.src="/?compact-qa="+Date.now();
+</script></body></html>
