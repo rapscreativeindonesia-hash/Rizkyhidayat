@@ -646,7 +646,7 @@ function rhCollectRows(form,kind){
 }
 let rhDraftSaveTimer=null;
 function saveWorkingContent(form){
- if(!form||form.id!=="content-form")return;
+ if(!form||form.getAttribute("id")!=="content-form")return;
  try{
    const fd=new FormData(form),get=k=>String(fd.get(k)||"").trim();
    const script=rhCollectRows(form,"script"),shots=rhCollectRows(form,"shots");
@@ -672,7 +672,7 @@ function saveWorkingContent(form){
  }
 }
 function queueWorkingContent(form){
- if(!form||form.id!=="content-form")return;
+ if(!form||form.getAttribute("id")!=="content-form")return;
  clearTimeout(rhDraftSaveTimer);
  rhDraftSaveTimer=setTimeout(()=>{if(form.isConnected)saveWorkingContent(form);},500);
 }
@@ -759,9 +759,9 @@ function modal(title,body){
 
 /* Drafts protect text against accidental navigation or lost browser state. */
 const DRAFT_PREFIX="rh-creator-draft-v1:";
-function draftKey(form){return DRAFT_PREFIX+form.id+":"+(form.elements.namedItem("id")?.value||"new");}
+function draftKey(form){return DRAFT_PREFIX+form.getAttribute("id")+":"+(form.elements.namedItem("id")?.value||"new");}
 function saveDraft(form){
- if(!form||!["idea-form","content-form","asset-form","brand-form","profile-form"].includes(form.id))return;
+ if(!form||!["idea-form","content-form","asset-form","brand-form","profile-form"].includes(form.getAttribute("id")))return;
  const values=Object.fromEntries(new FormData(form).entries());
  const sections={};for(const kind of RH_BUILDER_KEYS)if(form.querySelector('.rh-builder-list[data-kind="'+kind+'"]'))sections[kind]=rhCollectRows(form,kind);
  const draft=JSON.stringify({values,sections,draftContentId:form.dataset.draftContentId||"",updated_at:Date.now()});
@@ -797,7 +797,7 @@ function clearFormDraft(form){
 document.addEventListener("input",e=>{
  const form=e.target.closest("form");
  if(form){
-   if(form.id==="content-form"&&e.target.closest('.rh-builder-list[data-kind="script"]'))rhRefreshShotChoices(form);
+   if(form.getAttribute("id")==="content-form"&&e.target.closest('.rh-builder-list[data-kind="script"]'))rhRefreshShotChoices(form);
    saveDraft(form);
    queueWorkingContent(form);
  }
@@ -883,15 +883,15 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("submit",function(e){
  const form=e.target;
- window.__rhSaveStage="event:"+String(form?.id||"unknown");
- if(!["content-form","idea-form","asset-form","brand-form","profile-form"].includes(form.id))return;
+ window.__rhSaveStage="event:"+String(form?.getAttribute("id")||"unknown");
+ if(!["content-form","idea-form","asset-form","brand-form","profile-form"].includes(form.getAttribute("id")))return;
  e.preventDefault();
  window.__rhSaveStage="prevented";
  const fd=new FormData(form),get=k=>String(fd.get(k)||"").trim();
  window.__rhSaveStage="formdata";
  try{
    const isLink=(s)=>!s||!!safeWebLink(s);
-   if(form.id==="content-form"){
+   if(form.getAttribute("id")==="content-form"){
      if(!get("title"))throw new Error("Judul konten perlu diisi sebelum menyimpan.");
      const script=rhCollectRows(form,"script"),shots=rhCollectRows(form,"shots"),checks=rhCollectRows(form,"checklist"),refs=rhCollectRows(form,"references");
      // Draft or incomplete URLs must never prevent saving an otherwise complete content.
@@ -906,7 +906,7 @@ document.addEventListener("submit",function(e){
      content.pillar=content.content_type||content.pillar||"UGC";
      content.campaign=state.brands.find(x=>x.id===brandId)?.campaign||"";
      content.updated_at=Date.now();
-   }else if(form.id==="idea-form"){
+   }else if(form.getAttribute("id")==="idea-form"){
      let content=state.ideas.find(x=>x.id===get("id"));
      if(!content){content={id:id(),stage:"Ide"};state.ideas.push(content);}
      for(const field of ["title","hook","pillar","platform","notes","date"])content[field]=get(field);
@@ -916,11 +916,11 @@ document.addEventListener("submit",function(e){
        if(hook)hook.text=content.hook;
      }
      content.updated_at=Date.now();
-   }else if(form.id==="asset-form"){
+   }else if(form.getAttribute("id")==="asset-form"){
      const url=get("url");
      if(!safeWebLink(url))throw new Error("Masukkan link http/https yang valid.");
      state.assets.push({id:id(),title:get("title"),url,kind:get("kind"),updated_at:Date.now()});
-   }else if(form.id==="brand-form"){
+   }else if(form.getAttribute("id")==="brand-form"){
      if(!get("name"))throw new Error("Nama brand perlu diisi sebelum menyimpan.");
      const refs=rhCollectRows(form,"references"),files=rhCollectRows(form,"files"),finalLinks=rhCollectRows(form,"final_links");
      // Store incomplete website and reference links as drafts without blocking save.
@@ -930,7 +930,7 @@ document.addEventListener("submit",function(e){
      for(const field of ["value","rate_card","dp","paid"])b[field]=Math.max(0,Number(get(field))||0);
      b.deliverables_checklist=rhCollectRows(form,"deliverables_checklist");
      b.references=refs;b.files=files;b.final_links=finalLinks;b.updated_at=Date.now();
-   }else if(form.id==="profile-form"){
+   }else if(form.getAttribute("id")==="profile-form"){
      state.profile.handle=get("handle");
      for(const field of ["followers","views","likes","videos"])state.profile[field]=Math.max(0,Number(get(field))||0);
      state.profile.updated_at=Date.now();
