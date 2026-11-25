@@ -723,6 +723,111 @@ body.rh-modal-locked{position:fixed!important;width:100%!important;left:0;right:
  #modal-layer .rh-editor-form .rh-inline-link{grid-template-columns:minmax(0,36%) minmax(0,1fr)}
  #modal-layer .rh-editor-form .rh-inline-main .rh-shot-extra-grid{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Dedicated bounded date control for iPad Safari: native picker, custom visual. */
+#modal-layer .rh-editor-form .form-grid,
+#modal-layer .rh-editor-form .rh-collab-fields{
+ column-gap:16px!important;
+ row-gap:10px;
+}
+#modal-layer .rh-date-field{
+ min-width:0!important;
+ max-width:100%!important;
+ width:100%!important;
+ box-sizing:border-box;
+ overflow:visible;
+}
+#modal-layer .rh-date-shell{
+ position:relative!important;
+ display:block!important;
+ box-sizing:border-box!important;
+ width:100%!important;
+ min-width:0!important;
+ max-width:100%!important;
+ min-height:43px;
+ height:43px;
+ border:1px solid #496574;
+ border-radius:10px;
+ background:#10232f;
+ overflow:hidden!important;
+ isolation:isolate;
+}
+#modal-layer .rh-date-visual{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:9px;
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ box-sizing:border-box;
+ padding:0 12px;
+ overflow:hidden;
+ pointer-events:none;
+ z-index:1;
+ font:600 13px/1.3 "Manrope",system-ui,sans-serif;
+ color:#e5f3f7;
+ white-space:nowrap;
+}
+#modal-layer .rh-date-text{
+ flex:1;
+ min-width:0;
+ max-width:100%;
+ text-overflow:ellipsis;
+ overflow:hidden;
+}
+#modal-layer .rh-date-icon{
+ flex:0 0 17px;
+ width:17px;
+ height:17px;
+ stroke:#9dbbc8;
+}
+#modal-layer .rh-date-shell .rh-date-native,
+#modal-layer .rh-date-field .rh-date-native{
+ position:absolute!important;
+ inset:0!important;
+ left:0!important;
+ top:0!important;
+ z-index:2!important;
+ opacity:0!important;
+ appearance:none!important;
+ -webkit-appearance:none!important;
+ display:block!important;
+ margin:0!important;
+ padding:0!important;
+ width:100%!important;
+ height:100%!important;
+ min-width:0!important;
+ min-height:0!important;
+ max-width:100%!important;
+ max-height:100%!important;
+ border:0!important;
+ box-shadow:none!important;
+ overflow:hidden!important;
+ cursor:pointer;
+ font-size:16px!important;
+}
+#modal-layer .rh-date-shell:focus-within{
+ border-color:#b4d9e9;
+ box-shadow:0 0 0 2px #99c6d130;
+}
+#modal-layer .rh-date-shell .rh-date-native::-webkit-datetime-edit{
+ opacity:0!important;
+}
+#modal-layer .rh-date-shell .rh-date-native::-webkit-calendar-picker-indicator{
+ opacity:0!important;
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ cursor:pointer;
+}
+@media(max-width:580px){
+ #modal-layer .rh-editor-form .form-grid,
+ #modal-layer .rh-editor-form .rh-collab-fields{column-gap:10px!important}
+ #modal-layer .rh-date-shell{height:43px}
+}
 </style>
 </head>
 <body>
@@ -1166,6 +1271,7 @@ function modal(title,body){
    // Keep every existing field inside the form for FormData and autosave.
    form.noValidate=true;
    restoreFormDraft(form);
+   rhSyncDateLabels(form);
    if(form.classList.contains("rh-editor-form")){
      const scrollArea=document.createElement("div");
      scrollArea.className="rh-form-scrollbody";
@@ -1236,6 +1342,7 @@ function clearFormDraft(form){
 }
 document.addEventListener("input",e=>{
  if(e.target.matches?.(".rh-editor-form textarea"))rhFitTextarea(e.target);
+ if(e.target.matches?.(".rh-date-native"))rhUpdateDateVisual(e.target);
  const form=e.target.closest("form");
  if(form){
    if(e.target.closest('.rh-builder-list[data-kind="script"]')){
@@ -1252,6 +1359,7 @@ document.addEventListener("input",e=>{
  }
 });
 document.addEventListener("change",async e=>{
+ if(e.target.matches?.(".rh-date-native"))rhUpdateDateVisual(e.target);
  const form=e.target.closest("form");
  if(!form)return;
  if(e.target.matches("[data-brief-file]")){
@@ -1278,7 +1386,31 @@ if(document.fonts?.ready)document.fonts.ready.then(()=>{
 window.addEventListener("pagehide",()=>{const form=document.querySelector("#content-form");if(form){saveDraft(form);saveWorkingContent(form);}});
 function close(){const layer=document.getElementById("modal-layer");if(!layer.classList.contains("open"))return;layer.classList.remove("open");layer.setAttribute("aria-hidden","true");layer.style.removeProperty("--rh-viewport-height");layer.style.removeProperty("--rh-viewport-offset");rhUnlockPage();}
 function formFooter(){return '<div class="form-actions"><button type="button" class="button ghost" data-action="close">Batal</button><button type="submit" class="button primary">Simpan</button></div>';}
-function input(label,name,value,type,extra){return '<label class="field">'+label+'<input name="'+name+'" type="'+(type||"text")+'" value="'+txt(value||"")+'" '+(extra||"")+'></label>';}
+/* Safari iPad renders a native date control wider than its CSS grid track.
+   Keep the native date picker interactive, but isolate its paint behind our own
+   bounded date tile so it cannot overlap a neighboring field. */
+const RH_MONTHS=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+function rhDateDisplay(value){
+ const match=String(value||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ if(!match)return "Pilih tanggal";
+ const month=Number(match[2]),day=Number(match[3]);
+ return month>=1&&month<=12&&day>=1&&day<=31?day+" "+RH_MONTHS[month-1]+" "+match[1]:"Pilih tanggal";
+}
+function rhDateControl(name,value,scope,label){
+ const attr=scope==="content"?'data-content-field="'+txt(name)+'"':'name="'+txt(name)+'"';
+ return '<span class="rh-date-shell"><span class="rh-date-visual" aria-hidden="true"><span class="rh-date-text">'+txt(rhDateDisplay(value))+'</span><svg class="rh-date-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg></span><input class="rh-date-native" type="date" '+attr+' value="'+txt(value||"")+'" aria-label="'+txt(label||name)+'"></span>';
+}
+function rhUpdateDateVisual(input){
+ const shell=input?.closest?.(".rh-date-shell"),value=shell?.querySelector(".rh-date-text");
+ if(value)value.textContent=rhDateDisplay(input.value);
+}
+function rhSyncDateLabels(root){
+ root?.querySelectorAll?.(".rh-date-shell input[type=date]").forEach(rhUpdateDateVisual);
+}
+function input(label,name,value,type,extra){
+ if(type==="date")return '<label class="field rh-date-field">'+txt(label)+rhDateControl(name,value,"form",label)+'</label>';
+ return '<label class="field">'+txt(label)+'<input name="'+name+'" type="'+(type||"text")+'" value="'+txt(value||"")+'" '+(extra||"")+'></label>';
+}
 function select(label,name,options,selected){return '<label class="field">'+label+'<select name="'+name+'">'+options.map(function(s){return '<option value="'+txt(s)+'" '+(s===selected?"selected":"")+'>'+txt(s)+'</option>';}).join("")+'</select></label>';}
 function ideaForm(id,date){var x=state.ideas.find(function(a){return a.id===id;})||{title:"",hook:"",pillar:"Education",platform:"TikTok",stage:"Ide",notes:"",date:date||""};modal(id?"Edit Ide":"Tambah Ide Konten",'<form id="idea-form"><input type="hidden" name="id" value="'+txt(id||"")+'"><div class="form-grid">'+input("Judul Konten *","title",x.title,"text","required maxlength=160")+input("Hook / Opening","hook",x.hook)+select("Pilar Konten","pillar",["Education","Entertainment","Lifestyle","UGC","Travel","Product","Lainnya"],x.pillar)+select("Platform","platform",["TikTok","Instagram","YouTube","Threads","Facebook","Multiplatform"],x.platform)+input("Tanggal Posting","date",x.date,"date")+'<label class="field wide">Konsep / Catatan<textarea name="notes">'+txt(x.notes)+'</textarea></label></div><p class="rh-helper">Script lengkap dan shot list dapat dilanjutkan dari halaman Content.</p>'+formFooter()+'</form>');}
 function assetForm(){modal("Tambah Tautan Aset",'<form id="asset-form"><div class="form-grid">'+input("Nama Aset *","title","","text","required")+input("Link HTTPS *","url","","url","required pattern=https?://.+")+select("Jenis","kind",["Referensi","Footage","Folder","Dokumen","Audio","Foto"],"Referensi")+'</div>'+formFooter()+'</form>');}
@@ -1299,8 +1431,8 @@ function rhCollabContentCard(item={},opened=false){
  +'<div class="rh-collab-content-body">'
  +'<div class="rh-collab-fields"><label class="field">Judul Konten<input data-content-field="title" value="'+txt(item.title||"")+'" placeholder="Contoh: UGC Video 1"></label>'
  +'<label class="field">Platform<select data-content-field="platform">'+options+'</select></label>'
- +'<label class="field">Tanggal Shooting<input type="date" data-content-field="shoot_date" value="'+txt(item.shoot_date||"")+'"></label>'
- +'<label class="field">Tanggal Posting<input type="date" data-content-field="date" value="'+txt(item.date||"")+'"></label></div>'
+ +'<label class="field rh-date-field">Tanggal Shooting'+rhDateControl("shoot_date",item.shoot_date,"content","Tanggal Shooting")+'</label>'
+ +'<label class="field rh-date-field">Tanggal Posting'+rhDateControl("date",item.date,"content","Tanggal Posting")+'</label></div>'
  +rhBuilder("script","Script per Kalimat",scripts,[],scripts)
  +rhBuilder("shots","Shot List",shots,[{id:id(),text:"",angle:"",checked:false}],scripts)
  +rhBuilder("checklist","Checklist Produksi",checks,[],scripts)
