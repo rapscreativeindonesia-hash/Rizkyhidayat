@@ -39,5 +39,5 @@ async function checkPage(){
  output.textContent=JSON.stringify({ok:true,report});
  }catch(e){output.textContent=JSON.stringify({ok:false,error:String(e),report});}
 }
-frame.addEventListener("load",checkPage,{once:true});frame.src="/?qa-date-overlap="+Date.now();
+frame.addEventListener("load",checkPage,{once:true});frame.style.width=(new URLSearchParams(location.search).get("w")||"1194")+"px";frame.src="/?qa-date-overlap="+Date.now();
 </script></body></html>
