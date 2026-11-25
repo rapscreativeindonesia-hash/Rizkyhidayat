@@ -1,0 +1,61 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><pre id="qa">Running layout tests…</pre><iframe id="frame" src="about:blank" title="private responsive test" style="position:absolute;left:-9000px;top:0;height:930px;width:390px;border:0"></iframe><script>
+const frame=document.querySelector("#frame"),out=document.querySelector("#qa");
+const pause=t=>new Promise(ok=>setTimeout(ok,t));
+const assert=(a,b)=>{if(!a)throw Error(b)};
+const cases=[390,580,768,1024,1194],results=[];
+let index=0;
+function rect(r){const x=r.getBoundingClientRect();return {left:x.left,right:x.right,top:x.top,bottom:x.bottom,width:x.width,height:x.height}}
+function inspectForm(doc,type,width){
+ const form=doc.querySelector(type==="Content"?"#content-form":"#brand-form"),scroll=form.querySelector(".rh-form-scrollbody");
+ assert(form&&scroll,"Modal form not found "+type);
+ const grids=[...form.querySelectorAll(".form-grid,.rh-collab-fields,.rh-builder-grid,.rh-shot-extra-grid")];
+ let violations=[],count=0;
+ for(const grid of grids){
+  const g=rect(grid);
+  for(const field of grid.children){
+    if(field.matches('input[type="hidden"]'))continue;
+    const f=rect(field);
+    if(f.width<=0)continue;
+    const control=field.matches("input,select,textarea")?field:field.querySelector("input:not([type=hidden]),select,textarea");
+    const c=control?rect(control):null;
+    if(f.left<g.left-2||f.right>g.right+2)violations.push({kind:"field",tag:field.tagName,field:field.textContent.trim().slice(0,24),deltaLeft:Math.round(g.left-f.left),deltaRight:Math.round(f.right-g.right)});
+    if(c&&(c.left<f.left-2||c.right>f.right+2))violations.push({kind:"control",field:field.textContent.trim().slice(0,24),deltaLeft:Math.round(f.left-c.left),deltaRight:Math.round(c.right-f.right)});
+    count++;
+  }
+ }
+ const dates=[...form.querySelectorAll('input[type="date"]')].map(el=>({name:el.name||el.dataset.contentField,control:rect(el),parent:rect(el.closest(".field"))}));
+ const starts=dates.filter(x=>x.name==="shoot_date"),ends=dates.filter(x=>x.name==="date");
+ let dateOverlaps=[];
+ for(const a of starts)for(const b of ends){
+  const sameRow=Math.abs(a.control.top-b.control.top)<20;
+  if(sameRow&&a.control.right>b.control.left+2)dateOverlaps.push({a:a.name,b:b.name,overlap:Math.round(a.control.right-b.control.left)});
+ }
+ return {type,width,fieldsChecked:count,gridViolations:violations.slice(0,12),dateOverlaps,dateFields:dates.length,formScrollWidth:scroll.scrollWidth,formClientWidth:scroll.clientWidth,logoImage:!!doc.querySelector('.rh-logo img[src*="rh-script.svg"]'),vectorNav:doc.querySelectorAll(".sidebar .nav .rh-vector-icon").length};
+}
+async function loaded(){
+ const width=cases[index],win=frame.contentWindow,doc=win.document;
+ try{
+  await pause(150);
+  const nav=doc.querySelector('[data-page="production"]');assert(nav,"Content nav missing");
+  nav.click();await pause(50);
+  doc.querySelector('[data-action="new-content"]').click();await pause(90);
+  const cont=inspectForm(doc,"Content",width);
+  doc.querySelector("#modal-layer .rh-modal-close").click();await pause(35);
+  doc.querySelector('[data-page="brand"]').click();await pause(55);
+  doc.querySelector('[data-action="new-brand"]').click();await pause(110);
+  const collab=inspectForm(doc,"Collaboration",width);
+  doc.querySelector("#modal-layer .rh-modal-close").click();
+  results.push(cont,collab);
+  index++;
+  if(index>=cases.length){
+    const fail=results.filter(r=>r.gridViolations.length||r.dateOverlaps.length||r.formScrollWidth>r.formClientWidth+3||!r.logoImage||r.vectorNav!==5);
+    out.textContent=JSON.stringify({ok:!fail.length,results,failCount:fail.length});
+  }else{
+    frame.style.width=cases[index]+"px";
+    frame.src="/?qa-field-containment="+Date.now()+"-"+index;
+  }
+ }catch(e){out.textContent=JSON.stringify({ok:false,error:String(e),atWidth:width,results});}
+}
+frame.addEventListener("load",loaded);
+frame.src="/?qa-field-containment="+Date.now();
+</script></body></html>
