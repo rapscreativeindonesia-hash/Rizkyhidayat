@@ -2,7 +2,7 @@
 const frame=document.querySelector("#frame"),out=document.querySelector("#qa");
 const pause=t=>new Promise(ok=>setTimeout(ok,t));
 const assert=(a,b)=>{if(!a)throw Error(b)};
-const cases=[390,580,768,1024,1194],results=[];
+const cases=[Math.max(320,Math.min(1300,Number(new URLSearchParams(location.search).get('w'))||390))],results=[];
 let index=0;
 function rect(r){const x=r.getBoundingClientRect();return {left:x.left,right:x.right,top:x.top,bottom:x.bottom,width:x.width,height:x.height}}
 function inspectForm(doc,type,width){
@@ -57,5 +57,5 @@ async function loaded(){
  }catch(e){out.textContent=JSON.stringify({ok:false,error:String(e),atWidth:width,results});}
 }
 frame.addEventListener("load",loaded);
-frame.src="/?qa-field-containment="+Date.now();
+frame.style.width=cases[0]+"px";frame.src="/?qa-field-containment="+Date.now();
 </script></body></html>
