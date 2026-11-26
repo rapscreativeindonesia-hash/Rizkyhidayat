@@ -916,6 +916,22 @@ body.rh-modal-locked{position:fixed!important;width:100%!important;left:0;right:
  .tt-profile-header .tt-status{padding:7px 9px}
 }
 
+
+/* Lock the identity row to the sidebar's top edge on tablet and desktop. */
+@media(min-width:791px){
+ .layout>.sidebar{padding-top:16px}
+ .tt-panel{padding-top:15px}
+ .tt-profile-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px}
+ .tt-profile-header .tt-identity{height:62px;align-items:flex-start}
+ .tt-profile-header .tt-head-right{align-self:center;max-width:100%;flex-wrap:nowrap}
+ .tt-profile-header .tt-profile-copy{padding-top:7px}
+ .sidebar .logo{align-items:flex-start}
+}
+@media(min-width:791px) and (max-width:1050px){
+ .tt-profile-header{grid-template-columns:minmax(0,1fr)}
+ .tt-profile-header .tt-head-right{justify-content:flex-start;flex-wrap:wrap}
+}
+
 </style>
 </head>
 <body>
@@ -932,7 +948,7 @@ body.rh-modal-locked{position:fixed!important;width:100%!important;left:0;right:
 })();
 </script>
 <div class="layout">
-<aside class="sidebar">
+<aside class="sidebar" data-layout-revision="rh-aligned-header-v4">
 <div class="logo"><div class="logo-mark rh-logo" role="img" aria-label="Logo RH asli"><img src="https://rizkyhidayat.com/assets/rh-script.svg" alt="Logo RH" loading="eager"></div><div class="brand-copy"><h1>Rizky Hidayat</h1><p>Freelance Content Creator</p></div></div>
 <nav class="nav" aria-label="Menu utama">
 <button data-page="dashboard" class="active"><span class="nav-icon"><svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Dashboard</button>
