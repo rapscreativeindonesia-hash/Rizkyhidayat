@@ -47,7 +47,7 @@ const WORKSPACE_FIELDS={
 };
 const WORKSPACE_NESTED={
  script:{id:90,type:40,text:6000},
- shots:{id:90,text:1600,angle:350,scriptId:90,checked:"boolean"},
+ shots:{id:90,text:1600,angle:350,scriptId:90,checked:"boolean",media:"media"},
  checklist:{id:90,text:1600,checked:"boolean",phase:80,description:4000,deadline:10,media:"media"},
  deadline_checks:{id:90,text:1600,checked:"boolean"},
  deliverables_checklist:{id:90,text:1600,checked:"boolean"},
