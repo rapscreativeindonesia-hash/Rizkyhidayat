@@ -1831,9 +1831,11 @@ async function musicSelect(index,autoplay=true){
   if(musicQueue.length)musicSelect(musicNextIndex(),autoplay);
  }
 }
-function musicResumeOnInteraction(){
+function musicResumeOnInteraction(event){
  if(!musicNeedGesture||!musicAudio)return;
- // Execute play() inside the user's real gesture, without waiting for a fetch.
+ // The explicit player buttons handle their own click: prevent a gesture/play double-toggle.
+ if(event?.target?.closest?.("#music-toggle,#music-next"))return;
+ // Execute play() synchronously inside any ordinary interaction.
  musicTryPlay();
 }
 function musicPause(){
