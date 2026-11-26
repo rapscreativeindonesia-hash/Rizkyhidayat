@@ -986,6 +986,15 @@ body.rh-modal-locked{position:fixed!important;width:100%!important;left:0;right:
 .rh-deadline-row.is-done .rh-deadline-copy strong{text-decoration:line-through;color:var(--muted)}
 .rh-deadline-done{margin-top:15px;border-top:1px solid var(--line);padding-top:12px}.rh-deadline-done summary{cursor:pointer;font-size:12px;color:var(--muted)}
 @media(max-width:460px){.rh-deadline-row{gap:8px;grid-template-columns:22px minmax(0,1fr) auto}.rh-deadline-tick{width:22px;height:22px}.rh-deadline-when{font-size:9px}}
+
+/* Detailed production references */
+.rh-check-head-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.rh-check-detail-main{flex:1;min-width:0;width:100%}.rh-check-detail{margin:5px 0 3px 33px;font-size:11px;color:var(--muted)}.rh-check-detail summary{cursor:pointer;overflow-wrap:anywhere}
+.rh-check-extra{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:8px}.rh-check-wide{grid-column:1/-1;min-width:0}.rh-check-extra textarea{min-height:54px}
+.rh-reference-box{display:grid;gap:7px;min-width:0}.rh-reference-items{display:grid;gap:6px}.rh-reference-item{display:flex;gap:7px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);padding:8px;border-radius:8px;min-width:0;overflow-wrap:anywhere}.rh-reference-item small{color:var(--muted);font-size:10px}.rh-reference-open{background:none;border:0;color:#b6dfef;padding:0;text-align:left;overflow-wrap:anywhere;max-width:100%}.rh-reference-item.expired{opacity:.65}.rh-reference-item .button{padding:5px 8px;font-size:10px;margin-left:auto}
+.rh-reference-upload{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:35px;padding:7px 10px;border:1px solid #567b8e;border-radius:8px;color:#bde1ef;cursor:pointer;background:#203b49}.rh-reference-upload input{position:absolute!important;inset:0;opacity:0;cursor:pointer}.rh-reference-help{color:var(--muted);font-size:10px}
+.rh-ref-lightbox{position:fixed;inset:0;z-index:11000;background:#000e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px}.rh-ref-lightbox img,.rh-ref-lightbox video{max-width:100%;max-height:82vh;object-fit:contain}
+@media(max-width:580px){.rh-check-extra{grid-template-columns:minmax(0,1fr)}.rh-check-detail{margin-left:0}}
 </style>
 </head>
 <body>
@@ -1287,7 +1296,10 @@ var stages=["Ide","Script","Shooting","Editing","Review","Final"];
 const SCRIPT_TYPES=["Hook","Problem","Edukasi","Value","Benefit","Proof","Transition","CTA","Custom"];
 const CONTENT_TYPES=["UGC","Personal Branding","Review","Event","Education","Entertainment","Travel","Product","Lifestyle","Lainnya"];
 const CONTENT_GOALS=["Awareness","Engagement","Conversion","Followers","Education","Portfolio","Lainnya"];
-const CONTENT_CHECKS=["Konsep & brief siap","Script selesai","Shot list siap","A-roll diambil","B-roll diambil","Editing selesai","Subtitle dan audio selesai","Color grading selesai","Final export siap","Caption dan posting selesai"];
+const CONTENT_TEMPLATE=[["Konsep & brief siap","Pra-produksi","Tentukan tujuan, target audiens, pesan utama, format, dan deliverable."],["Riset referensi & tren","Pra-produksi","Cari benchmark visual, hook, angle, audio, dan format."],["USP dan angle konten","Pra-produksi","Tentukan alasan audiens menonton dan sudut pandang utama."],["Hook 0–3 detik","Pra-produksi","Siapkan opening menarik dan relevan."],["Script selesai","Pra-produksi","Susun hook, isi, value, proof, transisi, dan CTA."],["Shot list siap","Pra-produksi","Tentukan A-roll, B-roll, framing, gerakan dan urutan shot."],["Storyboard & visual reference","Pra-produksi","Siapkan referensi pose, komposisi, lighting, atau video."],["Lokasi, jadwal & izin","Pra-produksi","Konfirmasi tempat, talent, waktu dan izin."],["Properti, wardrobe & produk","Pra-produksi","Siapkan outfit, produk dan perlengkapan."],["Peralatan & setting kamera","Produksi","Cek baterai, storage, lensa, resolusi, FPS, exposure dan white balance."],["Lighting dan audio test","Produksi","Uji cahaya, mikrofon, noise dan suara."],["A-roll diambil","Produksi","Rekam dialog, delivery, opening, CTA dan alternatif."],["B-roll diambil","Produksi","Ambil detail, wide, close-up, movement dan cutaway."],["Beauty shot & alternatif hook","Produksi","Ambil footage utama dan variasi opening."],["Review footage & retake","Produksi","Cek fokus, stabilitas, exposure, audio dan shot yang kurang."],["Backup & seleksi footage","Produksi","Amankan file asli dan pilih footage terbaik."],["Rough cut & storytelling","Pascaproduksi","Susun alur, trim jeda dan cocokkan script."],["Editing selesai","Pascaproduksi","Rapikan pacing, cut, transisi dan overlay."],["Subtitle dan audio selesai","Pascaproduksi","Periksa ejaan, sinkron subtitle, musik, SFX dan volume dialog."],["Color grading selesai","Pascaproduksi","Jaga warna kulit, exposure, white balance dan konsistensi."],["QC & revisi","Pascaproduksi","Cek brief, safe area, typo, CTA, dan hasil keseluruhan."],["Final export siap","Pascaproduksi","Cek resolusi, rasio, FPS dan hasil ekspor."],["Caption, hashtag & cover","Publikasi","Siapkan caption, keyword, CTA dan cover per platform."],["Approval brand (jika berlaku)","Publikasi","Pastikan persetujuan final sebelum posting."],["Caption dan posting selesai","Publikasi","Posting sesuai jadwal, cek mention, link dan tampilan."],["Evaluasi performa","Publikasi","Catat views, retention, engagement dan insight."]];
+const CONTENT_CHECKS=CONTENT_TEMPLATE.map(x=>x[0]);
+function newCheck(text){const t=CONTENT_TEMPLATE.find(x=>x[0]===text);return {id:id(),text,checked:false,phase:t?.[1]||"",description:t?.[2]||"",deadline:"",media:[]};}
+function expandedChecklist(items){return (items||[]).map(x=>{const t=CONTENT_TEMPLATE.find(v=>v[0]===x.text);return {...x,phase:x.phase||t?.[1]||"",description:x.description||t?.[2]||"",media:Array.isArray(x.media)?x.media:[]};});}
 const RH_BUILDER_KEYS=["script","shots","checklist","references","deliverables_checklist","files","final_links"];
 function safeWebLink(value){try{const u=new URL(String(value||"").trim());return ["http:","https:"].includes(u.protocol)?u.href:"";}catch(e){return "";}}
 function rhTextArea(label,field,value,extra){
@@ -1296,6 +1308,37 @@ function rhTextArea(label,field,value,extra){
 function rhSelect(label,field,values,current,extra){
  return '<label class="field '+(extra||"")+'">'+txt(label)+'<select name="'+field+'">'+values.map(x=>'<option value="'+txt(x)+'"'+(x===current?' selected':'')+'>'+txt(x)+'</option>').join("")+'</select></label>';
 }
+const REFERENCE_TYPES=new Set(["image/jpeg","image/png","image/webp","image/gif","image/heic","image/heif","video/mp4","video/quicktime","video/webm"]);
+function readReferenceList(input){try{const x=JSON.parse(input?.value||"[]");return Array.isArray(x)?x:[];}catch{return [];}}
+function referenceExpiry(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))return 0;const d=Date.parse(date+"T00:00:00+07:00");return Number.isFinite(d)?d+3*86400000:0;}
+function referenceMarkup(media){return (media||[]).map(m=>Number(m.expires)<=Date.now()?'<div class="rh-reference-item expired"><span>'+txt(m.name)+'</span><small>Referensi kedaluwarsa (H+2)</small></div>':'<div class="rh-reference-item"><button type="button" class="rh-reference-open" data-action="reference-open" data-id="'+txt(m.id)+'">'+(String(m.type).startsWith("video/")?"Video · ":"Foto · ")+txt(m.name)+'</button><small>Hapus setelah '+txt(fmt(nextDay(nextDay(m.deadline))))+' · '+(m.storage==="cloud"?"Cloud":"Perangkat")+'</small>'+btn("Hapus","reference-remove","danger",'data-id="'+txt(m.id)+'"')+'</div>').join("");}
+let referenceDBPromise;
+function referenceDB(){if(!referenceDBPromise)referenceDBPromise=new Promise((resolve,reject)=>{const r=indexedDB.open("rh-production-reference-v1",1);r.onupgradeneeded=()=>r.result.createObjectStore("media",{keyPath:"id"});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}).catch(e=>{referenceDBPromise=null;throw e;});return referenceDBPromise;}
+async function referenceLocal(op,value){const db=await referenceDB();return new Promise((resolve,reject)=>{const tx=db.transaction("media",op==="get"?"readonly":"readwrite"),store=tx.objectStore("media");const r=op==="put"?store.put(value):op==="get"?store.get(value):store.delete(value);tx.oncomplete=()=>resolve(r.result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+async function cleanupLocalReferences(){try{const db=await referenceDB();await new Promise((resolve,reject)=>{const tx=db.transaction("media","readwrite"),r=tx.objectStore("media").openCursor();r.onsuccess=()=>{const c=r.result;if(c){if(Number(c.value.expires)<=Date.now())c.delete();c.continue();}};tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}catch(e){console.warn("Local reference cleanup",e);}}
+function referenceDeadline(row,form){const own=row.querySelector('[data-field="deadline"]')?.value;const card=row.closest(".rh-collab-content-card");const val=(root,selector)=>root?.querySelector(selector)?.value||"";const brand=state.brands.find(x=>x.id===val(form,'[name="brand_id"]'));return own||val(card,'[data-content-field="date"]')||val(form,'[name="deadline"]')||val(form,'[name="date"]')||brand?.deadline||val(card,'[data-content-field="shoot_date"]')||val(form,'[name="shoot_date"]');}
+function referenceType(file){const type=String(file.type||"").toLowerCase();if(REFERENCE_TYPES.has(type))return type;const ext=file.name.split(".").pop().toLowerCase();return ({jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",gif:"image/gif",heic:"image/heic",heif:"image/heif",mp4:"video/mp4",mov:"video/quicktime",webm:"video/webm"})[ext]||"";}
+function refreshReferenceRow(row,media){row.querySelector('[data-field="media"]').value=JSON.stringify(media);row.querySelector(".rh-reference-items").innerHTML=referenceMarkup(media);const phase=row.querySelector('[data-field="phase"]')?.value||"Detail pekerjaan";row.querySelector(".rh-check-detail>summary").textContent=phase+" · "+media.filter(m=>Number(m.expires)>Date.now()).length+" referensi";}
+async function uploadReferences(form,row,files){
+ const deadline=referenceDeadline(row,form),expires=referenceExpiry(deadline);if(!expires||expires<=Date.now())throw Error("Isi deadline yang valid dan belum melewati H+2 sebelum unggah.");
+ let media=readReferenceList(row.querySelector('[data-field="media"]')).filter(x=>Number(x.expires)>Date.now());if(media.length+files.length>5)throw Error("Maksimal 5 referensi aktif per pekerjaan.");
+ for(const file of files){const type=referenceType(file);if(!type)throw Error("Format tidak didukung: "+file.name);if(!file.size||file.size>(type.startsWith("video/")?12:5)*1024*1024)throw Error("Ukuran file melebihi batas: "+file.name);}
+ for(const file of files){
+   const type=referenceType(file),meta={id:"ref_"+crypto.randomUUID(),name:file.name.slice(0,180),type,size:file.size,deadline,expires,storage:"cloud"};
+   let cloud=false;
+   try{const r=await fetch("/api/production-reference/"+meta.id+"?deadline="+encodeURIComponent(deadline),{method:"PUT",credentials:"same-origin",headers:{"content-type":type},body:file});if(r.ok)cloud=true;else if(r.status!==401)throw Error("Upload cloud gagal ("+r.status+")");}catch(e){console.warn("Reference cloud upload",e);}
+   if(!cloud){meta.storage="local";await referenceLocal("put",{...meta,blob:new Blob([file],{type})});}
+   media.push(meta);refreshReferenceRow(row,media);saveDraft(form);queueWorkingContent(form);
+ }
+ notice("Referensi tersimpan. File akan kedaluwarsa H+2.","ok");
+}
+async function openReference(meta){
+ if(Number(meta.expires)<=Date.now())throw Error("Referensi sudah kedaluwarsa.");
+ let blob;if(meta.storage==="cloud"){const r=await fetch("/api/production-reference/"+meta.id,{credentials:"same-origin",cache:"no-store"});if(!r.ok)throw Error("File tidak tersedia atau sesi cloud belum aktif.");blob=await r.blob();}else blob=(await referenceLocal("get",meta.id))?.blob;
+ if(!blob)throw Error("File tidak tersedia di perangkat ini.");
+ const url=URL.createObjectURL(blob);const overlay=document.createElement("div");overlay.className="rh-ref-lightbox";overlay.setAttribute("role","dialog");overlay.setAttribute("aria-label",meta.name);const close=document.createElement("button");close.type="button";close.textContent="Tutup";close.className="button";const media=document.createElement(meta.type.startsWith("video/")?"video":"img");media.src=url;if(media.tagName==="VIDEO"){media.controls=true;media.playsInline=true;}else media.alt=meta.name;const done=()=>{overlay.remove();URL.revokeObjectURL(url);};close.onclick=done;overlay.append(close,media);document.body.append(overlay);
+}
+async function removeReference(meta){if(meta.storage==="cloud"){const r=await fetch("/api/production-reference/"+meta.id,{method:"DELETE",credentials:"same-origin"});if(!r.ok&&r.status!==404)throw Error("File cloud belum dapat dihapus.");}else await referenceLocal("delete",meta.id);}
 function rhBuilderRow(kind,item,scriptRows){
  const obj=item||{},ident=txt(obj.id||id()),v=k=>txt(obj[k]||""),marked=obj.checked?" checked":"";
  const controls='<details class="rh-item-options"><summary aria-label="Atur urutan atau hapus" title="Opsi item">⋯</summary><div class="rh-item-options-popover">'+btn("↑ Naik","builder-up","",'aria-label="Pindah ke atas"')+btn("↓ Turun","builder-down","",'aria-label="Pindah ke bawah"')+btn("Hapus","builder-remove","rh-delete-btn",'aria-label="Hapus item"')+'</div></details>';
@@ -1306,7 +1349,10 @@ function rhBuilderRow(kind,item,scriptRows){
    const rows=scriptRows||[];
    const options='<option value="">Pilih kalimat</option>'+rows.map((x,i)=>'<option value="'+txt(x.id)+'"'+(obj.scriptId===x.id?' selected':'')+'>Kalimat '+(i+1)+' · '+txt(x.type||"Script")+'</option>').join("");
    content='<div class="rh-inline-main"><div class="rh-inline-check"><label class="rh-compact-checkbox" title="Tandai shot selesai"><input type="checkbox" data-field="checked" aria-label="Shot selesai"'+marked+'><span aria-hidden="true"></span></label><textarea data-field="text" rows="1" aria-label="Deskripsi shot" placeholder="Deskripsi shot…">'+v("text")+'</textarea></div><details class="rh-shot-extra"'+(obj.angle||obj.scriptId?' open':'')+'><summary>Detail shot</summary><div class="rh-shot-extra-grid"><input data-field="angle" aria-label="Angle atau gerakan kamera" value="'+v("angle")+'" placeholder="Angle / gerakan kamera"><select data-field="scriptId" aria-label="Hubungkan ke kalimat script">'+options+'</select></div></details></div>';
- }else if(kind==="checklist"||kind==="deliverables_checklist"){
+ }else if(kind==="checklist"){
+   const t=CONTENT_TEMPLATE.find(x=>x[0]===obj.text),media=Array.isArray(obj.media)?obj.media:[];
+   content='<div class="rh-inline-main rh-check-detail-main"><div class="rh-inline-check"><label class="rh-compact-checkbox" title="Tandai selesai"><input type="checkbox" data-field="checked" aria-label="Tugas selesai"'+marked+'><span aria-hidden="true"></span></label><input data-field="text" aria-label="Nama tugas" value="'+v("text")+'" placeholder="Tulis tugas…"></div><details class="rh-check-detail"><summary>'+txt(obj.phase||t?.[1]||"Detail pekerjaan")+' · '+media.filter(x=>Number(x.expires)>Date.now()).length+' referensi</summary><div class="rh-check-extra"><label class="field">Tahap<input data-field="phase" value="'+txt(obj.phase||t?.[1]||"")+'" placeholder="Tahap produksi"></label><label class="field">Deadline tugas<input type="date" data-field="deadline" value="'+v("deadline")+'"></label><label class="field rh-check-wide">Penjelasan / catatan<textarea rows="2" data-field="description" placeholder="Detail pekerjaan">'+txt(obj.description||t?.[2]||"")+'</textarea></label><div class="rh-check-wide rh-reference-box"><div class="rh-reference-items">'+referenceMarkup(media)+'</div><label class="rh-reference-upload">+ Foto / Video<input type="file" accept="image/*,video/*" multiple data-reference-upload></label><small class="rh-reference-help">Foto maksimal 5 MB, video 12 MB. Isi deadline tugas atau jadwal konten. File kedaluwarsa setelah H+2 sesuai deadline saat unggah.</small></div></div></details><input type="hidden" data-field="media" value="'+txt(JSON.stringify(media))+'"></div>';
+ }else if(kind==="deliverables_checklist"){
    content='<div class="rh-inline-main rh-inline-check"><label class="rh-compact-checkbox" title="Tandai selesai"><input type="checkbox" data-field="checked" aria-label="Tugas selesai"'+marked+'><span aria-hidden="true"></span></label><input data-field="text" aria-label="Nama tugas atau deliverable" value="'+v("text")+'" placeholder="Tulis tugas…"></div>';
  }else{
    content='<div class="rh-inline-main rh-inline-link"><input data-field="label" aria-label="Nama referensi atau file" value="'+v("label")+'" placeholder="Nama referensi"><input type="text" inputmode="url" data-field="url" aria-label="Link referensi atau file" value="'+v("url")+'" placeholder="Link / URL"></div>';
@@ -1315,18 +1361,18 @@ function rhBuilderRow(kind,item,scriptRows){
 }
 function rhBuilder(kind,title,rows,empty,scriptRows){
  const items=Array.isArray(rows)&&rows.length?rows:(empty||[]);
- const descriptions={script:"Satu baris satu kalimat",shots:"Centang shot yang selesai",checklist:"",deliverables_checklist:"",references:"",files:"",final_links:""};
- return '<section class="rh-builder-section rh-compact-section" data-group="'+txt(kind)+'"><div class="rh-builder-head"><div><h4>'+txt(title)+'</h4>'+(descriptions[kind]?'<p>'+descriptions[kind]+'</p>':'')+'</div>'+btn("+ Tambah","builder-add","rh-mini-btn",'data-kind="'+txt(kind)+'"')+'</div><div class="rh-builder-list" data-kind="'+txt(kind)+'">'+items.map(x=>rhBuilderRow(kind,x,scriptRows)).join("")+'</div></section>';
+ const descriptions={script:"Satu baris satu kalimat",shots:"Centang shot yang selesai",checklist:"Centang pekerjaan. Buka detail untuk catatan, deadline dan foto/video referensi.",deliverables_checklist:"",references:"",files:"",final_links:""};
+ return '<section class="rh-builder-section rh-compact-section" data-group="'+txt(kind)+'"><div class="rh-builder-head"><div><h4>'+txt(title)+'</h4>'+(descriptions[kind]?'<p>'+descriptions[kind]+'</p>':'')+'</div><div class="rh-check-head-actions">'+(kind==="checklist"?btn("Lengkapi template","check-template","rh-mini-btn"):"")+btn("+ Tambah","builder-add","rh-mini-btn",'data-kind="'+txt(kind)+'"')+'</div></div><div class="rh-builder-list" data-kind="'+txt(kind)+'">'+items.map(x=>rhBuilderRow(kind,x,scriptRows)).join("")+'</div></section>';
 }
 function rhCollectRows(form,kind){
  const container=form.querySelector('.rh-builder-list[data-kind="'+kind+'"]');
  if(!container)return [];
- const fields=kind==="script"?["type","text"]:kind==="shots"?["text","angle","scriptId","checked"]:(kind==="checklist"||kind==="deliverables_checklist")?["text","checked"]:["label","url"];
+ const fields=kind==="script"?["type","text"]:kind==="shots"?["text","angle","scriptId","checked"]:kind==="checklist"?["text","checked","phase","description","deadline","media"]:kind==="deliverables_checklist"?["text","checked"]:["label","url"];
  return [...container.querySelectorAll(".rh-builder-row")].map(row=>{
    const item={id:row.dataset.rowId||id()};
    for(const field of fields){
      const input=row.querySelector('[data-field="'+field+'"]');
-     item[field]=field==="checked"?!!input?.checked:String(input?.value||"").trim();
+     item[field]=field==="checked"?!!input?.checked:field==="media"?readReferenceList(input):String(input?.value||"").trim();
    }
    return item;
  }).filter(x=>!!(x.text||x.url||x.label));
@@ -1409,7 +1455,7 @@ function contentForm(contentId,date,brandId){
  const brand=state.brands.find(x=>x.id===(brandId||item.brand_id));
  const script=Array.isArray(item.script)&&item.script.length?item.script:(item.hook?[{id:id(),type:"Hook",text:item.hook}]:[{id:id(),type:"Hook",text:""},{id:id(),type:"Edukasi",text:""},{id:id(),type:"Value",text:""},{id:id(),type:"CTA",text:""}]);
  const shots=Array.isArray(item.shots)?item.shots:[];
- const checks=Array.isArray(item.checklist)&&item.checklist.length?item.checklist:CONTENT_CHECKS.map(x=>({id:id(),text:x,checked:false}));
+ const checks=Array.isArray(item.checklist)&&item.checklist.length?expandedChecklist(item.checklist):CONTENT_CHECKS.map(newCheck);
  const refs=Array.isArray(item.references)?item.references:[];
  const brandOptions='<option value="">Personal / tanpa brand</option>'+state.brands.map(x=>'<option value="'+txt(x.id)+'"'+(x.id===(brandId||item.brand_id)?" selected":"")+'>'+txt(x.name+(x.campaign?" · "+x.campaign:""))+'</option>').join("");
  const details='<form id="content-form" class="rh-editor-form"><input type="hidden" name="id" value="'+txt(contentId||"")+'"><div class="rh-form-section"><h4>Informasi Konten</h4><div class="form-grid">'+input("Judul Konten *","title",item.title,"text","required maxlength=160")+rhSelect("Kategori","content_type",CONTENT_TYPES,item.content_type||"UGC")+rhSelect("Platform","platform",["TikTok","Instagram","Instagram Reels","YouTube","YouTube Shorts","Facebook","Threads","Multiplatform"],item.platform||"TikTok")+rhSelect("Tujuan","goal",CONTENT_GOALS,item.goal||"Awareness")+input("Tanggal Shooting","shoot_date",item.shoot_date,"date")+input("Tanggal Posting","date",date||item.date,"date")+'<input type="hidden" name="brand_id" value="'+txt(brand?.id||"")+'">'+rhTextArea("Konsep / Catatan","notes",item.notes,"wide")+'</div></div>'+rhBuilder("script","Script per Kalimat",script,[],script)+rhBuilder("shots","Shot List",shots,[{id:id(),text:"",angle:"",checked:false}],script)+rhBuilder("checklist","Checklist Produksi",checks,[],script)+rhBuilder("references","Link Referensi",refs,[{id:id(),label:"",url:""}],script)+'<div class="rh-form-section"><h4>Publikasi & Hasil</h4><div class="form-grid">'+rhTextArea("Caption","caption",item.caption,"wide")+input("Hashtag","hashtags",item.hashtags)+input("Link Folder / File","folder_url",item.folder_url,"text",'inputmode="url"')+input("Link Konten Terpublikasi","published_url",item.published_url,"text",'inputmode="url"')+'</div></div>'+formFooter()+'</form>';
@@ -1578,6 +1624,14 @@ document.addEventListener("change",async e=>{
  if(e.target.matches?.(".rh-date-native"))rhUpdateDateVisual(e.target);
  const form=e.target.closest("form");
  if(!form)return;
+ if(e.target.matches("[data-reference-upload]")){
+   const row=e.target.closest(".rh-builder-row"),submit=form.querySelector('button[type="submit"]'),files=[...e.target.files||[]];
+   if(!row||!files.length)return;
+   e.target.disabled=true;if(submit)submit.disabled=true;
+   try{await uploadReferences(form,row,files);}catch(error){alert(error.message);}
+   finally{e.target.disabled=false;e.target.value="";if(submit)submit.disabled=false;}
+   return;
+ }
  if(e.target.matches("[data-brief-file]")){
    const submit=form.querySelector('button[type="submit"]');
    if(submit)submit.disabled=true;
@@ -1638,7 +1692,7 @@ function rhCollabContentCard(item={},opened=false){
  const scripts=Array.isArray(item.script)&&item.script.length?item.script:
   (item.hook?[{id:id(),type:"Hook",text:item.hook}]:[{id:id(),type:"Hook",text:""},{id:id(),type:"Edukasi",text:""},{id:id(),type:"CTA",text:""}]);
  const shots=Array.isArray(item.shots)?item.shots:[];
- const checks=Array.isArray(item.checklist)&&item.checklist.length?item.checklist:CONTENT_CHECKS.map(x=>({id:id(),text:x,checked:false}));
+ const checks=Array.isArray(item.checklist)&&item.checklist.length?expandedChecklist(item.checklist):CONTENT_CHECKS.map(newCheck);
  const refs=Array.isArray(item.references)?item.references:[];
  const platforms=["TikTok","Instagram","Instagram Reels","YouTube","YouTube Shorts","Facebook","Threads","Multiplatform"];
  const options=platforms.map(v=>'<option value="'+txt(v)+'"'+((item.platform||"TikTok")===v?" selected":"")+'>'+txt(v)+'</option>').join("");
@@ -1780,6 +1834,20 @@ document.addEventListener("click",function(e){
  const nav=e.target.closest("[data-page]");if(nav){setpage(nav.dataset.page);return;}
  const el=e.target.closest("[data-action]");if(!el)return;
  const a=el.dataset.action,which=el.dataset.id;
+ if(a==="check-template"){
+   const form=el.closest("form"),scope=el.closest(".rh-collab-content-card")||form,list=el.closest(".rh-builder-section")?.querySelector(".rh-builder-list");
+   if(!form||!list)return;
+   const existing=new Set(rhCollectRows(scope,"checklist").map(x=>x.text));
+   for(const t of CONTENT_CHECKS)if(!existing.has(t))list.insertAdjacentHTML("beforeend",rhBuilderRow("checklist",newCheck(t),[]));
+   saveDraft(form);queueWorkingContent(form);return;
+ }
+ if(a==="reference-open"||a==="reference-remove"){
+   const row=el.closest(".rh-builder-row"),form=el.closest("form");if(!row||!form)return;
+   const list=readReferenceList(row.querySelector('[data-field="media"]')),meta=list.find(x=>x.id===which);if(!meta)return;
+   if(a==="reference-open"){openReference(meta).catch(e=>alert(e.message));return;}
+   if(!confirm("Hapus file referensi ini?"))return;
+   removeReference(meta).then(()=>{refreshReferenceRow(row,list.filter(x=>x.id!==which));saveDraft(form);queueWorkingContent(form);}).catch(e=>alert(e.message));return;
+ }
  if(a.startsWith("builder-")){
    const form=el.closest("form");
    if(!form)return;
@@ -2154,6 +2222,7 @@ document.getElementById("music-volume")?.addEventListener("input",e=>{
  if(musicAudio)musicAudio.volume=Number(e.target.value)/100;
 });
 initMusic();
+cleanupLocalReferences();setInterval(cleanupLocalReferences,60000);
 setInterval(updateLiveIndicator,1000);
 // This checks the Cloudflare snapshot every 10 s; TikTok API refresh is handled by server cron every minute.
 setInterval(()=>{
