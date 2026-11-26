@@ -48,13 +48,18 @@ const WORKSPACE_FIELDS={
 const WORKSPACE_NESTED={
  script:{id:90,type:40,text:6000},
  shots:{id:90,text:1600,angle:350,scriptId:90,checked:"boolean"},
- checklist:{id:90,text:1600,checked:"boolean"},
+ checklist:{id:90,text:1600,checked:"boolean",phase:80,description:4000,deadline:10,media:"media"},
  deadline_checks:{id:90,text:1600,checked:"boolean"},
  deliverables_checklist:{id:90,text:1600,checked:"boolean"},
  references:{id:90,label:350,url:2000},
  files:{id:90,label:350,url:2000},
  final_links:{id:90,label:350,url:2000}
 };
+const REF_TYPES=new Set(["image/jpeg","image/png","image/webp","image/gif","image/heic","image/heif","video/mp4","video/quicktime","video/webm"]);
+function referenceExpiry(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))return 0;const n=Date.parse(date+"T00:00:00+07:00");return Number.isFinite(n)?n+3*86400000:0;}
+function normalizeReferenceList(raw){return (Array.isArray(raw)?raw:[]).slice(0,5).filter(m=>m&&/^ref_[A-Za-z0-9-]{8,80}$/.test(m.id||"")&&REF_TYPES.has(m.type)&&referenceExpiry(m.deadline)).map(m=>({id:m.id,name:String(m.name||"Referensi").slice(0,180),type:m.type,size:Math.min(12*1024*1024,Math.max(0,Number(m.size)||0)),deadline:m.deadline,expires:referenceExpiry(m.deadline),storage:m.storage==="cloud"?"cloud":"local"}));}
+function refExpiryKey(expires,id){return "prod-ref-exp:"+String(expires).padStart(13,"0")+":"+id;}
+async function deleteProductionReference(s,id,meta){if(!meta)return;const keys=Array.from({length:meta.chunks},(_,i)=>"prod-ref-part:"+id+":"+i);keys.push("prod-ref-meta:"+id,refExpiryKey(meta.expires,id));await s.delete(keys);}
 function workspaceRows(raw,kind){
  const shape=WORKSPACE_NESTED[kind],rows=Array.isArray(raw)?raw.slice(0,200):[],out=[],seen=new Set();
  for(const r of rows){
@@ -64,7 +69,8 @@ function workspaceRows(raw,kind){
    seen.add(id);const item={id};
    for(const [key,max] of Object.entries(shape)){
      if(key==="id")continue;
-     if(max==="boolean")item[key]=r[key]===true;
+     if(max==="media")item[key]=normalizeReferenceList(r[key]);
+     else if(max==="boolean")item[key]=r[key]===true;
      else item[key]=typeof r[key]==="string"?r[key].slice(0,max):"";
    }
    out.push(item);
@@ -202,6 +208,39 @@ export class TikTokStore {
           video_api_status:latest?.video_error?(videoCode?videoCode[1]:"failed"):latest?(latest.recent_video_count===0?"no_videos":"ok"):"not_checked",
           sync_error_present:!!lastError
         });
+      }
+      if(path==="/internal/cleanup-production-references"&&req.method==="POST"){
+        const rows=await s.list({start:"prod-ref-exp:",end:"prod-ref-exp:"+String(Date.now()).padStart(13,"0")+"~",limit:100});
+        for(const [key,id] of rows){const meta=await s.get("prod-ref-meta:"+id);if(meta&&meta.expires<=Date.now())await deleteProductionReference(s,id,meta);else await s.delete(key);}
+        return json({ok:true,processed:rows.size});
+      }
+      if(path.startsWith("/internal/production-reference/")){
+        const id=path.slice("/internal/production-reference/".length);
+        if(!/^ref_[A-Za-z0-9-]{8,80}$/.test(id))return json({error:"invalid_reference_id"},400);
+        const meta=await s.get("prod-ref-meta:"+id);
+        if(req.method==="DELETE"){await deleteProductionReference(s,id,meta);return json({ok:true});}
+        if(req.method==="PUT"){
+          if(meta)return json({error:"reference_exists"},409);
+          const type=(req.headers.get("content-type")||"").split(";")[0],deadline=url.searchParams.get("deadline"),expires=referenceExpiry(deadline);
+          if(!REF_TYPES.has(type)||!expires||expires<=Date.now())return json({error:"invalid_type_or_deadline"},400);
+          const max=(type.startsWith("video/")?12:5)*1024*1024;
+          if(Number(req.headers.get("content-length")||0)>max)return json({error:"reference_too_large"},413);
+          const bytes=new Uint8Array(await req.arrayBuffer());if(!bytes.length||bytes.length>max)return json({error:"reference_too_large"},413);
+          const chunkSize=700000,chunks=Math.ceil(bytes.length/chunkSize);
+          const record={type,expires,deadline,chunks,size:bytes.length};
+          await s.put({["prod-ref-meta:"+id]:record,[refExpiryKey(expires,id)]:id});
+          try{for(let i=0;i<chunks;i++)await s.put("prod-ref-part:"+id+":"+i,bytes.slice(i*chunkSize,(i+1)*chunkSize).buffer);}
+          catch(error){await deleteProductionReference(s,id,record);throw error;}
+          return json({ok:true,expires});
+        }
+        if(req.method==="GET"){
+          if(!meta)return json({error:"reference_not_found"},404);
+          if(meta.expires<=Date.now()){await deleteProductionReference(s,id,meta);return json({error:"reference_expired"},410);}
+          const bytes=new Uint8Array(meta.size);let offset=0;
+          for(let i=0;i<meta.chunks;i++){const part=await s.get("prod-ref-part:"+id+":"+i);if(!part)return json({error:"reference_incomplete"},503);const v=new Uint8Array(part);bytes.set(v,offset);offset+=v.length;}
+          if(offset!==meta.size)return json({error:"reference_incomplete"},503);
+          return new Response(bytes,{headers:{"content-type":meta.type,"cache-control":"private, no-store","x-content-type-options":"nosniff"}});
+        }
       }
       if(path.startsWith("/internal/collaboration-pdf/")){
         const pdfId=decodeURIComponent(path.slice("/internal/collaboration-pdf/".length));
@@ -422,6 +461,16 @@ export default {
         history
       });
     }
+    if(path.startsWith("/api/production-reference/")&&["GET","PUT","DELETE"].includes(req.method)){
+      if(!await isOwner(req,env))return json({error:"owner_authorization_required"},401);
+      if(req.method!=="GET"&&!originAllowed(req))return json({error:"invalid_origin"},403);
+      const id=path.slice("/api/production-reference/".length);
+      if(!/^ref_[A-Za-z0-9-]{8,80}$/.test(id))return json({error:"invalid_reference_id"},400);
+      const type=(req.headers.get("content-type")||"").split(";")[0];
+      if(req.method==="PUT"&&(!REF_TYPES.has(type)||Number(req.headers.get("content-length")||0)>(type.startsWith("video/")?12:5)*1024*1024))return json({error:"invalid_type_or_size"},413);
+      const r=await proxy(env,"/internal/production-reference/"+id+url.search,{method:req.method,...(req.method==="PUT"?{headers:{"content-type":type},body:req.body}:{})});
+      return new Response(r.body,{status:r.status,headers:r.headers});
+    }
     if(path.startsWith("/api/collaboration-pdf/")&&["GET","PUT","DELETE"].includes(req.method)){
       if(!await isOwner(req,env))return json({error:"owner_authorization_required"},401);
       const pdfId=path.slice("/api/collaboration-pdf/".length);
@@ -447,6 +496,7 @@ export default {
     return json({error:"not_found"},404);
   },
   async scheduled(event,env,ctx){
+    ctx.waitUntil(proxy(env,"/internal/cleanup-production-references",{method:"POST"}).catch(e=>console.error("reference_cleanup_failed",String(e))));
     if(!env.TIKTOK_CLIENT_KEY||!env.TIKTOK_CLIENT_SECRET)return;
     ctx.waitUntil(proxy(env,"/internal/sync-if-stale",{method:"POST"}).catch(e=>console.error("scheduled_sync_failed",String(e))));
   }
