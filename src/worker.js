@@ -41,7 +41,7 @@ async function getUser(token){const fields="open_id,display_name,avatar_url,user
 async function recentVideos(token){const fields="id,title,create_time,cover_image_url,share_url,view_count,like_count,comment_count,share_count";const r=await fetch(TIKTOK_VIDEO+"?fields="+fields,{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+token},body:JSON.stringify({max_count:20})});const j=await r.json();if(!r.ok||j.error?.code!=="ok")throw Error("TikTok video list: "+(j.error?.code||r.status));return (j.data?.videos||[]).map(v=>({id:v.id,title:v.title||"",view_count:v.view_count??null,like_count:v.like_count??null,comment_count:v.comment_count??null,share_count:v.share_count??null,create_time:v.create_time??null,share_url:v.share_url||""}));}
 
 const WORKSPACE_FIELDS={
- ideas:["id","title","hook","pillar","platform","stage","notes","date","content_type","goal","shoot_date","brand_id","campaign","script","shots","checklist","references","caption","hashtags","published_url","folder_url","updated_at"],
+ ideas:["id","title","hook","pillar","platform","stage","notes","date","content_type","goal","shoot_date","brand_id","campaign","script","shots","checklist","references","caption","hashtags","published_url","folder_url","workspace_kind","updated_at"],
  assets:["id","title","url","kind","updated_at"],
  brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","rate_card","rate_notes","dp","paid","post_date","brief_must","brief_avoid","brief_text","brief_pdf_id","brief_pdf_name","brief_pdf_size","brief_pdf_cloud","brief_pdf_date","references","files","final_links","deliverables_checklist","updated_at"]
 };
@@ -278,6 +278,11 @@ export class TikTokStore {
     if(!user.username||user.username.toLowerCase()!==expected)throw Error("Username TikTok tidak cocok");
     let videos=[],videoError=null;
     try{videos=await recentVideos(account.access_token);}catch(e){videoError=String(e.message||e).slice(0,110);}
+    const previous=await s.get("latest");
+    if(!videoError&&Array.isArray(previous?.videos)&&!previous.video_error){
+      const prior=new Map(previous.videos.map(v=>[v.id,v.view_count]));
+      videos=videos.map(v=>({...v,growth_views:Number.isFinite(v.view_count)&&Number.isFinite(prior.get(v.id))&&v.view_count>=prior.get(v.id)?v.view_count-prior.get(v.id):null}));
+    }
     const snapshot={synced_at:new Date().toISOString(),username:user.username,display_name:user.display_name||"",avatar_url:user.avatar_url||"",followers:user.follower_count??null,following:user.following_count??null,likes:user.likes_count??null,video_count:user.video_count??null,recent_views:videos.reduce((sum,v)=>sum+(Number(v.view_count)||0),0),recent_video_count:videos.length,videos,video_error:videoError,source:"tiktok_official_api"};
     if(snapshot.followers===null)throw Error("TikTok tidak memberi akses user.info.stats; periksa persetujuan scope");
     await s.put("latest",snapshot);
