@@ -995,6 +995,14 @@ body.rh-modal-locked{position:fixed!important;width:100%!important;left:0;right:
 .rh-reference-upload{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:35px;padding:7px 10px;border:1px solid #567b8e;border-radius:8px;color:#bde1ef;cursor:pointer;background:#203b49}.rh-reference-upload input{position:absolute!important;inset:0;opacity:0;cursor:pointer}.rh-reference-help{color:var(--muted);font-size:10px}
 .rh-ref-lightbox{position:fixed;inset:0;z-index:11000;background:#000e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px}.rh-ref-lightbox img,.rh-ref-lightbox video{max-width:100%;max-height:82vh;object-fit:contain}
 @media(max-width:580px){.rh-check-extra{grid-template-columns:minmax(0,1fr)}.rh-check-detail{margin-left:0}}
+
+/* Detailed calendar with readable titles and task deadlines */
+.rh-calendar-event{white-space:normal!important;overflow-wrap:anywhere;text-overflow:clip;display:block;padding:6px!important}
+.rh-event-title{display:block;font-weight:750;line-height:1.3}.rh-calendar-event small{display:block;font-size:9px;line-height:1.3;margin-top:3px;color:#d7e2e7}
+.rh-calendar-legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;color:var(--muted);font-size:11px}
+.rh-calendar-legend span{padding:5px 8px;border-radius:5px;background:#30556a;color:#e4eef2}.rh-calendar-legend span:nth-child(2){background:#4c5b48}.rh-calendar-legend span:nth-child(3){background:#414557}
+.rh-calendar-detail{display:grid;gap:12px;max-height:70vh;overflow:auto}.rh-calendar-detail-card{border:1px solid var(--line);border-radius:12px;padding:14px;overflow-wrap:anywhere}.rh-calendar-detail-card p{font-size:12px;color:var(--muted);margin:7px 0;white-space:pre-wrap}
+@media(max-width:580px){.rh-calendar-event small{font-size:7px}.rh-calendar-event{padding:3px!important}}
 </style>
 </head>
 <body>
@@ -1205,7 +1213,13 @@ function workspaceEvents(){
  for(const item of state.ideas){
   const kind=workspaceKind(item),label=kind==="idea"?"Ide":kind==="collaboration"?"Collaboration":"Content",action=kind==="idea"?"edit-idea":"edit-content";
   add(item,item.date,kind,label+" · Posting",action);
-  if(kind!=="idea")add(item,item.shoot_date,kind,label+" · Shooting",action);
+  if(kind!=="idea"){
+   add(item,item.shoot_date,kind,label+" · Shooting",action);
+   for(const task of item.checklist||[]){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(task.deadline||"")||!task.id)continue;
+    events.push({id:item.id,date:task.deadline,type:kind,label:label+" · "+(task.phase||"Checklist"),title:(task.text||"Checklist")+" — "+(item.title||"Konten"),platform:item.platform||"",action,key:"task|"+task.id+"|"+task.deadline,taskId:task.id,checked:task.checked===true,description:task.description||""});
+   }
+  }
  }
  for(const brand of state.brands){
   const related=state.ideas.filter(x=>x.brand_id===brand.id);
@@ -1232,6 +1246,7 @@ function toggleDeadline(source,id,key){
  const event=workspaceEvents().find(x=>x.action===source&&x.id===id&&x.key===key);
  const item=(source==="edit-brand"?state.brands:state.ideas).find(x=>x.id===id);
  if(!event||!item)return false;
+ if(event.taskId){const task=(item.checklist||[]).find(x=>x.id===event.taskId);if(!task)return false;task.checked=!event.checked;item.updated_at=Date.now();return true;}
  const checks=Array.isArray(item.deadline_checks)?item.deadline_checks:[];
  item.deadline_checks=[...checks.filter(x=>x.id!==key),{id:key,text:event.label,checked:!event.checked}];
  item.updated_at=Date.now();return true;
@@ -1286,10 +1301,19 @@ function ideaCard(x){return '<section class="panel"><div class="itemtop"><h3>'+t
 function assetCard(x){return '<div class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.kind)+'</div><a class="link small" href="'+txt(x.url)+'" target="_blank" rel="noopener noreferrer">'+txt(x.url)+'</a><div class="buttons" style="margin-top:12px">'+btn("Hapus","delete-asset","danger","data-id='"+txt(x.id)+"'")+'</div></div>';}
 function ideas(){return '<div class="toolbar"><div class="buttons">'+btn("Ide Konten","tab-ideas",libTab==="ideas"?"primary":"")+btn("Library Aset","tab-assets",libTab==="assets"?"primary":"")+'</div>'+btn(libTab==="ideas"?"+ Tambah Ide":"+ Tambah Aset",libTab==="ideas"?"new-idea":"new-asset","primary")+'</div>'+
 (libTab==="ideas"?'<div class="grid cols3">'+(ownIdeas().length?ownIdeas().map(ideaCard).join(""):'<div style="grid-column:1/-1">'+empty("Belum ada ide. Klik Tambah Ide untuk membuat ide pertama, melengkapi hook, dan menjadwalkannya.")+'</div>')+'</div>':'<div class="grid cols3">'+(state.assets.length?state.assets.map(assetCard).join(""):'<div style="grid-column:1/-1">'+empty("Library masih kosong. Simpan link referensi, folder footage, atau file produksi agar mudah ditemukan.")+'</div>')+'</div>');}
+function calendarDayDetails(date){
+ const events=workspaceEvents().filter(x=>x.date===date);
+ const rows=events.map(x=>{
+  const item=(x.action==="edit-brand"?state.brands:state.ideas).find(v=>v.id===x.id)||{};
+  const progress=x.action==="edit-brand"?{done:(item.deliverables_checklist||[]).filter(v=>v.checked).length,total:(item.deliverables_checklist||[]).length}:rhContentCompletion(item);
+  return '<article class="rh-calendar-detail-card"><strong>'+txt(x.title)+'</strong><p>'+txt(x.label)+(x.platform?' · '+txt(x.platform):"")+'</p><p>'+txt(x.checked?"Selesai":date<today()?"Terlambat":"Belum selesai")+(progress.total?" · Checklist "+progress.done+"/"+progress.total:"")+'</p>'+(x.description?'<p>'+txt(x.description)+'</p>':"")+(item.hook?'<p>Hook: '+txt(item.hook)+'</p>':"")+(item.notes?'<p>'+txt(item.notes)+'</p>':"")+'<div class="buttons">'+btn("Buka detail",x.action,"primary",'data-id="'+txt(x.id)+'"')+btn(x.checked?"Batalkan selesai":"Tandai selesai","calendar-deadline-toggle","",'data-id="'+txt(x.id)+'" data-source="'+txt(x.action)+'" data-key="'+txt(x.key)+'" data-date="'+txt(date)+'"')+'</div></article>';
+ }).join("");
+ modal("Jadwal · "+fmt(date),'<div class="rh-calendar-detail">'+(rows||empty("Tidak ada jadwal pada tanggal ini."))+'<div class="buttons">'+btn("+ Content","calendar-add-content","primary",'data-date="'+txt(date)+'"')+btn("+ Ide","calendar-add-idea","",'data-date="'+txt(date)+'"')+'</div></div>');
+}
 function calendar(embedded=false){const events=workspaceEvents();var d=new Date(today()+"T12:00:00");d.setDate(1);d.setMonth(d.getMonth()+calendarOffset);var y=d.getFullYear(),m=d.getMonth(),start=(d.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),cells=Math.ceil((start+days)/7)*7;
 var out='<section class="panel rh-calendar-panel">'+(embedded?'<h3 class="rh-dashboard-calendar-title">Konten Kalender</h3>':"")+'<div class="monthline"><div class="buttons">'+btn("‹","prev-month")+ '<h3 style="padding:9px 8px">'+d.toLocaleDateString("id-ID",{month:"long",year:"numeric"})+'</h3>'+btn("›","next-month")+'</div>'+btn("+ Tambah Konten","new-content","primary")+'</div><div class="calendar">';
 ["Sen","Sel","Rab","Kam","Jum","Sab","Min"].forEach(function(w){out+='<div class="dayname">'+w+'</div>';});
-for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?events.filter(x=>x.date===dateStr):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.map(function(x){return '<button type="button" class="event rh-calendar-event'+(x.checked?" is-done":"")+'" data-action="'+txt(x.action)+'" data-id="'+txt(x.id)+'" data-kind="'+txt(x.type)+'" title="'+txt(x.label+" · "+x.title)+'">'+txt(x.label+" · "+x.title)+'</button>';}).join("")+'</div>';}out+='</div></section>';if(!embedded)out+='<div class="notice">Kalender menyatukan jadwal Ide, Content, serta shooting, posting dan deadline Collaboration. Klik item untuk membuka sumbernya.</div>';return out;}
+for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?events.filter(x=>x.date===dateStr):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.map(function(x){return '<button type="button" class="event rh-calendar-event'+(x.checked?" is-done":"")+'" data-action="'+txt(x.action)+'" data-id="'+txt(x.id)+'" data-kind="'+txt(x.type)+'" title="'+txt(x.label+" · "+x.title)+'"><span class="rh-event-title">'+txt(x.title)+'</span><small>'+txt(x.label)+(x.checked?" · Selesai":"")+'</small></button>';}).join("")+'</div>';}out+='</div><div class="rh-calendar-legend"><span>Content</span><span>Collaboration</span><span>Ide</span><small>Ketuk tanggal untuk melihat semua jadwal, detail dan progres checklist.</small></div></section>';if(!embedded)out+='<div class="notice">Kalender menyatukan jadwal Ide, Content, serta shooting, posting dan deadline Collaboration. Klik item untuk membuka sumbernya.</div>';return out;}
 var stages=["Ide","Script","Shooting","Editing","Review","Final"];
 
 /* Creator Content Workspace — one project referenced from Content, Collaboration and Calendar. */
@@ -1919,12 +1943,14 @@ document.addEventListener("click",function(e){
  if(a==="go-production"){setpage("production");return;}
  if(a==="prev-month"){calendarOffset--;render();return;}
  if(a==="next-month"){calendarOffset++;render();return;}
+ if(a==="calendar-add-content"||a==="calendar-add-idea"){const date=el.dataset.date;close();if(a==="calendar-add-idea")ideaForm(null,date);else contentForm(null,date);return;}
+ if(a==="calendar-deadline-toggle"){try{if(toggleDeadline(el.dataset.source,which,el.dataset.key)){save();render();const date=el.dataset.date;close();calendarDayDetails(date);}}catch(error){alert(error.message);}return;}
  if(a==="deadline-toggle"){
    try{if(toggleDeadline(el.dataset.source,which,el.dataset.key)){save();render();}}
    catch(error){alert(error.message);}
    return;
  }
- if(a==="date-click"){contentForm(null,el.dataset.date);return;}
+ if(a==="date-click"){calendarDayDetails(el.dataset.date);return;}
  if(["delete-idea","delete-asset","delete-brand"].includes(a)){
    if(!confirm("Hapus data ini?"))return;
    const prop=a==="delete-idea"?"ideas":a==="delete-asset"?"assets":"brands";
