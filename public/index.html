@@ -828,6 +828,30 @@ body.rh-modal-locked{position:fixed!important;width:100%!important;left:0;right:
  #modal-layer .rh-editor-form .rh-collab-fields{column-gap:10px!important}
  #modal-layer .rh-date-shell{height:43px}
 }
+
+/* IK Music: 3-second crossfading motion themes; preserve continuously spinning IK disc. */
+.music-widget .music-meta{min-width:0}
+.music-widget #music-track{display:block;font-size:13px;line-height:1.3;font-weight:750;letter-spacing:-.2px;white-space:normal;overflow-wrap:anywhere}
+.music-widget #music-subtitle{display:block;font-size:10px;line-height:1.4;overflow-wrap:anywhere;color:#bbd0d9;margin-top:3px}
+.music-widget .music-album{position:relative;isolation:isolate;background:#223d4f;overflow:hidden}
+.music-widget .music-theme-layer{position:absolute;inset:-20%;z-index:0;opacity:0;pointer-events:none;background:#294e67;transform:translate3d(0,0,0) scale(1.08);transition:opacity 1.15s ease;animation:ikoyThemeDrift 8s ease-in-out infinite alternate}
+.music-widget .music-theme-layer:nth-child(2){animation-duration:10s;animation-direction:alternate-reverse}
+.music-widget .music-theme-layer.is-visible{opacity:1}
+@keyframes ikoyThemeDrift{0%{transform:translate3d(-5%,0,0) scale(1.07)}50%{transform:translate3d(4%,-2%,0) scale(1.12)}100%{transform:translate3d(3%,4%,0) scale(1.09)}}
+.music-widget .music-disc{position:relative;z-index:3;flex-shrink:0}
+.music-widget .music-shine{pointer-events:none;position:absolute;inset:0;z-index:1}
+.music-widget .music-album:after{z-index:2;pointer-events:none}
+.music-widget .music-controls{display:flex;align-items:center;gap:9px;flex-wrap:nowrap}
+.music-widget .music-controls .music-secondary{display:grid;place-items:center;flex:0 0 31px;width:31px;height:36px;min-width:31px;border:1px solid #688a9b6c;border-radius:10px;background:#244152ad;color:#e4f4f8;padding:0;transition:background .15s,border-color .15s}
+.music-widget .music-controls .music-secondary:hover,.music-widget .music-controls .music-secondary:focus-visible{background:#3d6174;border-color:#9dc6d7}
+.music-widget .music-controls .music-secondary svg{width:17px;height:17px}
+.music-widget .music-controls #music-toggle{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:50%;padding:0}
+.music-widget .music-controls .music-state{margin-left:auto;white-space:nowrap;font-size:9px;letter-spacing:.06em;min-width:0}
+.music-widget .music-album .music-disc span{user-select:none}
+@media(prefers-reduced-motion:reduce){
+ .music-widget .music-theme-layer{animation:none;transition:opacity 1.15s ease}
+ .music-widget .music-album:after{animation:none}
+}
 </style>
 </head>
 <body>
@@ -1746,10 +1770,17 @@ const MUSIC_TRACKS=[
  {title:"Umbrella",artist:"Rihanna",parts:["/audio/ikoy-track-12.part01.bin","/audio/ikoy-track-12.part02.bin","/audio/ikoy-track-12.part03.bin","/audio/ikoy-track-12.part04.bin","/audio/ikoy-track-12.part05.bin"]},
  {title:"Closer",artist:"The Chainsmokers feat. Halsey",parts:["/audio/ikoy-track-13.part01.bin","/audio/ikoy-track-13.part02.bin","/audio/ikoy-track-13.part03.bin","/audio/ikoy-track-13.part04.bin"]}
 ];
-const MUSIC_COLORS=["#3a718c","#705645","#486578","#617e8b","#755c74","#5b7682","#65836f","#786d57","#5a748c","#6a6688","#487f86","#776b7c","#667f6c"];
+const MUSIC_THEMES=[
+ {name:"Arctic",color:"#3e728f",background:"radial-gradient(ellipse at 16% 5%,#bbebffb8,transparent 48%),linear-gradient(125deg,#173346,#4e819d 58%,#c6d9de)"},
+ {name:"Copper",color:"#8b5e58",background:"radial-gradient(circle at 80% 15%,#ffd7b386,transparent 50%),linear-gradient(115deg,#32292f,#815950 56%,#cc9f84)"},
+ {name:"Midnight",color:"#4b5b9e",background:"radial-gradient(circle at 20% 5%,#b7bbffa0,transparent 49%),linear-gradient(130deg,#151b42,#464d8e 65%,#7779b0)"},
+ {name:"Forest",color:"#547970",background:"radial-gradient(ellipse at 70% 10%,#d2e9cb9c,transparent 51%),linear-gradient(120deg,#142f36,#3d7167 64%,#8eb4a3)"},
+ {name:"Rose",color:"#986a86",background:"radial-gradient(circle at 14% 90%,#ffc4dd80,transparent 50%),linear-gradient(125deg,#33233d,#7d5378 60%,#c3a0b1)"},
+ {name:"Dawn",color:"#8d7463",background:"radial-gradient(ellipse at 70% 15%,#fff2b4a8,transparent 51%),linear-gradient(120deg,#263f52,#8a8079 63%,#f0caa9)"}
+];
 const MUSIC_PLAY_ICON='<svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 9 6-9 6z"/></svg>';
 const MUSIC_PAUSE_ICON='<svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="5" width="3" height="14" rx="1"/><rect x="14" y="5" width="3" height="14" rx="1"/></svg>';
-let musicAudio=null,musicPlaying=false,musicIndex=-1,musicQueue=[],musicHistory=[],musicForward=[],musicLoading=0,musicNeedGesture=false;
+let musicAudio=null,musicPlaying=false,musicIndex=-1,musicQueue=[],musicHistory=[],musicForward=[],musicLoading=0,musicNeedGesture=false,musicThemeIndex=0,musicThemeFront=0,musicThemeTimer=null;
 const musicResolvedURLs=new Map();
 function musicShuffle(indices){
  for(let i=indices.length-1;i>0;i--){
@@ -1764,10 +1795,24 @@ function musicStatus(text){
 }
 function musicPaint(){
  const w=document.getElementById("music-widget"),btn=document.getElementById("music-toggle");
- if(w){w.classList.toggle("is-playing",musicPlaying);w.dataset.mood=String(Math.max(0,musicIndex)%3);w.style.setProperty("--mood-light",MUSIC_COLORS[Math.max(musicIndex,0)%MUSIC_COLORS.length]);}
+ if(w)w.classList.toggle("is-playing",musicPlaying);
  if(btn){btn.innerHTML=musicPlaying?MUSIC_PAUSE_ICON:MUSIC_PLAY_ICON;btn.setAttribute("aria-pressed",String(musicPlaying));btn.setAttribute("aria-label",musicPlaying?"Jeda musik":"Putar musik");}
  const track=MUSIC_TRACKS[musicIndex];
  if(track){const title=document.getElementById("music-track");title.textContent=track.title;title.title=track.title;document.getElementById("music-subtitle").textContent=track.artist+" · Shuffle aktif";}
+}
+function musicCycleTheme(){
+ const w=document.getElementById("music-widget");
+ if(!w)return;
+ musicThemeIndex=(musicThemeIndex+1)%MUSIC_THEMES.length;
+ const theme=MUSIC_THEMES[musicThemeIndex];
+ const layers=[document.getElementById("music-theme-one"),document.getElementById("music-theme-two")];
+ musicThemeFront=1-musicThemeFront;
+ const next=layers[musicThemeFront],old=layers[1-musicThemeFront];
+ if(next)next.style.background=theme.background;
+ if(old)old.classList.remove("is-visible");
+ if(next)next.classList.add("is-visible");
+ w.style.setProperty("--mood-light",theme.color);
+ w.dataset.theme=String(musicThemeIndex);
 }
 function musicInitialIndex(){
  // A direct MP3 makes the first autoplay attempt synchronous even on iOS.
@@ -1870,6 +1915,11 @@ function initMusic(){
  musicAudio.volume=Number(document.getElementById("music-volume")?.value||35)/100;
  musicAudio.addEventListener("ended",nextMusic);
  musicAudio.addEventListener("error",()=>{if(musicIndex>=0&&musicQueue.length)nextMusic();});
+ const w=document.getElementById("music-widget"),firstLayer=document.getElementById("music-theme-one");
+ if(firstLayer)firstLayer.style.background=MUSIC_THEMES[0].background;
+ if(w){w.dataset.theme="0";w.style.setProperty("--mood-light",MUSIC_THEMES[0].color);}
+ if(musicThemeTimer)clearInterval(musicThemeTimer);
+ musicThemeTimer=setInterval(musicCycleTheme,3000);
  const first=musicInitialIndex();
  musicQueue=musicShuffle(MUSIC_TRACKS.map((_,i)=>i).filter(i=>i!==first));
  // The source is a direct MP3: call play as soon as the page starts.
