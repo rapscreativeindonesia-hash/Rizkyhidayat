@@ -843,11 +843,10 @@ body.rh-modal-locked{position:fixed!important;width:100%!important;left:0;right:
 </nav>
 <section class="sidefoot music-widget" id="music-widget" aria-label="Ikoy Music">
 <div class="music-top"><span class="music-overline">IKOY MUSIC</span><span class="music-equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
-<div class="music-album" aria-hidden="true"><div class="music-disc"><span>IK</span></div><span class="music-shine"></span></div>
-<div class="music-meta"><strong id="music-track">Blue Hour</strong><small id="music-subtitle">Original ambient • Mood 01</small></div>
-<div class="music-controls"><button type="button" id="music-next" class="music-secondary" aria-label="Ganti suasana"><svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 1-2.4-5.7M20 4v6h-6"/></svg></button><button type="button" id="music-toggle" class="music-play" aria-label="Putar musik" aria-pressed="false"><svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 9 6-9 6z"/></svg></button><span id="music-state" class="music-state">PAUSED</span></div>
-<div class="music-vol"><span>VOL</span><input id="music-volume" type="range" min="0" max="100" value="35" aria-label="Volume musik ambient"></div>
-
+<div class="music-album" aria-hidden="true"><div class="music-theme-layer is-visible" id="music-theme-one"></div><div class="music-theme-layer" id="music-theme-two"></div><div class="music-disc"><span>IK</span></div><span class="music-shine"></span></div>
+<div class="music-meta"><strong id="music-track" aria-live="polite">Memuat lagu…</strong><small id="music-subtitle">13 lagu · Shuffle aktif</small></div>
+<div class="music-controls"><button type="button" id="music-prev" class="music-secondary" aria-label="Lagu sebelumnya" title="Lagu sebelumnya"><svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5v14"/><path d="m19 5-11 7 11 7z"/></svg></button><button type="button" id="music-toggle" class="music-play" aria-label="Putar musik" aria-pressed="false"><svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 9 6-9 6z"/></svg></button><button type="button" id="music-next" class="music-secondary" aria-label="Lagu berikutnya" title="Lagu berikutnya"><svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5v14"/><path d="m5 5 11 7-11 7z"/></svg></button><span id="music-state" class="music-state">PAUSED</span></div>
+<div class="music-vol"><span>VOL</span><input id="music-volume" type="range" min="0" max="100" value="35" aria-label="Volume musik"></div>
 </section>
 </aside>
 <main class="main"><header class="top"><div><h2 id="page-title">Dashboard</h2><p id="page-subtitle">Ringkasan perjalananmu sebagai content creator.</p></div><div class="date" id="now"></div></header><div id="app"></div><footer aria-label="Dokumen hukum" style="display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin:28px 0 0;padding:22px 8px 8px;border-top:1px solid #362b49;color:#b9a9ca;font-size:12px"><span>© 2026 Rizky Hidayat</span><a href="/privacy.html" style="color:#aacbd9">Privacy Policy</a><a href="/terms.html" style="color:#cfb3ff">Terms of Service</a></footer></main>
@@ -1733,24 +1732,24 @@ document.getElementById("modal-layer").addEventListener("click",function(e){if(e
 /* Ikoy Music: MP3 sources are extracted from the user's thirteen uploaded videos,
    each trimmed by four seconds. Shuffle entire playlist, no repeat within a cycle. */
 const MUSIC_TRACKS=[
- {title:"Track 01",url:"/audio/ikoy-track-01.mp3"},
- {title:"Track 02",url:"/audio/ikoy-track-02.mp3"},
- {title:"Track 03",parts:["/audio/ikoy-track-03.part01.bin","/audio/ikoy-track-03.part02.bin"]},
- {title:"Track 04",url:"/audio/ikoy-track-04.mp3"},
- {title:"Track 05",url:"/audio/ikoy-track-05.mp3"},
- {title:"Track 06",url:"/audio/ikoy-track-06.mp3"},
- {title:"Track 07",url:"/audio/ikoy-track-07.mp3"},
- {title:"Track 08",parts:["/audio/ikoy-track-08.part01.bin","/audio/ikoy-track-08.part02.bin"]},
- {title:"Track 09",parts:["/audio/ikoy-track-09.part01.bin","/audio/ikoy-track-09.part02.bin"]},
- {title:"Track 10",parts:["/audio/ikoy-track-10.part01.bin","/audio/ikoy-track-10.part02.bin","/audio/ikoy-track-10.part03.bin"]},
- {title:"Track 11",parts:["/audio/ikoy-track-11.part01.bin","/audio/ikoy-track-11.part02.bin","/audio/ikoy-track-11.part03.bin","/audio/ikoy-track-11.part04.bin","/audio/ikoy-track-11.part05.bin","/audio/ikoy-track-11.part06.bin"]},
- {title:"Track 12",parts:["/audio/ikoy-track-12.part01.bin","/audio/ikoy-track-12.part02.bin","/audio/ikoy-track-12.part03.bin","/audio/ikoy-track-12.part04.bin","/audio/ikoy-track-12.part05.bin"]},
- {title:"Track 13",parts:["/audio/ikoy-track-13.part01.bin","/audio/ikoy-track-13.part02.bin","/audio/ikoy-track-13.part03.bin","/audio/ikoy-track-13.part04.bin"]}
+ {title:"Stuck",artist:"LANY",url:"/audio/ikoy-track-01.mp3"},
+ {title:"I Lay My Love on You",artist:"Westlife",url:"/audio/ikoy-track-02.mp3"},
+ {title:"About You",artist:"The 1975",parts:["/audio/ikoy-track-03.part01.bin","/audio/ikoy-track-03.part02.bin"]},
+ {title:"Shape of My Heart",artist:"Backstreet Boys",url:"/audio/ikoy-track-04.mp3"},
+ {title:"2002",artist:"Anne-Marie",url:"/audio/ikoy-track-05.mp3"},
+ {title:"Cry",artist:"Cigarettes After Sex",url:"/audio/ikoy-track-06.mp3"},
+ {title:"Until I Found You",artist:"Stephen Sanchez feat. Em Beihold",url:"/audio/ikoy-track-07.mp3"},
+ {title:"Love Story (Taylor’s Version)",artist:"Taylor Swift",parts:["/audio/ikoy-track-08.part01.bin","/audio/ikoy-track-08.part02.bin"]},
+ {title:"Fearless (Taylor’s Version)",artist:"Taylor Swift",parts:["/audio/ikoy-track-09.part01.bin","/audio/ikoy-track-09.part02.bin"]},
+ {title:"Sampai Jadi Debu",artist:"Banda Neira",parts:["/audio/ikoy-track-10.part01.bin","/audio/ikoy-track-10.part02.bin","/audio/ikoy-track-10.part03.bin"]},
+ {title:"Ngegas Angin (Remix)",artist:"Muslih Finky",parts:["/audio/ikoy-track-11.part01.bin","/audio/ikoy-track-11.part02.bin","/audio/ikoy-track-11.part03.bin","/audio/ikoy-track-11.part04.bin","/audio/ikoy-track-11.part05.bin","/audio/ikoy-track-11.part06.bin"]},
+ {title:"Umbrella",artist:"Rihanna",parts:["/audio/ikoy-track-12.part01.bin","/audio/ikoy-track-12.part02.bin","/audio/ikoy-track-12.part03.bin","/audio/ikoy-track-12.part04.bin","/audio/ikoy-track-12.part05.bin"]},
+ {title:"Closer",artist:"The Chainsmokers feat. Halsey",parts:["/audio/ikoy-track-13.part01.bin","/audio/ikoy-track-13.part02.bin","/audio/ikoy-track-13.part03.bin","/audio/ikoy-track-13.part04.bin"]}
 ];
 const MUSIC_COLORS=["#3a718c","#705645","#486578","#617e8b","#755c74","#5b7682","#65836f","#786d57","#5a748c","#6a6688","#487f86","#776b7c","#667f6c"];
 const MUSIC_PLAY_ICON='<svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 9 6-9 6z"/></svg>';
 const MUSIC_PAUSE_ICON='<svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="5" width="3" height="14" rx="1"/><rect x="14" y="5" width="3" height="14" rx="1"/></svg>';
-let musicAudio=null,musicPlaying=false,musicIndex=-1,musicQueue=[],musicObjectURL=null,musicLoading=0,musicNeedGesture=false;
+let musicAudio=null,musicPlaying=false,musicIndex=-1,musicQueue=[],musicHistory=[],musicForward=[],musicLoading=0,musicNeedGesture=false;
 const musicResolvedURLs=new Map();
 function musicShuffle(indices){
  for(let i=indices.length-1;i>0;i--){
@@ -1768,8 +1767,7 @@ function musicPaint(){
  if(w){w.classList.toggle("is-playing",musicPlaying);w.dataset.mood=String(Math.max(0,musicIndex)%3);w.style.setProperty("--mood-light",MUSIC_COLORS[Math.max(musicIndex,0)%MUSIC_COLORS.length]);}
  if(btn){btn.innerHTML=musicPlaying?MUSIC_PAUSE_ICON:MUSIC_PLAY_ICON;btn.setAttribute("aria-pressed",String(musicPlaying));btn.setAttribute("aria-label",musicPlaying?"Jeda musik":"Putar musik");}
  const track=MUSIC_TRACKS[musicIndex];
- if(track)document.getElementById("music-track").textContent=track.title+" / "+MUSIC_TRACKS.length;
- document.getElementById("music-subtitle").textContent="MP3 pilihanmu · Shuffle aktif";
+ if(track){const title=document.getElementById("music-track");title.textContent=track.title;title.title=track.title;document.getElementById("music-subtitle").textContent=track.artist+" · Shuffle aktif";}
 }
 function musicInitialIndex(){
  // A direct MP3 makes the first autoplay attempt synchronous even on iOS.
@@ -1777,9 +1775,9 @@ function musicInitialIndex(){
  return ready[Math.floor(Math.random()*ready.length)];
 }
 function musicNextIndex(){
+ if(musicForward.length)return musicForward.shift();
  if(!musicQueue.length){
   musicQueue=musicShuffle(MUSIC_TRACKS.map((_,i)=>i).filter(i=>i!==musicIndex));
-  musicQueue.push(musicIndex);
  }
  return musicQueue.shift();
 }
@@ -1837,7 +1835,7 @@ async function musicSelect(index,autoplay=true){
 function musicResumeOnInteraction(event){
  if(!musicNeedGesture||!musicAudio)return;
  // The explicit player buttons handle their own click: prevent a gesture/play double-toggle.
- if(event?.target?.closest?.("#music-toggle,#music-next"))return;
+ if(event?.target?.closest?.("#music-toggle,#music-next,#music-prev"))return;
  // Execute play() synchronously inside any ordinary interaction.
  musicTryPlay();
 }
@@ -1854,14 +1852,24 @@ function toggleMusic(){
 }
 function nextMusic(){
  if(!musicAudio){musicSelect(musicInitialIndex(),true);return;}
+ if(musicIndex>=0)musicHistory.push(musicIndex);
  musicSelect(musicNextIndex(),true);
+}
+function previousMusic(){
+ if(!musicAudio)return;
+ if(musicHistory.length){
+   musicForward.unshift(musicIndex);
+   musicSelect(musicHistory.pop(),true);
+ }else{
+   try{musicAudio.currentTime=0;musicTryPlay();}catch(e){}
+ }
 }
 function initMusic(){
  musicAudio=new Audio();
  musicAudio.preload="auto";
  musicAudio.volume=Number(document.getElementById("music-volume")?.value||35)/100;
- musicAudio.addEventListener("ended",()=>musicSelect(musicNextIndex(),true));
- musicAudio.addEventListener("error",()=>{if(musicIndex>=0&&musicQueue.length)musicSelect(musicNextIndex(),true);});
+ musicAudio.addEventListener("ended",nextMusic);
+ musicAudio.addEventListener("error",()=>{if(musicIndex>=0&&musicQueue.length)nextMusic();});
  const first=musicInitialIndex();
  musicQueue=musicShuffle(MUSIC_TRACKS.map((_,i)=>i).filter(i=>i!==first));
  // The source is a direct MP3: call play as soon as the page starts.
@@ -1885,6 +1893,7 @@ function updateLiveIndicator(){
 document.addEventListener("click",e=>{
  if(!e.target.closest(".tt-action-menu"))document.querySelectorAll(".tt-action-menu[open]").forEach(x=>x.open=false);
  if(e.target.closest("#music-toggle")){toggleMusic();return;}
+ if(e.target.closest("#music-prev")){previousMusic();return;}
  if(e.target.closest("#music-next")){nextMusic();return;}
 });
 document.getElementById("music-volume")?.addEventListener("input",e=>{
