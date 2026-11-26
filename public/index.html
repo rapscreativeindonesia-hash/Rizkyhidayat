@@ -1730,41 +1730,145 @@ document.addEventListener("submit",function(e){
 document.getElementById("modal-layer").addEventListener("click",function(e){if(e.target===this)close();});document.addEventListener("keydown",function(e){if(e.key==="Escape")close();});
 
 /* Original generative ambient player (no licensed tracks or Spotify credentials) */
-const MUSIC_MOODS=[
- {title:"Blue Hour",subtitle:"Original ambient • Mood 01",color:"#3a718c",notes:[196,246.94,293.66]},
- {title:"Coffee Break",subtitle:"Original ambient • Mood 02",color:"#705645",notes:[174.61,220,261.63]},
- {title:"Afterglow",subtitle:"Original ambient • Mood 03",color:"#486578",notes:[164.81,220,329.63]}
+/* Ikoy Music: MP3 sources are extracted from the user's ten uploaded videos,
+   each trimmed by four seconds. Shuffle entire playlist, no repeat within a cycle. */
+const MUSIC_TRACKS=[
+ {title:"Track 01",url:"/audio/ikoy-track-01.mp3"},
+ {title:"Track 02",url:"/audio/ikoy-track-02.mp3"},
+ {title:"Track 03",parts:["/audio/ikoy-track-03.part01.bin","/audio/ikoy-track-03.part02.bin"]},
+ {title:"Track 04",url:"/audio/ikoy-track-04.mp3"},
+ {title:"Track 05",url:"/audio/ikoy-track-05.mp3"},
+ {title:"Track 06",url:"/audio/ikoy-track-06.mp3"},
+ {title:"Track 07",url:"/audio/ikoy-track-07.mp3"},
+ {title:"Track 08",parts:["/audio/ikoy-track-08.part01.bin","/audio/ikoy-track-08.part02.bin"]},
+ {title:"Track 09",parts:["/audio/ikoy-track-09.part01.bin","/audio/ikoy-track-09.part02.bin"]},
+ {title:"Track 10",parts:["/audio/ikoy-track-10.part01.bin","/audio/ikoy-track-10.part02.bin","/audio/ikoy-track-10.part03.bin"]}
 ];
-let musicMood=0,musicPlaying=false,musicAudio=null,musicMaster=null,musicOscillators=[],musicInterval=null;
-function setMusicMood(index){
- musicMood=(index+MUSIC_MOODS.length)%MUSIC_MOODS.length;
- const w=document.getElementById("music-widget"),m=MUSIC_MOODS[musicMood];if(!w)return;
- w.dataset.mood=String(musicMood);w.style.setProperty("--mood-light",m.color);
- document.getElementById("music-track").textContent=m.title;
- document.getElementById("music-subtitle").textContent=m.subtitle;
- if(musicAudio&&musicPlaying){
-  musicOscillators.forEach((osc,i)=>osc.frequency.setTargetAtTime(m.notes[i],musicAudio.currentTime,.38));
+const MUSIC_COLORS=["#3a718c","#705645","#486578","#617e8b","#755c74","#5b7682","#65836f","#786d57","#5a748c","#6a6688"];
+const MUSIC_PLAY_ICON='<svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 9 6-9 6z"/></svg>';
+const MUSIC_PAUSE_ICON='<svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="5" width="3" height="14" rx="1"/><rect x="14" y="5" width="3" height="14" rx="1"/></svg>';
+let musicAudio=null,musicPlaying=false,musicIndex=-1,musicQueue=[],musicObjectURL=null,musicLoading=0,musicNeedGesture=false;
+const musicResolvedURLs=new Map();
+function musicShuffle(indices){
+ for(let i=indices.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [indices[i],indices[j]]=[indices[j],indices[i]];
+ }
+ return indices;
+}
+function musicStatus(text){
+ const el=document.getElementById("music-state");
+ if(el)el.textContent=text;
+}
+function musicPaint(){
+ const w=document.getElementById("music-widget"),btn=document.getElementById("music-toggle");
+ if(w){w.classList.toggle("is-playing",musicPlaying);w.dataset.mood=String(Math.max(0,musicIndex)%3);w.style.setProperty("--mood-light",MUSIC_COLORS[Math.max(musicIndex,0)%MUSIC_COLORS.length]);}
+ if(btn){btn.innerHTML=musicPlaying?MUSIC_PAUSE_ICON:MUSIC_PLAY_ICON;btn.setAttribute("aria-pressed",String(musicPlaying));btn.setAttribute("aria-label",musicPlaying?"Jeda musik":"Putar musik");}
+ const track=MUSIC_TRACKS[musicIndex];
+ if(track)document.getElementById("music-track").textContent=track.title+" / 10";
+ document.getElementById("music-subtitle").textContent="MP3 pilihanmu · Shuffle aktif";
+}
+function musicInitialIndex(){
+ // A direct MP3 makes the first autoplay attempt synchronous even on iOS.
+ const ready=MUSIC_TRACKS.map((x,i)=>x.url?i:-1).filter(i=>i>=0);
+ return ready[Math.floor(Math.random()*ready.length)];
+}
+function musicNextIndex(){
+ if(!musicQueue.length){
+  musicQueue=musicShuffle(MUSIC_TRACKS.map((_,i)=>i).filter(i=>i!==musicIndex));
+  musicQueue.push(musicIndex);
+ }
+ return musicQueue.shift();
+}
+function musicSetState(state){
+ musicPlaying=state==="playing";
+ musicNeedGesture=state==="blocked";
+ musicStatus(state==="playing"?"PLAYING":state==="blocked"?"TAP TO START":state==="loading"?"LOADING":state==="error"?"SKIPPED":"PAUSED");
+ musicPaint();
+}
+async function musicURLFor(index){
+ const track=MUSIC_TRACKS[index];
+ if(track.url)return track.url;
+ if(musicResolvedURLs.has(index))return musicResolvedURLs.get(index);
+ const responses=await Promise.all(track.parts.map(path=>fetch(path,{cache:"force-cache"})));
+ if(responses.some(r=>!r.ok))throw Error("MP3 track not found: "+track.title);
+ const parts=await Promise.all(responses.map(r=>r.arrayBuffer()));
+ const url=URL.createObjectURL(new Blob(parts,{type:"audio/mpeg"}));
+ musicResolvedURLs.set(index,url);
+ return url;
+}
+function musicTryPlay(){
+ if(!musicAudio)return;
+ musicNeedGesture=false;
+ let attempt;
+ try{attempt=musicAudio.play();}
+ catch(e){musicSetState("blocked");return;}
+ if(attempt&&typeof attempt.then==="function"){
+  attempt.then(()=>{musicSetState("playing");})
+    .catch(e=>{if(e?.name==="AbortError")return;musicSetState(e?.name==="NotAllowedError"?"blocked":"error");});
+ }else musicSetState("playing");
+}
+async function musicSelect(index,autoplay=true){
+ const serial=++musicLoading;
+ musicIndex=index;
+ musicSetState("loading");
+ try{
+  const src=await musicURLFor(index);
+  if(serial!==musicLoading)return;
+  if(!musicAudio)musicAudio=new Audio();
+  musicAudio.src=src;
+  musicAudio.preload="auto";
+  musicAudio.volume=Number(document.getElementById("music-volume")?.value||35)/100;
+  musicAudio.load();
+  musicPaint();
+  if(autoplay)musicTryPlay();
+  else musicSetState("paused");
+ }catch(e){
+  if(serial!==musicLoading)return;
+  console.warn("Ikoy Music file error",e);
+  musicSetState("error");
+  // Skip broken files without trapping the playback queue.
+  if(musicQueue.length)musicSelect(musicNextIndex(),autoplay);
  }
 }
-async function toggleMusic(){
- const w=document.getElementById("music-widget"),btn=document.getElementById("music-toggle");
- if(!w||!btn)return;
- if(!musicAudio){
-  const AudioClass=window.AudioContext||window.webkitAudioContext;
-  if(!AudioClass){document.getElementById("music-state").textContent="UNSUPPORTED";return;}
-  musicAudio=new AudioClass();musicMaster=musicAudio.createGain();musicMaster.gain.value=0;musicMaster.connect(musicAudio.destination);
-  MUSIC_MOODS[0].notes.forEach((freq,i)=>{
-   const oscillator=musicAudio.createOscillator(),gain=musicAudio.createGain();
-   oscillator.type=i===1?"triangle":"sine";oscillator.frequency.value=freq;
-   gain.gain.value=i===0?.18:i===1?.045:.07;
-   oscillator.connect(gain).connect(musicMaster);oscillator.start();musicOscillators.push(oscillator);
-  });
+function musicResumeOnInteraction(){
+ if(!musicNeedGesture||!musicAudio)return;
+ // Execute play() inside the user's real gesture, without waiting for a fetch.
+ musicTryPlay();
+}
+function musicPause(){
+ if(!musicAudio)return;
+ musicAudio.pause();
+ musicNeedGesture=false;
+ musicSetState("paused");
+}
+function toggleMusic(){
+ if(musicPlaying){musicPause();return;}
+ if(musicAudio){musicTryPlay();return;}
+ musicSelect(musicInitialIndex(),true);
+}
+function nextMusic(){
+ if(!musicAudio){musicSelect(musicInitialIndex(),true);return;}
+ musicSelect(musicNextIndex(),true);
+}
+function initMusic(){
+ musicAudio=new Audio();
+ musicAudio.preload="auto";
+ musicAudio.volume=Number(document.getElementById("music-volume")?.value||35)/100;
+ musicAudio.addEventListener("ended",()=>musicSelect(musicNextIndex(),true));
+ musicAudio.addEventListener("error",()=>{if(musicIndex>=0&&musicQueue.length)musicSelect(musicNextIndex(),true);});
+ const first=musicInitialIndex();
+ musicQueue=musicShuffle(MUSIC_TRACKS.map((_,i)=>i).filter(i=>i!==first));
+ // The source is a direct MP3: call play as soon as the page starts.
+ musicIndex=first;
+ musicAudio.src=MUSIC_TRACKS[first].url;
+ musicAudio.load();
+ musicPaint();
+ musicTryPlay();
+ // When Safari blocks audible autoplay, start on the first ordinary tap/gesture.
+ for(const event of ["pointerdown","touchstart","keydown"]){
+  document.addEventListener(event,musicResumeOnInteraction,{passive:true,capture:true});
  }
- try{await musicAudio.resume();}catch(_){}
- musicPlaying=!musicPlaying;const volume=document.getElementById("music-volume").value/100;
- musicMaster.gain.setTargetAtTime(musicPlaying?volume*.30:0,musicAudio.currentTime,.12);
- w.classList.toggle("is-playing",musicPlaying);btn.innerHTML=musicPlaying?"<svg class=\"rh-vector-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"7\" y=\"5\" width=\"3\" height=\"14\" rx=\"1\"/><rect x=\"14\" y=\"5\" width=\"3\" height=\"14\" rx=\"1\"/></svg>":"<svg class=\"rh-vector-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 6 9 6-9 6z\"/></svg>";btn.setAttribute("aria-pressed",String(musicPlaying));btn.setAttribute("aria-label",musicPlaying?"Jeda musik":"Putar musik");
- document.getElementById("music-state").textContent=musicPlaying?"PLAYING":"PAUSED";
 }
 function updateLiveIndicator(){
  const el=document.getElementById("sync-age");if(!el)return;
@@ -1776,13 +1880,12 @@ function updateLiveIndicator(){
 document.addEventListener("click",e=>{
  if(!e.target.closest(".tt-action-menu"))document.querySelectorAll(".tt-action-menu[open]").forEach(x=>x.open=false);
  if(e.target.closest("#music-toggle")){toggleMusic();return;}
- if(e.target.closest("#music-next")){setMusicMood(musicMood+1);return;}
+ if(e.target.closest("#music-next")){nextMusic();return;}
 });
 document.getElementById("music-volume")?.addEventListener("input",e=>{
- if(musicMaster&&musicAudio&&musicPlaying)musicMaster.gain.setTargetAtTime((Number(e.target.value)/100)*.30,musicAudio.currentTime,.1);
+ if(musicAudio)musicAudio.volume=Number(e.target.value)/100;
 });
-setMusicMood(0);
-setInterval(()=>{setMusicMood(musicMood+1);},3000);
+initMusic();
 setInterval(updateLiveIndicator,1000);
 // This checks the Cloudflare snapshot every 10 s; TikTok API refresh is handled by server cron every minute.
 setInterval(()=>{
