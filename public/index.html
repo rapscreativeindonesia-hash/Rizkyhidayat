@@ -1320,9 +1320,10 @@ for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStar
 var stages=["Ide","Script","Shooting","Editing","Review","Final"];
 
 /* Creator Content Workspace — one project referenced from Content, Collaboration and Calendar. */
-const SCRIPT_TYPES=["Hook","Problem","Edukasi","Value","Benefit","Proof","Transition","CTA","Custom"];
-const CONTENT_TYPES=["UGC","Personal Branding","Review","Event","Education","Entertainment","Travel","Product","Lifestyle","Lainnya"];
-const CONTENT_GOALS=["Awareness","Engagement","Conversion","Followers","Education","Portfolio","Lainnya"];
+const SCRIPT_TYPES=["Hook","Intro","Problem","Edukasi","Insight","Value","Benefit","Proof","Transition","CTA","Custom"];
+const CONTENT_TYPES=["Personal Branding"];
+const COLLAB_CONTENT_TYPES=["UGC","Personal Branding","Review","Event","Education","Entertainment","Travel","Product","Lifestyle","Lainnya"];
+const CONTENT_GOALS=["Awareness","Engagement","Conversion","Followers","Education","Entertainment","Portfolio","Lainnya"];
 const CONTENT_TEMPLATE=[["Konsep & brief siap","Pra-produksi","Tentukan tujuan, target audiens, pesan utama, format, dan deliverable."],["Riset referensi & tren","Pra-produksi","Cari benchmark visual, hook, angle, audio, dan format."],["USP dan angle konten","Pra-produksi","Tentukan alasan audiens menonton dan sudut pandang utama."],["Hook 0–3 detik","Pra-produksi","Siapkan opening menarik dan relevan."],["Script selesai","Pra-produksi","Susun hook, isi, value, proof, transisi, dan CTA."],["Shot list siap","Pra-produksi","Tentukan A-roll, B-roll, framing, gerakan dan urutan shot."],["Storyboard & visual reference","Pra-produksi","Siapkan referensi pose, komposisi, lighting, atau video."],["Lokasi, jadwal & izin","Pra-produksi","Konfirmasi tempat, talent, waktu dan izin."],["Properti, wardrobe & produk","Pra-produksi","Siapkan outfit, produk dan perlengkapan."],["Peralatan & setting kamera","Produksi","Cek baterai, storage, lensa, resolusi, FPS, exposure dan white balance."],["Lighting dan audio test","Produksi","Uji cahaya, mikrofon, noise dan suara."],["A-roll diambil","Produksi","Rekam dialog, delivery, opening, CTA dan alternatif."],["B-roll diambil","Produksi","Ambil detail, wide, close-up, movement dan cutaway."],["Beauty shot & alternatif hook","Produksi","Ambil footage utama dan variasi opening."],["Review footage & retake","Produksi","Cek fokus, stabilitas, exposure, audio dan shot yang kurang."],["Backup & seleksi footage","Produksi","Amankan file asli dan pilih footage terbaik."],["Rough cut & storytelling","Pascaproduksi","Susun alur, trim jeda dan cocokkan script."],["Editing selesai","Pascaproduksi","Rapikan pacing, cut, transisi dan overlay."],["Subtitle dan audio selesai","Pascaproduksi","Periksa ejaan, sinkron subtitle, musik, SFX dan volume dialog."],["Color grading selesai","Pascaproduksi","Jaga warna kulit, exposure, white balance dan konsistensi."],["QC & revisi","Pascaproduksi","Cek brief, safe area, typo, CTA, dan hasil keseluruhan."],["Final export siap","Pascaproduksi","Cek resolusi, rasio, FPS dan hasil ekspor."],["Caption, hashtag & cover","Publikasi","Siapkan caption, keyword, CTA dan cover per platform."],["Approval brand (jika berlaku)","Publikasi","Pastikan persetujuan final sebelum posting."],["Caption dan posting selesai","Publikasi","Posting sesuai jadwal, cek mention, link dan tampilan."],["Evaluasi performa","Publikasi","Catat views, retention, engagement dan insight."]];
 const CONTENT_CHECKS=["Konsep & brief siap","Script selesai","Shot list siap","A-roll diambil","B-roll diambil","Editing selesai","Subtitle dan audio selesai","Color grading selesai","Final export siap","Caption dan posting selesai"];
 function newCheck(text){return {id:id(),text,checked:false};}
@@ -1435,7 +1436,7 @@ function saveWorkingContent(form){
    content.title=get("title")||"Konten belum diberi judul";
    content.script=script;content.shots=shots;content.checklist=rhCollectRows(form,"checklist");content.references=rhCollectRows(form,"references");
    content.hook=script.find(x=>x.type==="Hook")?.text||"";
-   content.pillar=content.content_type||"UGC";content.workspace_kind=content.brand_id?"collaboration":"content";content.updated_at=Date.now();
+   if(!content.brand_id)content.content_type="Personal Branding";content.pillar=content.content_type||"UGC";content.workspace_kind=content.brand_id?"collaboration":"content";content.updated_at=Date.now();
    if(!writeLocal())throw Error("Penyimpanan browser gagal");
    saveDraft(form);
    const el=form.querySelector("[data-draft-saved]");
@@ -1494,14 +1495,14 @@ function production(){
  return '<div class="rh-content-page">'+pendingContentDraft()+'<div class="rh-page-lead"><div><p class="rh-overline">CONTENT WORKSPACE</p><h3>Produksi Konten</h3><p>Tulis script per kalimat, susun shot list, tambahkan referensi dan centang pekerjaan.</p></div>'+btn("+ Content Baru","new-content","primary")+'</div><div class="rh-content-summary"><span>'+n(records.length)+' total konten</span></div><div class="rh-project-grid">'+(records.length?records.slice().sort((a,b)=>(b.updated_at||0)-(a.updated_at||0)).map(x=>rhProjectCard(x,false)).join(""):empty("Belum ada konten pribadi. Tekan + Content Baru untuk mulai."))+'</div></div>';
 }
 function contentForm(contentId,date,brandId){
- const item=state.ideas.find(x=>x.id===contentId)||{title:"",pillar:"Education",platform:"TikTok",content_type:"UGC",goal:"Awareness",notes:"",date:date||"",shoot_date:"",brand_id:brandId||"",caption:"",hashtags:""};
+ const item=state.ideas.find(x=>x.id===contentId)||{title:"",pillar:"Education",platform:"TikTok",content_type:brandId?"UGC":"Personal Branding",goal:"Awareness",notes:"",date:date||"",shoot_date:"",brand_id:brandId||"",caption:"",hashtags:""};
  const brand=state.brands.find(x=>x.id===(brandId||item.brand_id));
  const script=Array.isArray(item.script)&&item.script.length?item.script:(item.hook?[{id:id(),type:"Hook",text:item.hook}]:[{id:id(),type:"Hook",text:""},{id:id(),type:"Edukasi",text:""},{id:id(),type:"Value",text:""},{id:id(),type:"CTA",text:""}]);
  const productionData=normalizeProduction(item.shots||[],Array.isArray(item.checklist)&&item.checklist.length?item.checklist:CONTENT_CHECKS.map(newCheck));
  const shots=productionData.shots,checks=productionData.checklist;
  const refs=Array.isArray(item.references)?item.references:[];
  const brandOptions='<option value="">Personal / tanpa brand</option>'+state.brands.map(x=>'<option value="'+txt(x.id)+'"'+(x.id===(brandId||item.brand_id)?" selected":"")+'>'+txt(x.name+(x.campaign?" · "+x.campaign:""))+'</option>').join("");
- const details='<form id="content-form" class="rh-editor-form"><input type="hidden" name="id" value="'+txt(contentId||"")+'"><div class="rh-form-section"><h4>Informasi Konten</h4><div class="form-grid">'+input("Judul Konten *","title",item.title,"text","required maxlength=160")+rhSelect("Kategori","content_type",CONTENT_TYPES,item.content_type||"UGC")+rhSelect("Platform","platform",["TikTok","Instagram","Instagram Reels","YouTube","YouTube Shorts","Facebook","Threads","Multiplatform"],item.platform||"TikTok")+rhSelect("Tujuan","goal",CONTENT_GOALS,item.goal||"Awareness")+input("Tanggal Shooting","shoot_date",item.shoot_date,"date")+input("Tanggal Posting","date",date||item.date,"date")+'<input type="hidden" name="brand_id" value="'+txt(brand?.id||"")+'">'+rhTextArea("Konsep / Catatan","notes",item.notes,"wide")+'</div></div>'+rhBuilder("script","Script per Kalimat",script,[],script)+rhBuilder("shots","Shot List",shots,[{id:id(),text:"",angle:"",checked:false}],script)+rhBuilder("checklist","Checklist Produksi",checks,[],script)+rhBuilder("references","Link Referensi",refs,[{id:id(),label:"",url:""}],script)+'<div class="rh-form-section"><h4>Publikasi & Hasil</h4><div class="form-grid">'+rhTextArea("Caption","caption",item.caption,"wide")+input("Hashtag","hashtags",item.hashtags)+input("Link Folder / File","folder_url",item.folder_url,"text",'inputmode="url"')+input("Link Konten Terpublikasi","published_url",item.published_url,"text",'inputmode="url"')+'</div></div>'+formFooter()+'</form>';
+ const details='<form id="content-form" class="rh-editor-form"><input type="hidden" name="id" value="'+txt(contentId||"")+'"><div class="rh-form-section"><h4>Informasi Konten</h4><div class="form-grid">'+input("Judul Konten *","title",item.title,"text","required maxlength=160")+rhSelect("Kategori","content_type",brand?COLLAB_CONTENT_TYPES:CONTENT_TYPES,brand?(item.content_type||"UGC"):"Personal Branding")+rhSelect("Platform","platform",["TikTok","Instagram","Instagram Reels","YouTube","YouTube Shorts","Facebook","Threads","Multiplatform"],item.platform||"TikTok")+rhSelect("Tujuan","goal",CONTENT_GOALS,item.goal||"Awareness")+input("Tanggal Shooting","shoot_date",item.shoot_date,"date")+input("Tanggal Posting","date",date||item.date,"date")+'<input type="hidden" name="brand_id" value="'+txt(brand?.id||"")+'">'+rhTextArea("Konsep / Catatan","notes",item.notes,"wide")+'</div></div>'+rhBuilder("script","Script per Kalimat",script,[],script)+rhBuilder("shots","Shot List",shots,[{id:id(),text:"",angle:"",checked:false}],script)+rhBuilder("checklist","Checklist Produksi",checks,[],script)+rhBuilder("references","Link Referensi",refs,[{id:id(),label:"",url:""}],script)+'<div class="rh-form-section"><h4>Publikasi & Hasil</h4><div class="form-grid">'+rhTextArea("Caption","caption",item.caption,"wide")+input("Hashtag","hashtags",item.hashtags)+input("Link Folder / File","folder_url",item.folder_url,"text",'inputmode="url"')+input("Link Konten Terpublikasi","published_url",item.published_url,"text",'inputmode="url"')+'</div></div>'+formFooter()+'</form>';
  modal(brand?(contentId?"Edit Konten Collaboration":"Buat Konten Collaboration"):(contentId?"Edit Content":"Buat Content"),details);
  if(brand&&!contentId)notice("Konten baru terhubung ke "+brand.name,"ok");
 }
@@ -1618,7 +1619,7 @@ function restoreFormDraft(form){
   }
   if(parsed.draftContentId)form.dataset.draftContentId=parsed.draftContentId;
   for(const [key,value] of Object.entries(parsed.values||{})){
-   if(key==="id"||key==="brand_id")continue;
+   if(key==="id"||key==="brand_id"||(key==="content_type"&&form.id==="content-form"&&!form.elements.namedItem("brand_id")?.value))continue;
    const field=form.elements.namedItem(key);
    if(field&&"value" in field)field.value=String(value);
   }
@@ -2002,6 +2003,7 @@ document.addEventListener("submit",function(e){
      for(const field of ["title","platform","content_type","goal","date","shoot_date","brand_id","notes","caption","hashtags","folder_url","published_url"])content[field]=get(field);
      content.script=script;content.shots=shots;content.checklist=checks;content.references=refs;
      content.hook=script.find(x=>x.type==="Hook")?.text||"";
+     if(!brandId)content.content_type="Personal Branding";
      content.pillar=content.content_type||content.pillar||"UGC";
      content.workspace_kind=brandId?"collaboration":"content";content.campaign=state.brands.find(x=>x.id===brandId)?.campaign||"";
      content.updated_at=Date.now();
