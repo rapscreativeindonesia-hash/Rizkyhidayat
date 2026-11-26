@@ -41,14 +41,15 @@ async function getUser(token){const fields="open_id,display_name,avatar_url,user
 async function recentVideos(token){const fields="id,title,create_time,cover_image_url,share_url,view_count,like_count,comment_count,share_count";const r=await fetch(TIKTOK_VIDEO+"?fields="+fields,{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+token},body:JSON.stringify({max_count:20})});const j=await r.json();if(!r.ok||j.error?.code!=="ok")throw Error("TikTok video list: "+(j.error?.code||r.status));return (j.data?.videos||[]).map(v=>({id:v.id,title:v.title||"",view_count:v.view_count??null,like_count:v.like_count??null,comment_count:v.comment_count??null,share_count:v.share_count??null,create_time:v.create_time??null,share_url:v.share_url||""}));}
 
 const WORKSPACE_FIELDS={
- ideas:["id","title","hook","pillar","platform","stage","notes","date","content_type","goal","shoot_date","brand_id","campaign","script","shots","checklist","references","caption","hashtags","published_url","folder_url","workspace_kind","updated_at"],
+ ideas:["id","title","hook","pillar","platform","stage","notes","date","content_type","goal","shoot_date","brand_id","campaign","script","shots","checklist","references","caption","hashtags","published_url","folder_url","workspace_kind","deadline_checks","updated_at"],
  assets:["id","title","url","kind","updated_at"],
- brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","rate_card","rate_notes","dp","paid","post_date","brief_must","brief_avoid","brief_text","brief_pdf_id","brief_pdf_name","brief_pdf_size","brief_pdf_cloud","brief_pdf_date","references","files","final_links","deliverables_checklist","updated_at"]
+ brands:["id","name","contact","value","deadline","status","deliverables","notes","industry","website","social","pic","phone","email","campaign","goal","collaboration_type","compensation_type","barter","rate_card","rate_notes","dp","paid","post_date","brief_must","brief_avoid","brief_text","brief_pdf_id","brief_pdf_name","brief_pdf_size","brief_pdf_cloud","brief_pdf_date","references","files","final_links","deliverables_checklist","deadline_checks","updated_at"]
 };
 const WORKSPACE_NESTED={
  script:{id:90,type:40,text:6000},
  shots:{id:90,text:1600,angle:350,scriptId:90,checked:"boolean"},
  checklist:{id:90,text:1600,checked:"boolean"},
+ deadline_checks:{id:90,text:1600,checked:"boolean"},
  deliverables_checklist:{id:90,text:1600,checked:"boolean"},
  references:{id:90,label:350,url:2000},
  files:{id:90,label:350,url:2000},

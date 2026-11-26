@@ -968,6 +968,24 @@ body.rh-modal-locked{position:fixed!important;width:100%!important;left:0;right:
 .tt-workspace-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tt-workspace-counts>div{border:1px solid var(--line);padding:10px;border-radius:10px;display:flex;flex-direction:column;gap:3px;min-width:0}.tt-workspace-counts strong{font-size:20px}.tt-workspace-counts span{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
 .rh-calendar-event[data-kind="idea"]{background:#414557}.rh-calendar-event[data-kind="collaboration"]{background:#4c5b48}.rh-calendar-event[data-kind="content"]{background:#30556a}
 
+
+/* Dashboard calendar and actionable H-1 checklist */
+.rh-dashboard-calendar,.rh-calendar-panel,.rh-deadline-panel{min-width:0;width:100%}
+.rh-dashboard-calendar-title{margin:0 0 14px!important}
+.rh-calendar-event.is-done{text-decoration:line-through;opacity:.62}
+.rh-deadline-panel .section-head{align-items:flex-start;flex-wrap:wrap}
+.rh-deadline-panel .section-head p{margin:5px 0 0}
+.rh-deadline-total{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.rh-deadline-list{display:grid;gap:0}
+.rh-deadline-row{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:12px;align-items:center;min-width:0;padding:12px 0;border-top:1px solid var(--line)}
+.rh-deadline-tick{width:24px;height:24px;display:grid;place-items:center;padding:0;border:1px solid #648697;background:#142733;border-radius:6px;color:#0d2430;font-size:15px;font-weight:800}
+.rh-deadline-tick[aria-checked="true"]{background:#9fc9bb;border-color:#9fc9bb}
+.rh-deadline-copy{display:grid;gap:4px;min-width:0;border:0;padding:0;color:inherit;background:none;text-align:left;overflow-wrap:anywhere}
+.rh-deadline-copy strong{font-size:13px}.rh-deadline-copy small{font-size:11px;color:var(--muted)}
+.rh-deadline-when{font-size:11px;color:#b0c8d4;white-space:nowrap}.rh-deadline-when.overdue{color:#f0a9a0}
+.rh-deadline-row.is-done .rh-deadline-copy strong{text-decoration:line-through;color:var(--muted)}
+.rh-deadline-done{margin-top:15px;border-top:1px solid var(--line);padding-top:12px}.rh-deadline-done summary{cursor:pointer;font-size:12px;color:var(--muted)}
+@media(max-width:460px){.rh-deadline-row{gap:8px;grid-template-columns:22px minmax(0,1fr) auto}.rh-deadline-tick{width:22px;height:22px}.rh-deadline-when{font-size:9px}}
 </style>
 </head>
 <body>
@@ -1142,7 +1160,8 @@ async function syncCloudWorkspace(){
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function n(v){return new Intl.NumberFormat("id-ID").format(Number(v)||0);}
 function rp(v){return "Rp "+n(v);}
-function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function today(){const p=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const get=t=>p.find(x=>x.type===t).value;return get("year")+"-"+get("month")+"-"+get("day");}
+function nextDay(date){const d=new Date(date+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10);}
 function fmt(d){if(!d)return "Belum dijadwalkan";return new Date(d+"T12:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"});}
 function chip(s){return '<span class="pill">'+esc(s)+'</span>';}
 function btn(label,act,variant,extra){return '<button type="button" class="button '+(variant||"")+'" data-action="'+act+'" '+(extra||"")+'>'+label+'</button>';}
@@ -1165,9 +1184,15 @@ function workspaceKind(x){
 }
 function ownIdeas(){return state.ideas.filter(x=>workspaceKind(x)==="idea");}
 function ownContent(){return state.ideas.filter(x=>workspaceKind(x)==="content");}
+function deadlineKey(label,date){return label+"|"+date;}
 function workspaceEvents(){
  const events=[];
- function add(item,date,type,label,action){if(/^\d{4}-\d{2}-\d{2}$/.test(date||""))events.push({id:item.id,date,type,label,title:item.title||item.name||"Tanpa judul",platform:item.platform||"",action});}
+ function add(item,date,type,label,action){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))return;
+  const key=deadlineKey(label,date),saved=(item.deadline_checks||[]).find(x=>x.id===key);
+  const defaultDone=action==="edit-brand"?item.status==="Selesai":label.endsWith("Posting")?!!item.published_url:label.endsWith("Shooting")&&item.shots?.length>0&&item.shots.every(x=>x.checked===true);
+  events.push({id:item.id,date,type,label,title:item.title||item.name||"Tanpa judul",platform:item.platform||"",action,key,checked:saved?saved.checked===true:!!defaultDone});
+ }
  for(const item of state.ideas){
   const kind=workspaceKind(item),label=kind==="idea"?"Ide":kind==="collaboration"?"Collaboration":"Content",action=kind==="idea"?"edit-idea":"edit-content";
   add(item,item.date,kind,label+" · Posting",action);
@@ -1179,6 +1204,28 @@ function workspaceEvents(){
   if(!related.some(x=>x.date===brand.post_date))add(brand,brand.post_date,"collaboration","Collaboration · Posting","edit-brand");
  }
  return events.sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title));
+}
+function deadlineRows(events,day){
+ return events.map(x=>{
+  const when=x.date<day?"Lewat deadline":x.date===day?"Hari ini":"Besok";
+  return '<div class="rh-deadline-row'+(x.checked?' is-done':'')+'"><button type="button" class="rh-deadline-tick" role="checkbox" aria-checked="'+x.checked+'" aria-label="'+txt((x.checked?'Batalkan selesai: ':'Tandai selesai: ')+x.title+" · "+x.label)+'" data-action="deadline-toggle" data-id="'+txt(x.id)+'" data-source="'+txt(x.action)+'" data-key="'+txt(x.key)+'">'+(x.checked?'✓':'')+'</button><button type="button" class="rh-deadline-copy" data-action="'+txt(x.action)+'" data-id="'+txt(x.id)+'"><strong>'+txt(x.title)+'</strong><small>'+txt(x.label)+' · '+txt(fmt(x.date))+'</small></button><span class="rh-deadline-when'+(!x.checked&&x.date<day?' overdue':'')+'">'+txt(when)+'</span></div>';
+ }).join("");
+}
+function deadlineChecklist(){
+ const day=today(),tomorrow=nextDay(day);
+ const due=workspaceEvents().filter(x=>x.date<=tomorrow);
+ const open=due.filter(x=>!x.checked),done=due.filter(x=>x.checked);
+ return '<section class="panel rh-deadline-panel" aria-label="Checklist deadline satu hari"><div class="section-head"><div><h3>Checklist Pekerjaan</h3><p class="muted small">Deadline H-1 · Hari ini, besok, dan pekerjaan terlambat</p></div><span class="rh-deadline-total">'+open.length+' belum selesai</span></div>'+
+ (open.length?'<div class="rh-deadline-list">'+deadlineRows(open,day)+'</div>':empty("Tidak ada pekerjaan yang belum selesai dengan deadline sampai besok."))+
+ (done.length?'<details class="rh-deadline-done"><summary>Selesai ('+done.length+')</summary><div class="rh-deadline-list">'+deadlineRows(done,day)+'</div></details>':"")+'</section>';
+}
+function toggleDeadline(source,id,key){
+ const event=workspaceEvents().find(x=>x.action===source&&x.id===id&&x.key===key);
+ const item=(source==="edit-brand"?state.brands:state.ideas).find(x=>x.id===id);
+ if(!event||!item)return false;
+ const checks=Array.isArray(item.deadline_checks)?item.deadline_checks:[];
+ item.deadline_checks=[...checks.filter(x=>x.id!==key),{id:key,text:event.label,checked:!event.checked}];
+ item.updated_at=Date.now();return true;
 }
 function trendingVideos(live){
  const rows=(live?.videos||[]).filter(v=>Number.isFinite(v.growth_views)&&v.growth_views>0).sort((a,b)=>b.growth_views-a.growth_views).slice(0,5);
@@ -1194,7 +1241,6 @@ function performanceGraph(history){
  return '<div class="tt-graph-value"><strong>'+n(h[h.length-1].recent_views)+'</strong><span>Total views 20 video terbaru</span></div><svg viewBox="0 0 520 120" role="img" aria-label="Grafik total views video terbaru berdasarkan snapshot API" style="width:100%;height:auto;max-height:170px"><path d="M12 16H508 M12 61H508 M12 106H508" stroke="#45616e" stroke-opacity=".5" fill="none"/><polyline points="'+pts+'" fill="none" stroke="#a8d7e9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="itemtop small muted"><span>Awal '+n(min===max?max:h[0].recent_views)+'</span><span>Terakhir '+n(h[h.length-1].recent_views)+'</span></div>';
 }
 function dashboard(){
- const next=workspaceEvents().filter(x=>x.date>=today()).slice(0,6);
  const connected=!!tiktokSync?.connected,live=connected&&tiktokSync?.latest?tiktokSync.latest:null;
  const isSandbox=tiktokConfig?.mode==="sandbox";
  const allZero=!!(isSandbox&&live&&live.followers===0&&live.likes===0&&live.video_count===0);
@@ -1224,19 +1270,17 @@ function dashboard(){
  '<div class="tt-metric"><div class="tt-metric-label">Views 20 Video</div><div class="tt-metric-value">'+views+'</div><div class="tt-metric-note">'+videoNote+'</div></div>'+
  '</div><div class="tt-lower"><div class="tt-lower-card"><h4>Konten yang Lagi Naik</h4>'+trendingVideos(live)+'</div><div class="tt-lower-card"><h4>Grafik Performa</h4>'+performanceGraph(tiktokSync?.history||[])+'</div></div>'+
  oauthInfo+'</section>'+
- '<div class="tt-quick"><section class="panel"><div class="section-head"><h3>Kalender & Jadwal Konten</h3>'+btn("Lihat Kalender","go-calendar","")+'</div>'+
- (next.length?'<ul class="tt-schedule">'+next.map(x=>'<li><button class="tt-event-link" data-action="'+txt(x.action)+'" data-id="'+txt(x.id)+'"><strong>'+txt(x.title)+'</strong><span>'+fmt(x.date)+' · '+txt(x.label)+(x.platform?' · '+txt(x.platform):'')+'</span></button></li>').join("")+'</ul>':empty("Belum ada jadwal Content, Collaboration atau Ide."))+'</section>'+
- '<section class="panel"><div class="section-head"><h3>Creative Workspace</h3><span class="pill">5 halaman</span></div><div class="tt-workspace-counts"><div><strong>'+n(ownContent().length)+'</strong><span>Content</span></div><div><strong>'+n(state.brands.length)+'</strong><span>Collaboration</span></div><div><strong>'+n(ownIdeas().length)+'</strong><span>Ide</span></div></div><div class="tt-small-actions">'+btn("+ Tambah Ide","new-idea","primary")+btn("Produksi","go-production","")+btn("Collaboration","new-brand","")+'</div></section></div></div>';
+ '<section class="rh-dashboard-calendar" aria-label="Kalender Konten">'+calendar(true)+'</section>'+deadlineChecklist()+'</div>';
 }
 
 function ideaCard(x){return '<section class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3></div><p class="muted small">Hook: '+txt(x.hook||(x.script||[]).find(a=>a.type==="Hook")?.text||"Belum diisi")+'</p><div class="tagrow">'+chip(x.pillar||"Umum")+chip(x.platform||"TikTok")+(x.date?chip(fmt(x.date)):"")+'</div><p class="muted small">'+txt(x.notes||"Belum ada catatan.")+'</p><div class="buttons">'+btn("Edit Ide","edit-idea","","data-id='"+txt(x.id)+"'")+btn("Hapus","delete-idea","danger","data-id='"+txt(x.id)+"'")+'</div></section>';}
 function assetCard(x){return '<div class="panel"><div class="itemtop"><h3>'+txt(x.title)+'</h3>'+chip(x.kind)+'</div><a class="link small" href="'+txt(x.url)+'" target="_blank" rel="noopener noreferrer">'+txt(x.url)+'</a><div class="buttons" style="margin-top:12px">'+btn("Hapus","delete-asset","danger","data-id='"+txt(x.id)+"'")+'</div></div>';}
 function ideas(){return '<div class="toolbar"><div class="buttons">'+btn("Ide Konten","tab-ideas",libTab==="ideas"?"primary":"")+btn("Library Aset","tab-assets",libTab==="assets"?"primary":"")+'</div>'+btn(libTab==="ideas"?"+ Tambah Ide":"+ Tambah Aset",libTab==="ideas"?"new-idea":"new-asset","primary")+'</div>'+
 (libTab==="ideas"?'<div class="grid cols3">'+(ownIdeas().length?ownIdeas().map(ideaCard).join(""):'<div style="grid-column:1/-1">'+empty("Belum ada ide. Klik Tambah Ide untuk membuat ide pertama, melengkapi hook, dan menjadwalkannya.")+'</div>')+'</div>':'<div class="grid cols3">'+(state.assets.length?state.assets.map(assetCard).join(""):'<div style="grid-column:1/-1">'+empty("Library masih kosong. Simpan link referensi, folder footage, atau file produksi agar mudah ditemukan.")+'</div>')+'</div>');}
-function calendar(){const events=workspaceEvents();var d=new Date();d.setDate(1);d.setMonth(d.getMonth()+calendarOffset);var y=d.getFullYear(),m=d.getMonth(),start=(d.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),cells=Math.ceil((start+days)/7)*7;
-var out='<section class="panel"><div class="monthline"><div class="buttons">'+btn("‹","prev-month")+ '<h3 style="padding:9px 8px">'+d.toLocaleDateString("id-ID",{month:"long",year:"numeric"})+'</h3>'+btn("›","next-month")+'</div>'+btn("+ Tambah Konten","new-content","primary")+'</div><div class="calendar">';
+function calendar(embedded=false){const events=workspaceEvents();var d=new Date(today()+"T12:00:00");d.setDate(1);d.setMonth(d.getMonth()+calendarOffset);var y=d.getFullYear(),m=d.getMonth(),start=(d.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),cells=Math.ceil((start+days)/7)*7;
+var out='<section class="panel rh-calendar-panel">'+(embedded?'<h3 class="rh-dashboard-calendar-title">Konten Kalender</h3>':"")+'<div class="monthline"><div class="buttons">'+btn("‹","prev-month")+ '<h3 style="padding:9px 8px">'+d.toLocaleDateString("id-ID",{month:"long",year:"numeric"})+'</h3>'+btn("›","next-month")+'</div>'+btn("+ Tambah Konten","new-content","primary")+'</div><div class="calendar">';
 ["Sen","Sel","Rab","Kam","Jum","Sab","Min"].forEach(function(w){out+='<div class="dayname">'+w+'</div>';});
-for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?events.filter(x=>x.date===dateStr):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.map(function(x){return '<button type="button" class="event rh-calendar-event" data-action="'+txt(x.action)+'" data-id="'+txt(x.id)+'" data-kind="'+txt(x.type)+'" title="'+txt(x.label+" · "+x.title)+'">'+txt(x.label+" · "+x.title)+'</button>';}).join("")+'</div>';}out+='</div></section><div class="notice">Kalender menyatukan jadwal Ide, Content, serta shooting, posting dan deadline Collaboration. Klik item untuk membuka sumbernya.</div>';return out;}
+for(var i=0;i<cells;i++){var day=i-start+1;var dateStr=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");var valid=day>0&&day<=days;var matches=valid?events.filter(x=>x.date===dateStr):[];out+='<div class="day '+(!valid?"out ":"")+(dateStr===today()?"today":"")+'" '+(valid?'data-action="date-click" data-date="'+dateStr+'"':'')+'><span class="daynum">'+(valid?day:"")+'</span>'+matches.map(function(x){return '<button type="button" class="event rh-calendar-event'+(x.checked?" is-done":"")+'" data-action="'+txt(x.action)+'" data-id="'+txt(x.id)+'" data-kind="'+txt(x.type)+'" title="'+txt(x.label+" · "+x.title)+'">'+txt(x.label+" · "+x.title)+'</button>';}).join("")+'</div>';}out+='</div></section>';if(!embedded)out+='<div class="notice">Kalender menyatukan jadwal Ide, Content, serta shooting, posting dan deadline Collaboration. Klik item untuk membuka sumbernya.</div>';return out;}
 var stages=["Ide","Script","Shooting","Editing","Review","Final"];
 
 /* Creator Content Workspace — one project referenced from Content, Collaboration and Calendar. */
@@ -1807,6 +1851,11 @@ document.addEventListener("click",function(e){
  if(a==="go-production"){setpage("production");return;}
  if(a==="prev-month"){calendarOffset--;render();return;}
  if(a==="next-month"){calendarOffset++;render();return;}
+ if(a==="deadline-toggle"){
+   try{if(toggleDeadline(el.dataset.source,which,el.dataset.key)){save();render();}}
+   catch(error){alert(error.message);}
+   return;
+ }
  if(a==="date-click"){contentForm(null,el.dataset.date);return;}
  if(["delete-idea","delete-asset","delete-brand"].includes(a)){
    if(!confirm("Hapus data ini?"))return;
