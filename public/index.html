@@ -285,11 +285,10 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
  .tt-action-popover{right:0;min-width:190px}
 }
 
-/* Reliable workspace save feedback and restored draft UI */
+/* Workspace save feedback */
 #save-notice{position:fixed;bottom:24px;right:24px;z-index:10000;width:min(420px,calc(100vw - 32px));padding:15px 19px;border:1px solid #64a38e;border-radius:12px;background:#193b35;color:#e4f7ee;box-shadow:0 12px 40px #0007;font:600 13px/1.55 "Manrope",sans-serif;opacity:0;visibility:hidden;transform:translateY(10px);transition:.15s ease;pointer-events:none}
 #save-notice.visible{opacity:1;visibility:visible;transform:translateY(0)}
 #save-notice[data-kind="warn"]{background:#47352a;border-color:#c39c72;color:#fff0dd}
-.restored-draft{padding:10px 13px;background:#3d3526;border:1px solid #9e8759;border-radius:10px;color:#f5dba7;font-size:12px;margin-bottom:12px}
 
 /* Content + Collaboration V3: native workspace controls, compact responsive layout */
 .rh-page-lead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 0 16px;padding:19px 22px;border:1px solid #3d5361;border-radius:19px;background:linear-gradient(115deg,#223a47,#14232e 75%);box-shadow:0 10px 26px #03080d18}
@@ -380,7 +379,6 @@ h1,h2,h3,h4,.tt-profile-copy h3,.tt-metric-value,.music-meta strong{font-family:
 
 .rh-calendar-event{border:0;text-align:left;width:100%;font-family:inherit;cursor:pointer;line-height:1.35;overflow:hidden;text-overflow:ellipsis;color:#dceaf0}
 .rh-calendar-event:hover,.rh-calendar-event:focus-visible{background:#365769;outline:1px solid #88b1c3}
-.rh-draft-alert{padding:14px 17px;border:1px solid #6b92a5;background:#213944;border-radius:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}.rh-draft-alert strong{font-size:13px;color:#e9f6f7}.rh-draft-alert p{color:#bed2da;font-size:12px;margin:5px 0 0}
 
 /* Compact Creator Workspace: reduce wasted vertical space while preserving all controls */
 .modal:has(.rh-editor-form){padding:14px!important;max-width:840px}
@@ -1400,7 +1398,7 @@ async function uploadReferences(form,row,files){
    let cloud=false;
    try{const r=await fetch("/api/production-reference/"+meta.id+"?deadline="+encodeURIComponent(deadline),{method:"PUT",credentials:"same-origin",headers:{"content-type":type},body:file});if(r.ok)cloud=true;else if(r.status!==401)throw Error("Upload cloud gagal ("+r.status+")");}catch(e){console.warn("Reference cloud upload",e);}
    if(!cloud){meta.storage="local";await referenceLocal("put",{...meta,blob:new Blob([file],{type})});}
-   media.push(meta);refreshReferenceRow(row,media);saveDraft(form);queueWorkingContent(form);
+   media.push(meta);refreshReferenceRow(row,media);
  }
  notice("Referensi tersimpan. File akan kedaluwarsa H+2.","ok");
 }
@@ -1447,38 +1445,6 @@ function rhCollectRows(form,kind){
    return item;
  }).filter(x=>!!(x.text||x.url||x.label||x.media?.length));
 }
-let rhDraftSaveTimer=null;
-function saveWorkingContent(form){
- if(!form||form.getAttribute("id")!=="content-form")return;
- try{
-   const fd=new FormData(form),get=k=>String(fd.get(k)||"").trim();
-   const script=rhCollectRows(form,"script"),shots=rhCollectRows(form,"shots");
-   if(!(get("title")||get("notes")||get("caption")||script.some(x=>x.text)||shots.some(x=>x.text||x.media?.length)))return;
-   const valueId=get("id")||form.dataset.draftContentId||id();
-   let content=state.ideas.find(x=>x.id===valueId);
-   if(!content){content={id:valueId,stage:"Ide"};state.ideas.push(content);}
-   form.dataset.draftContentId=valueId;
-   for(const key of ["platform","content_type","goal","date","shoot_date","brand_id","notes","caption","hashtags","folder_url","published_url"])content[key]=get(key);
-   content.title=get("title")||"Konten belum diberi judul";
-   content.script=script;content.shots=shots;content.checklist=rhCollectRows(form,"checklist");content.references=rhCollectRows(form,"references");
-   content.hook=script.find(x=>x.type==="Hook")?.text||"";
-   if(!content.brand_id)content.content_type="Personal Branding";content.pillar=content.content_type||"UGC";content.workspace_kind=content.brand_id?"collaboration":"content";content.updated_at=Date.now();
-   if(!writeLocal())throw Error("Penyimpanan browser gagal");
-   saveDraft(form);
-   const el=form.querySelector("[data-draft-saved]");
-   if(el)el.textContent="Draf tersimpan otomatis";
-   if(cloudAccess==="ok"||cloudAccess==="saving")scheduleCloudSave();
- }catch(error){
-   console.warn("Draft save failed",error);
-   const el=form.querySelector("[data-draft-saved]");
-   if(el)el.textContent="Penyimpanan otomatis gagal — jangan tutup halaman.";
- }
-}
-function queueWorkingContent(form){
- if(!form||form.getAttribute("id")!=="content-form")return;
- clearTimeout(rhDraftSaveTimer);
- rhDraftSaveTimer=setTimeout(()=>{if(form.isConnected)saveWorkingContent(form);},500);
-}
 function rhLoadScriptRows(form){
  return rhCollectRows(form,"script").map(x=>({id:x.id,type:x.type}));
 }
@@ -1505,20 +1471,9 @@ function rhProjectCard(item,compact){
  const progress=rhContentCompletion(item),percent=progress.total?Math.round(progress.done/progress.total*100):0;
  return '<article class="panel rh-project-card'+(compact?' compact':'')+'"><div class="rh-project-heading"><div><p class="rh-project-kicker">'+txt(brand?brand.name+(brand.campaign?" · "+brand.campaign:""):"Personal Content")+'</p><h3>'+txt(item.title||"Konten tanpa judul")+'</h3></div><span class="rh-platform">'+txt(item.platform||"TikTok")+'</span></div><div class="rh-metadata"><span>'+txt(item.content_type||item.pillar||"Content")+'</span>'+(item.date?'<span>'+fmt(item.date)+'</span>':"")+'</div><div class="rh-progress-head"><span>Checklist produksi</span><strong>'+progress.done+' / '+progress.total+'</strong></div><div class="rh-progress"><span style="width:'+percent+'%"></span></div><div class="rh-project-stats"><span>'+n((item.script||[]).length||(item.hook?1:0))+' kalimat</span><span>'+n((item.shots||[]).length)+' shot</span><span>'+n((item.references||[]).length)+' referensi</span></div><div class="buttons">'+btn("Buka Content","edit-content","primary",'data-id="'+txt(item.id)+'"')+(compact?"":btn("Hapus","delete-idea","danger",'data-id="'+txt(item.id)+'"'))+'</div></article>';
 }
-function pendingContentDraft(){
- let raw="";
- try{raw=localStorage.getItem("rh-creator-draft-v1:content-form:new")||sessionStorage.getItem("rh-creator-draft-v1:content-form:new")||"";}catch(e){}
- if(!raw)return "";
- try{
-  const parsed=JSON.parse(raw),values=parsed.values||{},sections=parsed.sections||{};
-  const hasWork=String(values.title||"").trim()||String(values.notes||"").trim()||Object.values(sections).some(list=>Array.isArray(list)&&list.some(x=>x.text||x.label||x.url));
-  if(!hasWork)return "";
-  return '<div class="rh-draft-alert"><div><strong>Draf konten sebelumnya ditemukan.</strong><p>Kalimat dan shot list yang sempat kamu isi masih bisa dipulihkan.</p></div>'+btn("Pulihkan Draf","new-content","primary")+'</div>';
- }catch(e){return "";}
-}
 function production(){
  const records=ownContent();
- return '<div class="rh-content-page">'+pendingContentDraft()+'<div class="rh-page-lead"><div><p class="rh-overline">CONTENT WORKSPACE</p><h3>Produksi Konten</h3><p>Tulis script per kalimat, susun shot list, tambahkan referensi dan centang pekerjaan.</p></div>'+btn("+ Content Baru","new-content","primary")+'</div><div class="rh-content-summary"><span>'+n(records.length)+' total konten</span></div><div class="rh-project-grid">'+(records.length?records.slice().sort((a,b)=>(b.updated_at||0)-(a.updated_at||0)).map(x=>rhProjectCard(x,false)).join(""):empty("Belum ada konten pribadi. Tekan + Content Baru untuk mulai."))+'</div></div>';
+ return '<div class="rh-content-page"><div class="rh-page-lead"><div><p class="rh-overline">CONTENT WORKSPACE</p><h3>Produksi Konten</h3><p>Tulis script per kalimat, susun shot list, tambahkan referensi dan centang pekerjaan.</p></div>'+btn("+ Content Baru","new-content","primary")+'</div><div class="rh-content-summary"><span>'+n(records.length)+' total konten</span></div><div class="rh-project-grid">'+(records.length?records.slice().sort((a,b)=>(b.updated_at||0)-(a.updated_at||0)).map(x=>rhProjectCard(x,false)).join(""):empty("Belum ada konten pribadi. Tekan + Content Baru untuk mulai."))+'</div></div>';
 }
 function contentForm(contentId,date,brandId){
  const item=state.ideas.find(x=>x.id===contentId)||{title:"",pillar:"Education",platform:"TikTok",content_type:brandId?"UGC":"Personal Branding",goal:"Awareness",notes:"",date:date||"",shoot_date:"",brand_id:brandId||"",caption:"",hashtags:""};
@@ -1548,7 +1503,7 @@ function brand(){
  return '<div class="rh-collaboration-page"><div class="rh-page-lead"><div><p class="rh-overline">BRAND PARTNERSHIPS</p><h3>Collaboration</h3><p>Kelola campaign, brief, fee, deliverables, pembayaran, dan produksi konten brand dalam satu halaman.</p></div>'+btn("+ Collaboration","new-brand","primary")+'</div><div class="rh-collab-summary"><div><span>Total Collaboration</span><strong>'+n(state.brands.length)+'</strong></div><div><span>Aktif / Berjalan</span><strong>'+n(active)+'</strong></div><div><span>Total Deal</span><strong>'+rp(total)+'</strong></div><div><span>Sisa Pembayaran</span><strong>'+rp(balance)+'</strong></div></div><div class="rh-collab-list">'+(state.brands.length?state.brands.slice().sort((a,b)=>(b.updated_at||0)-(a.updated_at||0)).map(brandCard).join(""):empty("Belum ada Collaboration. Tambahkan brand atau campaign pertamamu."))+'</div></div>';
 }
 
-/* Expand writing fields with their content, including restored drafts on iOS Safari. */
+/* Expand writing fields on iOS Safari. */
 function rhFitTextarea(field){
  if(!field||field.tagName!=="TEXTAREA")return;
  field.style.overflowY="hidden";
@@ -1602,7 +1557,6 @@ function modal(title,body){
  if(form){
    // Keep every existing field inside the form for FormData and autosave.
    form.noValidate=true;
-   restoreFormDraft(form);
    form.querySelectorAll(".rh-custom-select").forEach(x=>rhUpdateCustomSelect(x,true));
    rhSyncDateLabels(form);
    if(form.classList.contains("rh-editor-form")){
@@ -1617,66 +1571,6 @@ function modal(title,body){
  requestAnimationFrame(()=>{rhUpdateModalViewport();if(form)rhFitTextareas(form);});
 }
 
-/* Drafts protect text against accidental navigation or lost browser state. */
-const DRAFT_PREFIX="rh-creator-draft-v1:";
-function draftKey(form){const brand=form.getAttribute("id")==="content-form"?form.elements.namedItem("brand_id")?.value:"";return DRAFT_PREFIX+form.getAttribute("id")+":"+(form.elements.namedItem("id")?.value||(brand?"new-brand-"+brand:"new"));}
-function saveDraft(form){
- if(!form||!["idea-form","content-form","asset-form","brand-form","profile-form"].includes(form.getAttribute("id")))return;
- const values=Object.fromEntries(new FormData(form).entries());
- const isCollab=form.getAttribute("id")==="brand-form",sections={};
- for(const kind of RH_BUILDER_KEYS){
-   if(isCollab&&["script","shots","checklist"].includes(kind))continue;
-   if(form.querySelector('.rh-builder-list[data-kind="'+kind+'"]'))sections[kind]=rhCollectRows(form,kind);
- }
- const inlineContent=isCollab?rhCollectCollabContent(form):null;
- const deletedContentIds=isCollab?JSON.parse(form.dataset.deletedContentIds||"[]"):null;
- const draft=JSON.stringify({values,sections,inlineContent,deletedContentIds,draftContentId:form.dataset.draftContentId||"",updated_at:Date.now()});
- try{localStorage.setItem(draftKey(form),draft);}
- catch(e){try{sessionStorage.setItem(draftKey(form),draft);}catch(_){}}
-}
-function restoreFormDraft(form){
- let draft=null;
- try{draft=localStorage.getItem(draftKey(form))||sessionStorage.getItem(draftKey(form));}catch(e){}
- if(!draft)return;
- try{
-  const parsed=JSON.parse(draft);
-  if(parsed.sections&&Array.isArray(parsed.sections.checklist)){
-   const p=normalizeProduction(parsed.sections.shots||[],parsed.sections.checklist);
-   parsed.sections.shots=p.shots;parsed.sections.checklist=p.checklist;
-  }
-  if(parsed.draftContentId)form.dataset.draftContentId=parsed.draftContentId;
-  for(const [key,value] of Object.entries(parsed.values||{})){
-   if(key==="id"||key==="brand_id"||(key==="content_type"&&form.id==="content-form"&&!form.elements.namedItem("brand_id")?.value))continue;
-   const field=form.elements.namedItem(key);
-   if(field&&"value" in field)field.value=String(value);
-  }
-  const isCollab=form.getAttribute("id")==="brand-form";
-  if(parsed.sections&&typeof parsed.sections==="object"){
-    for(const kind of RH_BUILDER_KEYS){
-      if(isCollab&&["script","shots","checklist"].includes(kind))continue;
-      if(Array.isArray(parsed.sections[kind]))rhReplaceBuilderRows(form,kind,parsed.sections[kind]);
-    }
-    if(!isCollab)rhRefreshShotChoices(form);
-  }
-  if(isCollab){
-    if(Array.isArray(parsed.inlineContent)&&parsed.inlineContent.length){
-      const list=form.querySelector(".rh-collab-content-list");
-      if(list)list.innerHTML=parsed.inlineContent.map((item,i)=>rhCollabContentCard(item,i===0)).join("");
-    }
-    form.dataset.deletedContentIds=JSON.stringify(Array.isArray(parsed.deletedContentIds)?parsed.deletedContentIds:[]);
-    rhPdfInput(form);
-    form.querySelectorAll(".rh-collab-content-card").forEach(card=>rhRefreshShotChoices(card));
-  }
-  const marker=document.createElement("div");marker.className="restored-draft";
-  marker.textContent="Draf tulisan sebelumnya dipulihkan otomatis.";
-  form.prepend(marker);
- }catch(e){}
-}
-function clearFormDraft(form){
- for(const storage of [localStorage,sessionStorage]){
-  try{storage.removeItem(draftKey(form));}catch(e){}
- }
-}
 document.addEventListener("input",e=>{
  if(e.target.matches?.("[data-custom-choice],[data-custom-entry]"))rhUpdateCustomSelect(e.target);
  if(e.target.matches?.(".rh-editor-form textarea"))rhFitTextarea(e.target);
@@ -1692,8 +1586,8 @@ document.addEventListener("input",e=>{
      const title=card?.querySelector(".rh-card-video-title");
      if(title)title.textContent=e.target.value||"Konten baru";
    }
-   saveDraft(form);
-   queueWorkingContent(form);
+   
+   
  }
 });
 document.addEventListener("change",async e=>{
@@ -1724,7 +1618,7 @@ document.addEventListener("change",async e=>{
    }finally{if(submit)submit.disabled=false;e.target.value="";}
    return;
  }
- saveDraft(form);queueWorkingContent(form);
+ 
 });
 window.addEventListener("resize",()=>{
  const open=document.querySelector("#modal-layer.open .rh-editor-form");
@@ -1734,8 +1628,7 @@ if(document.fonts?.ready)document.fonts.ready.then(()=>{
  const open=document.querySelector("#modal-layer.open .rh-editor-form");
  if(open)rhFitTextareas(open);
 });
-window.addEventListener("pagehide",()=>{const form=document.querySelector("#content-form");if(form){saveDraft(form);saveWorkingContent(form);}});
-function close(){const layer=document.getElementById("modal-layer");if(!layer.classList.contains("open"))return;layer.classList.remove("open");layer.setAttribute("aria-hidden","true");layer.style.removeProperty("--rh-viewport-height");layer.style.removeProperty("--rh-viewport-offset");rhUnlockPage();}
+function close(){const layer=document.getElementById("modal-layer");if(!layer.classList.contains("open"))return;layer.classList.remove("open");layer.setAttribute("aria-hidden","true");layer.style.removeProperty("--rh-viewport-height");layer.style.removeProperty("--rh-viewport-offset");document.getElementById("modal-content").replaceChildren();rhUnlockPage();}
 function formFooter(){return '<div class="form-actions"><button type="button" class="button ghost" data-action="close">Batal</button><button type="submit" class="button primary">Simpan</button></div>';}
 /* Safari iPad renders a native date control wider than its CSS grid track.
    Keep the native date picker interactive, but isolate its paint behind our own
@@ -1875,7 +1768,7 @@ async function rhHandlePdfUpload(form,file){
    const el=form.querySelector('[name="'+field+'"]');if(el)el.value=value;
  }
  rhPdfInput(form);
- saveDraft(form);
+ 
  notice(cloud?"PDF tersimpan di Cloudflare dan perangkat ini.":"PDF tersimpan di perangkat ini. Simpan Collaboration untuk menautkannya.","ok");
 }
 async function rhOpenBriefPdf(source){
@@ -1920,7 +1813,7 @@ document.addEventListener("click",function(e){
    const list=readReferenceList(row.querySelector('[data-field="media"]')),meta=list.find(x=>x.id===which);if(!meta)return;
    if(a==="reference-open"){openReference(meta).catch(e=>alert(e.message));return;}
    if(!confirm("Hapus file referensi ini?"))return;
-   removeReference(meta).then(()=>{refreshReferenceRow(row,list.filter(x=>x.id!==which));saveDraft(form);queueWorkingContent(form);}).catch(e=>alert(e.message));return;
+   removeReference(meta).then(()=>{refreshReferenceRow(row,list.filter(x=>x.id!==which));}).catch(e=>alert(e.message));return;
  }
  if(a.startsWith("builder-")){
    const form=el.closest("form");
@@ -1942,7 +1835,7 @@ document.addEventListener("click",function(e){
    if(a==="builder-up"&&row?.previousElementSibling)list.insertBefore(row,row.previousElementSibling);
    if(a==="builder-down"&&row?.nextElementSibling)list.insertBefore(row.nextElementSibling,row);
    if(kind==="script")rhRefreshShotChoices(scope);
-   saveDraft(form);queueWorkingContent(form);
+   
    return;
  }
  if(a==="collab-add-content"){
@@ -1952,7 +1845,7 @@ document.addEventListener("click",function(e){
    const card=list.lastElementChild;
    rhFitTextareas(card);
    card.scrollIntoView({block:"nearest",behavior:"smooth"});
-   saveDraft(form);
+   
    return;
  }
  if(a==="collab-remove-content"){
@@ -1964,7 +1857,7 @@ document.addEventListener("click",function(e){
      const deleted=new Set(JSON.parse(form.dataset.deletedContentIds||"[]"));
      deleted.add(existing.id);form.dataset.deletedContentIds=JSON.stringify([...deleted]);
    }
-   card.remove();saveDraft(form);return;
+   card.remove();return;
  }
  if(a==="brief-open"){rhOpenBriefPdf(el.closest("form"));return;}
  if(a==="brand-open-pdf"){const brand=state.brands.find(x=>x.id===which);if(brand)rhOpenBriefPdf(brand);return;}
@@ -1972,7 +1865,7 @@ document.addEventListener("click",function(e){
    const form=el.closest("form");if(!form)return;
    if(!confirm("Lepaskan PDF dari Collaboration ini?"))return;
    for(const key of ["brief_pdf_id","brief_pdf_name","brief_pdf_size","brief_pdf_cloud","brief_pdf_date"]){const field=form.querySelector('[name="'+key+'"]');if(field)field.value="";}
-   rhPdfInput(form);saveDraft(form);return;
+   rhPdfInput(form);return;
  }
  if(a==="close"){close();return;}
  if(a==="new-content"){contentForm(null,el.dataset.date||"",el.dataset.brandId||"");return;}
@@ -2027,12 +1920,11 @@ document.addEventListener("submit",function(e){
    if(form.getAttribute("id")==="content-form"){
      if(!get("title"))throw new Error("Judul konten perlu diisi sebelum menyimpan.");
      const script=rhCollectRows(form,"script"),shots=rhCollectRows(form,"shots"),checks=rhCollectRows(form,"checklist"),refs=rhCollectRows(form,"references");
-     // Draft or incomplete URLs must never prevent saving an otherwise complete content.
+     // Incomplete URLs must never prevent saving an otherwise complete content.
      const brandId=get("brand_id");
      if(brandId&&!state.brands.some(b=>b.id===brandId))throw new Error("Collaboration terkait tidak ditemukan.");
-     let content=state.ideas.find(x=>x.id===(get("id")||form.dataset.draftContentId));
+     let content=state.ideas.find(x=>x.id===(get("id")));
      if(!content){content={id:id(),stage:"Ide"};state.ideas.push(content);}
-     form.dataset.draftContentId=content.id;
      for(const field of ["title","platform","content_type","goal","date","shoot_date","brand_id","notes","caption","hashtags","folder_url","published_url"])content[field]=get(field);
      content.script=script;content.shots=shots;content.checklist=checks;content.references=refs;
      content.hook=script.find(x=>x.type==="Hook")?.text||"";
@@ -2058,7 +1950,7 @@ document.addEventListener("submit",function(e){
    }else if(form.getAttribute("id")==="brand-form"){
      if(!get("name"))throw new Error("Nama brand perlu diisi sebelum menyimpan.");
      const refs=rhCollectRows(form,"references"),files=rhCollectRows(form,"files"),finalLinks=rhCollectRows(form,"final_links");
-     // Store incomplete website and reference links as drafts without blocking save.
+     // Preserve incomplete website and reference links without blocking save.
      let b=state.brands.find(x=>x.id===get("id"));
      if(!b){b={id:id()};state.brands.push(b);}
      for(const field of ["name","industry","contact","phone","email","website","social","campaign","goal","collaboration_type","status","deadline","post_date","deliverables","notes","brief_text","brief_must","brief_avoid","compensation_type","barter","rate_notes","brief_pdf_id","brief_pdf_name","brief_pdf_cloud","brief_pdf_date"])b[field]=get(field);
@@ -2087,7 +1979,7 @@ document.addEventListener("submit",function(e){
      state.profile.updated_at=Date.now();
    }
    window.__rhSaveStage="saving";
-   save();window.__rhSaveStage="stored";clearFormDraft(form);close();render();window.__rhSaveStage="rendered";
+   save();window.__rhSaveStage="stored";close();render();window.__rhSaveStage="rendered";
  }catch(error){
    window.__rhSaveStage="error";window.__rhSaveError=String(error?.message||error);
    notice("Gagal menyimpan: "+error.message,"warn");
