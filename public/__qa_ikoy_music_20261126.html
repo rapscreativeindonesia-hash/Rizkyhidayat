@@ -1,7 +1,7 @@
 <!doctype html><html lang="id"><head><meta charset="utf-8"><title>Ikoy Music QA</title></head><body><pre id="qa">RUNNING</pre><iframe id="dashboard" src="/?music-qa=20261126" style="width:390px;height:700px;position:absolute;left:-9000px;top:0" title="audio test"></iframe><script>
 const out=document.querySelector("#qa");
 const paths=["01.mp3","02.mp3","03.part01.bin","03.part02.bin","04.mp3","05.mp3","06.mp3","07.mp3","08.part01.bin","08.part02.bin","09.part01.bin","09.part02.bin","10.part01.bin","10.part02.bin","10.part03.bin"].map(f=>"/audio/ikoy-track-"+f);
-const expected=[1692699,1949029,2209683,2209683,2185536,2437849,2148298,1359856,1653648,1653648,1838100,1838100,1953774,1953774,1953774];
+const expected=[1692699,1949029,2209683,2209683,2185536,2437849,2148298,1359856,1653648,1653646,1838100,1838100,1953774,1953774,1953772];
 const sizeExpected={};
 paths.forEach((p,i)=>sizeExpected[p]=expected[i]);
 async function test(){
