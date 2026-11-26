@@ -1730,7 +1730,7 @@ document.addEventListener("submit",function(e){
 document.getElementById("modal-layer").addEventListener("click",function(e){if(e.target===this)close();});document.addEventListener("keydown",function(e){if(e.key==="Escape")close();});
 
 /* Original generative ambient player (no licensed tracks or Spotify credentials) */
-/* Ikoy Music: MP3 sources are extracted from the user's ten uploaded videos,
+/* Ikoy Music: MP3 sources are extracted from the user's thirteen uploaded videos,
    each trimmed by four seconds. Shuffle entire playlist, no repeat within a cycle. */
 const MUSIC_TRACKS=[
  {title:"Track 01",url:"/audio/ikoy-track-01.mp3"},
@@ -1742,9 +1742,12 @@ const MUSIC_TRACKS=[
  {title:"Track 07",url:"/audio/ikoy-track-07.mp3"},
  {title:"Track 08",parts:["/audio/ikoy-track-08.part01.bin","/audio/ikoy-track-08.part02.bin"]},
  {title:"Track 09",parts:["/audio/ikoy-track-09.part01.bin","/audio/ikoy-track-09.part02.bin"]},
- {title:"Track 10",parts:["/audio/ikoy-track-10.part01.bin","/audio/ikoy-track-10.part02.bin","/audio/ikoy-track-10.part03.bin"]}
+ {title:"Track 10",parts:["/audio/ikoy-track-10.part01.bin","/audio/ikoy-track-10.part02.bin","/audio/ikoy-track-10.part03.bin"]},
+ {title:"Track 11",parts:["/audio/ikoy-track-11.part01.bin","/audio/ikoy-track-11.part02.bin","/audio/ikoy-track-11.part03.bin","/audio/ikoy-track-11.part04.bin","/audio/ikoy-track-11.part05.bin","/audio/ikoy-track-11.part06.bin"]},
+ {title:"Track 12",parts:["/audio/ikoy-track-12.part01.bin","/audio/ikoy-track-12.part02.bin","/audio/ikoy-track-12.part03.bin","/audio/ikoy-track-12.part04.bin","/audio/ikoy-track-12.part05.bin"]},
+ {title:"Track 13",parts:["/audio/ikoy-track-13.part01.bin","/audio/ikoy-track-13.part02.bin","/audio/ikoy-track-13.part03.bin","/audio/ikoy-track-13.part04.bin"]}
 ];
-const MUSIC_COLORS=["#3a718c","#705645","#486578","#617e8b","#755c74","#5b7682","#65836f","#786d57","#5a748c","#6a6688"];
+const MUSIC_COLORS=["#3a718c","#705645","#486578","#617e8b","#755c74","#5b7682","#65836f","#786d57","#5a748c","#6a6688","#487f86","#776b7c","#667f6c"];
 const MUSIC_PLAY_ICON='<svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 9 6-9 6z"/></svg>';
 const MUSIC_PAUSE_ICON='<svg class="rh-vector-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="5" width="3" height="14" rx="1"/><rect x="14" y="5" width="3" height="14" rx="1"/></svg>';
 let musicAudio=null,musicPlaying=false,musicIndex=-1,musicQueue=[],musicObjectURL=null,musicLoading=0,musicNeedGesture=false;
@@ -1765,7 +1768,7 @@ function musicPaint(){
  if(w){w.classList.toggle("is-playing",musicPlaying);w.dataset.mood=String(Math.max(0,musicIndex)%3);w.style.setProperty("--mood-light",MUSIC_COLORS[Math.max(musicIndex,0)%MUSIC_COLORS.length]);}
  if(btn){btn.innerHTML=musicPlaying?MUSIC_PAUSE_ICON:MUSIC_PLAY_ICON;btn.setAttribute("aria-pressed",String(musicPlaying));btn.setAttribute("aria-label",musicPlaying?"Jeda musik":"Putar musik");}
  const track=MUSIC_TRACKS[musicIndex];
- if(track)document.getElementById("music-track").textContent=track.title+" / 10";
+ if(track)document.getElementById("music-track").textContent=track.title+" / "+MUSIC_TRACKS.length;
  document.getElementById("music-subtitle").textContent="MP3 pilihanmu · Shuffle aktif";
 }
 function musicInitialIndex(){
